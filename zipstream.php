@@ -297,13 +297,18 @@ class ZipStream {
     $nlen = strlen($name);
 
     # create dos timestamp
-    $opt['time'] = $opt['time'] ? $opt['time'] : time();
+    $opt['time'] = @$opt['time'] ? $opt['time'] : time();
     $dts = $this->dostime($opt['time']);
 
     # build file header
     $fields = array(            # (from V.A of APPNOTE.TXT)
       array('V', 0x04034b50),     # local file header signature
-      array('v', (6 << 8) + 3),   # version needed to extract
+      
+      //array('v', (6 << 8) + 3),   # version needed to extract
+      array('v', 0x000A),   # version needed to extract
+      //FIXED as mentioned in http://linlog.skepticats.com/entries/2012/02/Streaming_ZIP_files_in_PHP.php
+      //and http://stackoverflow.com/questions/5573211/dynamically-created-zip-files-by-zipstream-in-php-wont-open-in-osx
+
       array('v', 0x00),           # general purpose bit flag
       array('v', $meth),          # compresion method (deflate or store)
       array('V', $dts),           # dos timestamp
@@ -409,7 +414,7 @@ class ZipStream {
     list ($name, $opt, $meth, $crc, $zlen, $len, $ofs) = $args;
 
     # get attributes
-    $comment = $opt['comment'] ? $opt['comment'] : '';
+    $comment = @$opt['comment'] ? $opt['comment'] : '';
 
     # get dos timestamp
     $dts = $this->dostime($opt['time']);
@@ -452,7 +457,7 @@ class ZipStream {
 
     # grab comment (if specified)
     $comment = '';
-    if ($opt && $opt['comment'])
+    if ($opt && @$opt['comment'])
       $comment = $opt['comment'];
 
     $fields = array(                # (from V,F of APPNOTE.TXT)
@@ -503,12 +508,12 @@ class ZipStream {
     
     # grab content type from options
     $content_type = 'application/x-zip';
-    if ($opt['content_type'])
+    if (@$opt['content_type'])
       $content_type = $this->opt['content_type'];
 
     # grab content disposition 
     $disposition = 'attachment';
-    if ($opt['content_disposition'])
+    if (@$opt['content_disposition'])
       $disposition = $opt['content_disposition'];
 
     if ($this->output_name) 
