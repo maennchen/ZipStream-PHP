@@ -152,18 +152,22 @@ class ZipStream {
   # own headers (including the filename), and still use this library.
   #
   function __construct($name = null, $opt = array()) {
-    # save options
-    $this->opt = $opt;
-
-    # set large file defaults: size = 20 megabytes, method = store
-    if (!$this->opt['large_file_size'])
-      $this->opt['large_file_size'] = 20 * 1024 * 1024;
-    if (!$this->opt['large_file_method'])
-      $this->opt['large_file_method'] = 'store';
+    
+    $defaults = array(
+      # set large file defaults: size = 20 megabytes
+      'large_file_size' => 20 * 1024 * 1024,
+      'large_file_method' => 'store',
+      'send_http_headers' => FALSE
+    );
+    
+    # merge and save options
+    $this->opt = array_merge(
+      $defaults,
+      $opt
+    );
 
     $this->output_name = $name;
-    if ($name || $opt['send_http_headers'])
-      $this->need_headers = true; 
+    $this->need_headers = $name || $this->opt['send_http_headers'];
   }
 
   #
