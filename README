@@ -20,6 +20,12 @@ simple example:
     # add a file named 'image.jpg' from a local file 'path/to/image.jpg'
     $zip->add_file_from_path('some_image.jpg', 'path/to/image.jpg');
 
+    # add a file named 'image.jpg' from an open stream resource
+    $fp = tmpfile();
+    fwrite($fp, 'The quick brown fox jumped over the lazy dog.');
+    $zip->add_file_from_stream('goodbye.xml', $fp);
+    fclose($fp);
+
     # finish the zip stream
     $zip->finish();
 
