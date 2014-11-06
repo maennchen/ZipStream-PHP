@@ -419,8 +419,14 @@ class ZipStream {
 
       # close file and finalize crc
       fclose($fh);
-      $crc = unpack('V', hash_final($hash_ctx, true));
-      $crc = $crc[1];
+      
+      if (version_compare(PHP_VERSION, '5.2.6', '>')) {
+        $crc = hexdec(hash_final($hash_ctx));
+      }else{
+        $crc = unpack('V', hash_final($hash_ctx, true));
+        $crc = $crc[1];
+      }
+      
     } else {
       die("unknown large_file_method: $meth_str");
     }
