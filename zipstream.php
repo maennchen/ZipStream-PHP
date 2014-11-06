@@ -284,8 +284,6 @@ class ZipStream {
   #   fwrite($fp, 'The quick brown fox jumped over the lazy dog.');
   #
   #   # add a file named 'streamfile.txt' from the content of the stream
-  #   # '/usr/share/bigfile.rar' with a comment and a last-modified
-  #   # time of two hours ago
   #   $x->add_file_from_stream('streamfile.txt', $fp);
   #
   function add_file_from_stream($name, $stream, $opt = array()) {
