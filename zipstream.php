@@ -263,6 +263,55 @@ class ZipStream {
   }
 
   #
+  # add_file_from_stream - adds an open stream to the archive uncompressed
+  #
+  # Parameters:
+  #
+  #  $name   - path of file in archive (including directory).
+  #  $stream - contents of file as a stream resource
+  #  $opt    - Hash of options for file (optional, see "File Options"
+  #            below).
+  #
+  # File Options:
+  #  time     - Last-modified timestamp (seconds since the epoch) of
+  #             this file.  Defaults to the current time.
+  #  comment  - Comment related to this file.
+  #
+  # Examples:
+  #
+  #   # create a temporary file stream and write text to it
+  #   $fp = tmpfile();
+  #   fwrite($fp, 'The quick brown fox jumped over the lazy dog.');
+  #
+  #   # add a file named 'streamfile.txt' from the content of the stream
+  #   $x->add_file_from_stream('streamfile.txt', $fp);
+  #
+  function add_file_from_stream($name, $stream, $opt = array()) {
+    $block_size = 1048576; # process in 1 megabyte chunks
+    $algo       = 'crc32b';
+    $meth       = 0x00;
+
+    # calculate header attributes
+    fseek($stream, 0, SEEK_END);
+    $zlen = $len = ftell($stream);
+
+    rewind($stream);
+    $ctx = hash_init($algo);
+    hash_update_stream($ctx, $stream);
+    $crc = unpack('V', hash_final($ctx, true));
+    $crc = $crc[1];
+
+    # send file header
+    $this->add_file_header($name, $opt, $meth, $crc, $zlen, $len);
+
+    rewind($stream);
+    while ($data = fgets($stream, $block_size)) {
+      # send data
+      $this->send($data);
+    }
+  }
+
+  #
   # finish - Write zip footer to stream.
   #
   # Example:
