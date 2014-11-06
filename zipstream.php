@@ -296,10 +296,15 @@ class ZipStream {
     $zlen = $len = ftell($stream);
 
     rewind($stream);
-    $ctx = hash_init($algo);
-    hash_update_stream($ctx, $stream);
-    $crc = unpack('V', hash_final($ctx, true));
-    $crc = $crc[1];
+    $hash_ctx = hash_init($algo);
+    hash_update_stream($hash_ctx, $stream);
+
+    if (version_compare(PHP_VERSION, '5.2.6', '>')) {
+      $crc = hexdec(hash_final($hash_ctx));
+    }else{
+      $crc = unpack('V', hash_final($hash_ctx, true));
+      $crc = $crc[1];
+    }
 
     # send file header
     $this->add_file_header($name, $opt, $meth, $crc, $zlen, $len);
