@@ -157,7 +157,8 @@ class ZipStream {
       # set large file defaults: size = 20 megabytes
       'large_file_size' => 20 * 1024 * 1024,
       'large_file_method' => 'store',
-      'send_http_headers' => FALSE
+      'send_http_headers' => FALSE,
+      'http_header_callback' => 'header'
     );
     
     # merge and save options
@@ -587,8 +588,9 @@ class ZipStream {
       'Content-Transfer-Encoding' => 'binary',
     );
 
+    $call = $this->opt['http_header_callback'];
     foreach ($headers as $key => $val)
-      header("$key: $val");
+      $call("$key: $val");
   }
 
   #
