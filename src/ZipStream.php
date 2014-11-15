@@ -67,7 +67,7 @@ use ZipStream\Exception\FileNotReadableException;
  *   $zip->finish();
  */
 class ZipStream {
-	const VERSION = '0.2.2';
+	const VERSION = '0.3.0';
 	
 	/**
 	 * Global Options
