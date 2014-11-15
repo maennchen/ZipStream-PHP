@@ -642,6 +642,4 @@ class ZipStream {
     # build output string from header and compressed data
     return call_user_func_array('pack', $args);
   }
-};
-
-?>
+}
