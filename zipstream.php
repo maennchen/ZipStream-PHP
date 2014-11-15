@@ -399,8 +399,12 @@ class ZipStream {
     if ($meth_str == 'store') {
       # store method
       $meth = 0x00;
-      $crc  = unpack('V', hash_file($algo, $path, true));
-      $crc = $crc[1];
+      if (version_compare(PHP_VERSION, '5.2.6', '>')) {
+        $crc = hexdec(hash_file($algo, $path));
+      } else {
+        $crc = unpack('V', hash_file($algo, $path, true));
+        $crc = $crc[1];
+      }
     } elseif ($meth_str == 'deflate') {
       # deflate method
       $meth = 0x08;
