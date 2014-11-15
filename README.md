@@ -8,7 +8,7 @@ Simply add a dependency on maennchen/zipstream-php to your project's composer.js
 
     {
         "require": {
-            "maennchen/zipstream-php": "4.3.*"
+            "maennchen/zipstream-php": "0.3.*"
         }
     }
 
