@@ -358,7 +358,7 @@ class ZipStream {
 		$nlen = strlen($name);
 		
 		// create dos timestamp
-		$opt['time'] = @$opt['time'] ? $opt['time'] : time();
+		$opt['time'] = isset($opt['time']) && !empty($opt['time']) ? $opt['time'] : time();
 		$dts         = $this->dostime($opt['time']);
 		
 		// build file header
@@ -535,7 +535,7 @@ class ZipStream {
 		list($name, $opt, $meth, $crc, $zlen, $len, $ofs) = $args;
 		
 		// get attributes
-		$comment = @$opt['comment'] ? $opt['comment'] : '';
+		$comment = isset($opt['comment']) && !empty($opt['comment']) ? $opt['comment'] : '';
 		
 		// get dos timestamp
 		$dts = $this->dostime($opt['time']);
@@ -629,8 +629,9 @@ class ZipStream {
 		
 		// grab comment (if specified)
 		$comment = '';
-		if ($opt && @$opt['comment'])
+		if ($opt && isset($opt['comment'])) {
 			$comment = $opt['comment'];
+		}
 		
 		$fields = array( // (from V,F of APPNOTE.TXT)
 			array(
@@ -707,16 +708,19 @@ class ZipStream {
 		
 		// grab content type from options
 		$content_type = 'application/x-zip';
-		if (@$opt['content_type'])
+		if (isset($opt['content_type'])) {
 			$content_type = $this->opt['content_type'];
+		}
 		
 		// grab content disposition 
 		$disposition = 'attachment';
-		if (@$opt['content_disposition'])
+		if (isset($opt['content_disposition'])) {
 			$disposition = $opt['content_disposition'];
+		}
 		
-		if ($this->output_name)
+		if ($this->output_name) {
 			$disposition .= "; filename=\"{$this->output_name}\"";
+		}
 		
 		$headers = array(
 			'Content-Type' => $content_type,
