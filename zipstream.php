@@ -166,6 +166,10 @@ class ZipStream {
       $opt
     );
 
+    if (!isset($this->opt['output_stream'])) {
+      $this->opt['output_stream'] = fopen('php://output', 'w');
+    }
+
     $this->output_name = $name;
     $this->need_headers = $name || $this->opt['send_http_headers'];
   }
@@ -603,7 +607,7 @@ class ZipStream {
       $this->send_http_headers();
     $this->need_headers = false;
 
-    echo $str;
+    fwrite($this->opt['output_stream'], $str);
   }
 
   #
