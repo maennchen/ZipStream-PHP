@@ -14,6 +14,6 @@
 		"php": ">= 5.3"
 	},
   	"autoload": {
-     	"classmap": [ "zipstream.php" ] 
+     	"classmap": [ "ZipStream.php" ] 
     }
 }
