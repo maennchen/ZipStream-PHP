@@ -1,5 +1,6 @@
 <?php
 namespace ZipStream;
+use ZipStream\Exception\InvalidOptionException;
 
 /**
  * ZipStream
@@ -463,7 +464,7 @@ class ZipStream {
 			}
 			
 		} else {
-			die("unknown large_file_method: $meth_str");
+			throw new InvalidOptionException('large_file_method', array('store', 'deflate'), $meth_str);
 		}
 		
 		// send file header
