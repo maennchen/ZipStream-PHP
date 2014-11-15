@@ -16,3 +16,8 @@ Classes, Variables, Methods etc:
 
 ## Pull Requests
 Feel free to submit Pull Requests.
+
+## Testing
+For every new feature please write a new PHPUnit Test.
+
+Before every commit execute the bin/test file to check if your changes wrecked something.
