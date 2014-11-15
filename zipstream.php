@@ -140,13 +140,13 @@ class ZipStream {
   public function __construct($name = null, $opt = array()) {
     
     $defaults = array(
-      # set large file defaults: size = 20 megabytes
+      // set large file defaults: size = 20 megabytes
       'large_file_size' => 20 * 1024 * 1024,
       'large_file_method' => 'store',
       'send_http_headers' => FALSE
     );
     
-    # merge and save options
+    // merge and save options
     $this->opt = array_merge(
       $defaults,
       $opt
@@ -186,19 +186,19 @@ class ZipStream {
    *   ));
    */
   public function add_file($name, $data, $opt = array()) {
-    # compress data
+    // compress data
     $zdata = gzdeflate($data);
 
-    # calculate header attributes
+    // calculate header attributes
     $crc  = crc32($data);
     $zlen = strlen($zdata);
     $len  = strlen($data);
     $meth = 0x08;
 
-    # send file header
+    // send file header
     $this->add_file_header($name, $opt, $meth, $crc, $zlen, $len);
 
-    # print data
+    // print data
     $this->send($zdata);
   }
 
@@ -240,11 +240,11 @@ class ZipStream {
    */
   public function add_file_from_path($name, $path, $opt = array()) {
     if ($this->is_large_file($path)) {
-      # file is too large to be read into memory; add progressively
+      // file is too large to be read into memory; add progressively
       $this->add_large_file($name, $path, $opt);
     } else {
-      # file is small enough to read into memory; read file contents and
-      # handle with add_file()
+      // file is small enough to read into memory; read file contents and
+      // handle with add_file()
       $data = file_get_contents($path);
       $this->add_file($name, $data, $opt);
     }
@@ -266,21 +266,21 @@ class ZipStream {
    *
    * Examples:
    *
-   *   # create a temporary file stream and write text to it
+   *   // create a temporary file stream and write text to it
    *   $fp = tmpfile();
    *   fwrite($fp, 'The quick brown fox jumped over the lazy dog.');
    *
-   *   # add a file named 'streamfile.txt' from the content of the stream
+   *   // add a file named 'streamfile.txt' from the content of the stream
    *   $x->add_file_from_stream('streamfile.txt', $fp);
    *
    * @return void
    */
   public function add_file_from_stream($name, $stream, $opt = array()) {
-    $block_size = 1048576; # process in 1 megabyte chunks
+    $block_size = 1048576; // process in 1 megabyte chunks
     $algo       = 'crc32b';
     $meth       = 0x00;
 
-    # calculate header attributes
+    // calculate header attributes
     fseek($stream, 0, SEEK_END);
     $zlen = $len = ftell($stream);
 
@@ -295,12 +295,12 @@ class ZipStream {
       $crc = $crc[1];
     }
 
-    # send file header
+    // send file header
     $this->add_file_header($name, $opt, $meth, $crc, $zlen, $len);
 
     rewind($stream);
     while ($data = fgets($stream, $block_size)) {
-      # send data
+      // send data
       $this->send($data);
     }
   }
@@ -312,18 +312,18 @@ class ZipStream {
    * 
    *  Example:
    *
-   *   # add a list of files to the archive
+   *   // add a list of files to the archive
    *   $files = array('foo.txt', 'bar.jpg');
    *   foreach ($files as $path)
    *     $zip->add_file($path, file_get_contents($path));
    * 
-   *   # write footer to stream
+   *   // write footer to stream
    *   $zip->finish();
    * 
    * @return void
    */ 
   public function finish() {
-    # add trailing cdr record
+    // add trailing cdr record
     $this->add_cdr($this->opt);
     $this->clear();
   }
@@ -335,44 +335,44 @@ class ZipStream {
    * @return void
    */
   private function add_file_header($name, $opt, $meth, $crc, $zlen, $len) {
-    # strip leading slashes from file name
-    # (fixes bug in windows archive viewer)
+    // strip leading slashes from file name
+    // (fixes bug in windows archive viewer)
     $name = preg_replace('/^\\/+/', '', $name);
 
-    # calculate name length
+    // calculate name length
     $nlen = strlen($name);
 
-    # create dos timestamp
+    // create dos timestamp
     $opt['time'] = @$opt['time'] ? $opt['time'] : time();
     $dts = $this->dostime($opt['time']);
 
-    # build file header
-    $fields = array(            # (from V.A of APPNOTE.TXT)
-      array('V', 0x04034b50),     # local file header signature
+    // build file header
+    $fields = array(            // (from V.A of APPNOTE.TXT)
+      array('V', 0x04034b50),     // local file header signature
       
-      //array('v', (6 << 8) + 3),   # version needed to extract
-      array('v', 0x000A),   # version needed to extract
+      //array('v', (6 << 8) + 3),   // version needed to extract
+      array('v', 0x000A),   // version needed to extract
       //FIXED as mentioned in http://linlog.skepticats.com/entries/2012/02/Streaming_ZIP_files_in_PHP.php
       //and http://stackoverflow.com/questions/5573211/dynamically-created-zip-files-by-zipstream-in-php-wont-open-in-osx
 
-      array('v', 0x00),           # general purpose bit flag
-      array('v', $meth),          # compresion method (deflate or store)
-      array('V', $dts),           # dos timestamp
-      array('V', $crc),           # crc32 of data
-      array('V', $zlen),          # compressed data length
-      array('V', $len),           # uncompressed data length
-      array('v', $nlen),          # filename length
-      array('v', 0),              # extra data len
+      array('v', 0x00),           // general purpose bit flag
+      array('v', $meth),          // compresion method (deflate or store)
+      array('V', $dts),           // dos timestamp
+      array('V', $crc),           // crc32 of data
+      array('V', $zlen),          // compressed data length
+      array('V', $len),           // uncompressed data length
+      array('v', $nlen),          // filename length
+      array('v', 0),              // extra data len
     );
 
-    # pack fields and calculate "total" length
+    // pack fields and calculate "total" length
     $ret = $this->pack_fields($fields);
     $cdr_len = strlen($ret) + $nlen + $zlen;
 
-    # print header and filename
+    // print header and filename
     $this->send($ret . $name);
 
-    # add to central directory record and increment offset
+    // add to central directory record and increment offset
     $this->add_to_cdr($name, $opt, $meth, $crc, $zlen, $len, $cdr_len);
   }
 
@@ -386,35 +386,35 @@ class ZipStream {
    */ 
   private function add_large_file($name, $path, $opt = array()) {
     $st = stat($path);
-    $block_size = 1048576; # process in 1 megabyte chunks
+    $block_size = 1048576; // process in 1 megabyte chunks
     $algo = 'crc32b';
 
-    # calculate header attributes
+    // calculate header attributes
     $zlen = $len = $st['size'];
 
     $meth_str = $this->opt['large_file_method'];
     if ($meth_str == 'store') {
-      # store method
+      // store method
       $meth = 0x00;
       $crc  = unpack('V', hash_file($algo, $path, true));
       $crc = $crc[1];
     } elseif ($meth_str == 'deflate') {
-      # deflate method
+      // deflate method
       $meth = 0x08;
 
-      # open file, calculate crc and compressed file length
+      // open file, calculate crc and compressed file length
       $fh = fopen($path, 'rb');
       $hash_ctx = hash_init($algo);
       $zlen = 0;
 
-      # read each block, update crc and zlen
+      // read each block, update crc and zlen
       while ($data = fgets($fh, $block_size)) {
         hash_update($hash_ctx, $data);
         $data = gzdeflate($data);
         $zlen += strlen($data);
       }
 
-      # close file and finalize crc
+      // close file and finalize crc
       fclose($fh);
       
       if (version_compare(PHP_VERSION, '5.2.6', '>')) {
@@ -428,22 +428,22 @@ class ZipStream {
       die("unknown large_file_method: $meth_str");
     }
 
-    # send file header
+    // send file header
     $this->add_file_header($name, $opt, $meth, $crc, $zlen, $len);
 
-    # open input file
+    // open input file
     $fh = fopen($path, 'rb');
 
-    # send file blocks
+    // send file blocks
     while ($data = fgets($fh, $block_size)) {
       if ($meth_str == 'deflate') 
         $data = gzdeflate($data);
 
-      # send data
+      // send data
       $this->send($data);
     }
 
-    # close input file
+    // close input file
     fclose($fh);
   }
 
@@ -478,37 +478,37 @@ class ZipStream {
   private function add_cdr_file($args) {
     list ($name, $opt, $meth, $crc, $zlen, $len, $ofs) = $args;
 
-    # get attributes
+    // get attributes
     $comment = @$opt['comment'] ? $opt['comment'] : '';
 
-    # get dos timestamp
+    // get dos timestamp
     $dts = $this->dostime($opt['time']);
 
-    $fields = array(                  # (from V,F of APPNOTE.TXT)
-      array('V', 0x02014b50),           # central file header signature
-      array('v', (6 << 8) + 3),         # version made by
-      array('v', (6 << 8) + 3),         # version needed to extract
-      array('v', 0x00),                 # general purpose bit flag
-      array('v', $meth),                # compresion method (deflate or store)
-      array('V', $dts),                 # dos timestamp
-      array('V', $crc),                 # crc32 of data
-      array('V', $zlen),                # compressed data length
-      array('V', $len),                 # uncompressed data length
-      array('v', strlen($name)),        # filename length
-      array('v', 0),                    # extra data len
-      array('v', strlen($comment)),     # file comment length
-      array('v', 0),                    # disk number start
-      array('v', 0),                    # internal file attributes
-      array('V', 32),                   # external file attributes
-      array('V', $ofs),                 # relative offset of local header
+    $fields = array(                  // (from V,F of APPNOTE.TXT)
+      array('V', 0x02014b50),           // central file header signature
+      array('v', (6 << 8) + 3),         // version made by
+      array('v', (6 << 8) + 3),         // version needed to extract
+      array('v', 0x00),                 // general purpose bit flag
+      array('v', $meth),                // compresion method (deflate or store)
+      array('V', $dts),                 // dos timestamp
+      array('V', $crc),                 // crc32 of data
+      array('V', $zlen),                // compressed data length
+      array('V', $len),                 // uncompressed data length
+      array('v', strlen($name)),        // filename length
+      array('v', 0),                    // extra data len
+      array('v', strlen($comment)),     // file comment length
+      array('v', 0),                    // disk number start
+      array('v', 0),                    // internal file attributes
+      array('V', 32),                   // external file attributes
+      array('V', $ofs),                 // relative offset of local header
     );
 
-    # pack fields, then append name and comment
+    // pack fields, then append name and comment
     $ret = $this->pack_fields($fields) . $name . $comment;
 
     $this->send($ret);
 
-    # increment cdr offset
+    // increment cdr offset
     $this->cdr_ofs += strlen($ret);
   }
 
@@ -523,20 +523,20 @@ class ZipStream {
     $cdr_len = $this->cdr_ofs;
     $cdr_ofs = $this->ofs;
 
-    # grab comment (if specified)
+    // grab comment (if specified)
     $comment = '';
     if ($opt && @$opt['comment'])
       $comment = $opt['comment'];
 
-    $fields = array(                # (from V,F of APPNOTE.TXT)
-      array('V', 0x06054b50),         # end of central file header signature
-      array('v', 0x00),               # this disk number
-      array('v', 0x00),               # number of disk with cdr
-      array('v', $num),               # number of entries in the cdr on this disk
-      array('v', $num),               # number of entries in the cdr
-      array('V', $cdr_len),           # cdr size
-      array('V', $cdr_ofs),           # cdr ofs
-      array('v', strlen($comment)),   # zip file comment length
+    $fields = array(                // (from V,F of APPNOTE.TXT)
+      array('V', 0x06054b50),         // end of central file header signature
+      array('v', 0x00),               // this disk number
+      array('v', 0x00),               // number of disk with cdr
+      array('v', $num),               // number of entries in the cdr on this disk
+      array('v', $num),               // number of entries in the cdr
+      array('V', $cdr_len),           // cdr size
+      array('V', $cdr_ofs),           // cdr ofs
+      array('v', strlen($comment)),   // zip file comment length
     );
 
     $ret = $this->pack_fields($fields) . $comment;
@@ -574,15 +574,15 @@ class ZipStream {
    * @return void
    */
   private function send_http_headers() {
-    # grab options
+    // grab options
     $opt = $this->opt;
     
-    # grab content type from options
+    // grab content type from options
     $content_type = 'application/x-zip';
     if (@$opt['content_type'])
       $content_type = $this->opt['content_type'];
 
-    # grab content disposition 
+    // grab content disposition 
     $disposition = 'attachment';
     if (@$opt['content_disposition'])
       $disposition = $opt['content_disposition'];
@@ -623,19 +623,19 @@ class ZipStream {
    * @return DOS Timestamp
    */
   function dostime($when = 0) {
-    # get date array for timestamp
+    // get date array for timestamp
     $d = getdate($when);
 
-    # set lower-bound on dates
+    // set lower-bound on dates
     if ($d['year'] < 1980) {
       $d = array('year' => 1980, 'mon' => 1, 'mday' => 1, 
                  'hours' => 0, 'minutes' => 0, 'seconds' => 0);
     }
 
-    # remove extra years from 1980
+    // remove extra years from 1980
     $d['year'] -= 1980;
 
-    # return date string
+    // return date string
     return ($d['year'] << 25) | ($d['mon'] << 21) | ($d['mday'] << 16) |
            ($d['hours'] << 11) | ($d['minutes'] << 5) | ($d['seconds'] >> 1);
   }
@@ -650,16 +650,16 @@ class ZipStream {
   function pack_fields($fields) {
     list ($fmt, $args) = array('', array());
 
-    # populate format string and argument list
+    // populate format string and argument list
     foreach ($fields as $field) {
       $fmt .= $field[0];
       $args[] = $field[1];
     }
 
-    # prepend format string to argument list
+    // prepend format string to argument list
     array_unshift($args, $fmt);
 
-    # build output string from header and compressed data
+    // build output string from header and compressed data
     return call_user_func_array('pack', $args);
   }
 }
