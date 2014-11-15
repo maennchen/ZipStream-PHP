@@ -78,10 +78,10 @@
 class ZipStream {
   const VERSION = '0.2.2';
 
-  var $opt = array(),
-      $files = array(),
-      $cdr_ofs = 0,
-      $ofs = 0; 
+  public $opt = array();
+  public $files = array();
+  public $cdr_ofs = 0;
+  public $ofs = 0; 
 
   #
   # Create a new ZipStream object.
@@ -151,7 +151,7 @@ class ZipStream {
   # headers by default.  This behavior is to allow software to send its
   # own headers (including the filename), and still use this library.
   #
-  function __construct($name = null, $opt = array()) {
+  public function __construct($name = null, $opt = array()) {
     
     $defaults = array(
       # set large file defaults: size = 20 megabytes
@@ -199,7 +199,7 @@ class ZipStream {
   #     'comment' => 'this is a comment about bar.jpg',
   #   ));
   # 
-  function add_file($name, $data, $opt = array()) {
+  public function add_file($name, $data, $opt = array()) {
     # compress data
     $zdata = gzdeflate($data);
 
@@ -250,7 +250,7 @@ class ZipStream {
   #     'comment' => 'this is a comment about bar.jpg',
   #   ));
   # 
-  function add_file_from_path($name, $path, $opt = array()) {
+  public function add_file_from_path($name, $path, $opt = array()) {
     if ($this->is_large_file($path)) {
       # file is too large to be read into memory; add progressively
       $this->add_large_file($name, $path, $opt);
@@ -286,7 +286,7 @@ class ZipStream {
   #   # add a file named 'streamfile.txt' from the content of the stream
   #   $x->add_file_from_stream('streamfile.txt', $fp);
   #
-  function add_file_from_stream($name, $stream, $opt = array()) {
+  public function add_file_from_stream($name, $stream, $opt = array()) {
     $block_size = 1048576; # process in 1 megabyte chunks
     $algo       = 'crc32b';
     $meth       = 0x00;
@@ -329,7 +329,7 @@ class ZipStream {
   #   # write footer to stream
   #   $zip->finish();
   # 
-  function finish() {
+  public function finish() {
     # add trailing cdr record
     $this->add_cdr($this->opt);
     $this->clear();
