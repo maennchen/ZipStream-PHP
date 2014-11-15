@@ -1,6 +1,8 @@
 <?php
 namespace ZipStream;
 use ZipStream\Exception\InvalidOptionException;
+use ZipStream\Exception\FileNotFoundException;
+use ZipStream\Exception\FileNotReadableException;
 
 /**
  * ZipStream
@@ -242,8 +244,16 @@ class ZipStream {
 	 *   ));
 	 * 
 	 * @return void
+	 * @throws \ZipStream\Exception\FileNotFoundException
+	 * @throws \ZipStream\Exception\FileNotReadableException
 	 */
 	public function addFileFromPath($name, $path, $opt = array()) {
+		if(!is_readable($path)) {
+			if(!file_exists($path)) {
+				throw new FileNotFoundException($path);
+			}
+			throw new FileNotReadableException($path);
+		}
 		if ($this->isLargeFile($path)) {
 			// file is too large to be read into memory; add progressively
 			$this->addLargeFile($name, $path, $opt);

@@ -26,4 +26,22 @@ class ZipStreamTest extends PHPUnit_Framework_TestCase {
 		// Trigger error by adding a file
 		$zip->addFileFromPath('foobar.php', __FILE__); 
 	}
+
+	/**
+	 * @expectedException ZipStream\Exception\FileNotFoundException
+	 */
+	public function testFileNotFoundException() {
+		// Get ZipStream Object
+		$zip = new ZipStream();
+
+		// Trigger error by adding a file which doesn't exist
+		$zip->addFileFromPath('foobar.php', '/foo/bar/foobar.php'); 
+	}
+
+	/**
+	 * @todo: expectedException ZipStream\Exception\FileNotReadableException
+	 */
+	public function testFileNotReadableException() {
+		// TODO: How to test this?
+	}
 }
