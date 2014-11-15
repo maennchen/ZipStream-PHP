@@ -32,11 +32,11 @@
  *
  *      * add first file
  *     $data = file_get_contents('some_file.gif');
- *     $zip->add_file('some_file.gif', $data);
+ *     $zip->addFile('some_file.gif', $data);
  *
  *      * add second file
  *     $data = file_get_contents('some_file.gif');
- *     $zip->add_file('another_file.png', $data);
+ *     $zip->addFile('another_file.png', $data);
  *
  * 3.  Finish the zip stream:
  *
@@ -56,7 +56,7 @@
  *
  *   // read and add each file to the archive
  *   foreach ($files as $path)
- *     $zip->add_file($path, file_get_contents($path));
+ *     $zip->addFile($path, file_get_contents($path));
  * 
  *   // write archive footer to stream
  *   $zip->finish();
@@ -87,7 +87,7 @@ class ZipStream {
 	 *                         FILENAME is the specified filename.
 	 *   large_file_size     - Size, in bytes, of the largest file to try
 	 *                         and load into memory (used by
-	 *                         add_file_from_path()).  Large files may also
+	 *                         addFileFromPath()).  Large files may also
 	 *                         be compressed differently; see the
 	 *                         'large_file_method' option.
 	 *   large_file_method   - How to handle large files.  Legal values are
@@ -97,7 +97,7 @@ class ZipStream {
 	 *                         and is much, much slower.  Note that deflate
 	 *                         must compress the file twice and extremely
 	 *                         slow.
-	 *   send_http_headers   - Boolean indicating whether or not to send
+	 *   sendHttpHeaders   - Boolean indicating whether or not to send
 	 *                         the HTTP headers for this file.
 	 *
 	 * Note that content_type and content_disposition do nothing if you are
@@ -105,7 +105,7 @@ class ZipStream {
 	 *
 	 * Large File Support:
 	 *
-	 * By default, the method add_file_from_path() will send send files
+	 * By default, the method addFileFromPath() will send send files
 	 * larger than 20 megabytes along raw rather than attempting to
 	 * compress them.  You can change both the maximum size and the
 	 * compression behavior using the large_file_* options above, with the
@@ -143,7 +143,7 @@ class ZipStream {
 			// set large file defaults: size = 20 megabytes
 			'large_file_size' => 20 * 1024 * 1024,
 			'large_file_method' => 'store',
-			'send_http_headers' => FALSE,
+			'sendHttpHeaders' => FALSE,
 			'http_header_callback' => 'header'
 		);
 		
@@ -155,11 +155,11 @@ class ZipStream {
 		}
 		
 		$this->output_name  = $name;
-		$this->need_headers = $name || $this->opt['send_http_headers'];
+		$this->need_headers = $name || $this->opt['sendHttpHeaders'];
 	}
 	
 	/**
-	 * add_file
+	 * addFile
 	 * 
 	 * add a file to the archive
 	 *   
@@ -177,17 +177,17 @@ class ZipStream {
 	 *
 	 *   // add a file named 'foo.txt'
 	 *   $data = file_get_contents('foo.txt');
-	 *   $zip->add_file('foo.txt', $data);
+	 *   $zip->addFile('foo.txt', $data);
 	 * 
 	 *   // add a file named 'bar.jpg' with a comment and a last-modified
 	 *   // time of two hours ago
 	 *   $data = file_get_contents('bar.jpg');
-	 *   $zip->add_file('bar.jpg', $data, array(
+	 *   $zip->addFile('bar.jpg', $data, array(
 	 *     'time'    => time() - 2 * 3600,
 	 *     'comment' => 'this is a comment about bar.jpg',
 	 *   ));
 	 */
-	public function add_file($name, $data, $opt = array()) {
+	public function addFile($name, $data, $opt = array()) {
 		// compress data
 		$zdata = gzdeflate($data);
 		
@@ -198,14 +198,14 @@ class ZipStream {
 		$meth = 0x08;
 		
 		// send file header
-		$this->add_file_header($name, $opt, $meth, $crc, $zlen, $len);
+		$this->addFileHeader($name, $opt, $meth, $crc, $zlen, $len);
 		
 		// print data
 		$this->send($zdata);
 	}
 	
 	/**
-	 * add_file_from_path
+	 * addFileFromPath
 	 * 
 	 * add a file at path to the archive.
 	 *
@@ -227,33 +227,33 @@ class ZipStream {
 	 * Examples:
 	 *
 	 *   // add a file named 'foo.txt' from the local file '/tmp/foo.txt'
-	 *   $zip->add_file_from_path('foo.txt', '/tmp/foo.txt');
+	 *   $zip->addFileFromPath('foo.txt', '/tmp/foo.txt');
 	 * 
 	 *   // add a file named 'bigfile.rar' from the local file
 	 *   // '/usr/share/bigfile.rar' with a comment and a last-modified
 	 *   // time of two hours ago
 	 *   $path = '/usr/share/bigfile.rar';
-	 *   $zip->add_file_from_path('bigfile.rar', $path, array(
+	 *   $zip->addFileFromPath('bigfile.rar', $path, array(
 	 *     'time'    => time() - 2 * 3600,
 	 *     'comment' => 'this is a comment about bar.jpg',
 	 *   ));
 	 * 
 	 * @return void
 	 */
-	public function add_file_from_path($name, $path, $opt = array()) {
-		if ($this->is_large_file($path)) {
+	public function addFileFromPath($name, $path, $opt = array()) {
+		if ($this->isLargeFile($path)) {
 			// file is too large to be read into memory; add progressively
-			$this->add_large_file($name, $path, $opt);
+			$this->addLargeFile($name, $path, $opt);
 		} else {
 			// file is small enough to read into memory; read file contents and
-			// handle with add_file()
+			// handle with addFile()
 			$data = file_get_contents($path);
-			$this->add_file($name, $data, $opt);
+			$this->addFile($name, $data, $opt);
 		}
 	}
 	
 	/**
-	 * add_file_from_stream
+	 * addFile_from_stream
 	 * 
 	 * dds an open stream to the archive uncompressed
 	 *
@@ -273,11 +273,11 @@ class ZipStream {
 	 *   fwrite($fp, 'The quick brown fox jumped over the lazy dog.');
 	 *
 	 *   // add a file named 'streamfile.txt' from the content of the stream
-	 *   $x->add_file_from_stream('streamfile.txt', $fp);
+	 *   $x->addFile_from_stream('streamfile.txt', $fp);
 	 *
 	 * @return void
 	 */
-	public function add_file_from_stream($name, $stream, $opt = array()) {
+	public function addFileFromStream($name, $stream, $opt = array()) {
 		$block_size = 1048576; // process in 1 megabyte chunks
 		$algo       = 'crc32b';
 		$meth       = 0x00;
@@ -298,7 +298,7 @@ class ZipStream {
 		}
 		
 		// send file header
-		$this->add_file_header($name, $opt, $meth, $crc, $zlen, $len);
+		$this->addFileHeader($name, $opt, $meth, $crc, $zlen, $len);
 		
 		rewind($stream);
 		while ($data = fgets($stream, $block_size)) {
@@ -317,7 +317,7 @@ class ZipStream {
 	 *   // add a list of files to the archive
 	 *   $files = array('foo.txt', 'bar.jpg');
 	 *   foreach ($files as $path)
-	 *     $zip->add_file($path, file_get_contents($path));
+	 *     $zip->addFile($path, file_get_contents($path));
 	 * 
 	 *   // write footer to stream
 	 *   $zip->finish();
@@ -326,7 +326,7 @@ class ZipStream {
 	 */
 	public function finish() {
 		// add trailing cdr record
-		$this->add_cdr($this->opt);
+		$this->addCdr($this->opt);
 		$this->clear();
 	}
 	
@@ -336,7 +336,7 @@ class ZipStream {
 	 * @todo: @param's
 	 * @return void
 	 */
-	private function add_file_header($name, $opt, $meth, $crc, $zlen, $len) {
+	private function addFileHeader($name, $opt, $meth, $crc, $zlen, $len) {
 		// strip leading slashes from file name
 		// (fixes bug in windows archive viewer)
 		$name = preg_replace('/^\\/+/', '', $name);
@@ -398,14 +398,14 @@ class ZipStream {
 		);
 		
 		// pack fields and calculate "total" length
-		$ret     = $this->pack_fields($fields);
+		$ret     = $this->packFields($fields);
 		$cdr_len = strlen($ret) + $nlen + $zlen;
 		
 		// print header and filename
 		$this->send($ret . $name);
 		
 		// add to central directory record and increment offset
-		$this->add_to_cdr($name, $opt, $meth, $crc, $zlen, $len, $cdr_len);
+		$this->addToCdr($name, $opt, $meth, $crc, $zlen, $len, $cdr_len);
 	}
 	
 	/**
@@ -416,7 +416,7 @@ class ZipStream {
 	 * @param array $opt
 	 * @return void
 	 */
-	private function add_large_file($name, $path, $opt = array()) {
+	private function addLargeFile($name, $path, $opt = array()) {
 		$st         = stat($path);
 		$block_size = 1048576; // process in 1 megabyte chunks
 		$algo       = 'crc32b';
@@ -465,7 +465,7 @@ class ZipStream {
 		}
 		
 		// send file header
-		$this->add_file_header($name, $opt, $meth, $crc, $zlen, $len);
+		$this->addFileHeader($name, $opt, $meth, $crc, $zlen, $len);
 		
 		// open input file
 		$fh = fopen($path, 'rb');
@@ -488,7 +488,7 @@ class ZipStream {
 	 *
 	 * @return Boolean
 	 */
-	function is_large_file($path) {
+	function isLargeFile($path) {
 		$st = stat($path);
 		return ($this->opt['large_file_size'] > 0) && ($st['size'] > $this->opt['large_file_size']);
 	}
@@ -499,7 +499,7 @@ class ZipStream {
 	 * @todo: @param's
 	 * @return void
 	 */
-	private function add_to_cdr($name, $opt, $meth, $crc, $zlen, $len, $rec_len) {
+	private function addToCdr($name, $opt, $meth, $crc, $zlen, $len, $rec_len) {
 		$this->files[] = array(
 			$name,
 			$opt,
@@ -518,7 +518,7 @@ class ZipStream {
 	 * @param array $args
 	 * @return void
 	 */
-	private function add_cdr_file($args) {
+	private function addCdrFile($args) {
 		list($name, $opt, $meth, $crc, $zlen, $len, $ofs) = $args;
 		
 		// get attributes
@@ -595,7 +595,7 @@ class ZipStream {
 		);
 		
 		// pack fields, then append name and comment
-		$ret = $this->pack_fields($fields) . $name . $comment;
+		$ret = $this->packFields($fields) . $name . $comment;
 		
 		$this->send($ret);
 		
@@ -609,7 +609,7 @@ class ZipStream {
 	 * @param array $opt
 	 * @return void
 	 */
-	private function add_cdr_eof($opt = null) {
+	private function addCdrEof($opt = null) {
 		$num     = count($this->files);
 		$cdr_len = $this->cdr_ofs;
 		$cdr_ofs = $this->ofs;
@@ -654,7 +654,7 @@ class ZipStream {
 			) // zip file comment length
 		);
 		
-		$ret = $this->pack_fields($fields) . $comment;
+		$ret = $this->packFields($fields) . $comment;
 		$this->send($ret);
 	}
 	
@@ -664,10 +664,10 @@ class ZipStream {
 	 * @param array $opt
 	 * @return void
 	 */
-	private function add_cdr($opt = null) {
+	private function addCdr($opt = null) {
 		foreach ($this->files as $file)
-			$this->add_cdr_file($file);
-		$this->add_cdr_eof($opt);
+			$this->addCdrFile($file);
+		$this->addCdrEof($opt);
 	}
 	
 	/**
@@ -688,7 +688,7 @@ class ZipStream {
 	 * 
 	 * @return void
 	 */
-	private function send_http_headers() {
+	private function sendHttpHeaders() {
 		// grab options
 		$opt = $this->opt;
 		
@@ -726,7 +726,7 @@ class ZipStream {
 	 */
 	private function send($str) {
 		if ($this->need_headers)
-			$this->send_http_headers();
+			$this->sendHttpHeaders();
 		$this->need_headers = false;
 		
 		fwrite($this->opt['output_stream'], $str);
@@ -768,7 +768,7 @@ class ZipStream {
 	 * @param array $fields
 	 * @return array
 	 */
-	function pack_fields($fields) {
+	function packFields($fields) {
 		list($fmt, $args) = array(
 			'',
 			array()
