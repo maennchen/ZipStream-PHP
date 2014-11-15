@@ -69,9 +69,26 @@ use ZipStream\Exception\FileNotReadableException;
 class ZipStream {
 	const VERSION = '0.2.2';
 	
+	/**
+	 * Global Options
+	 *
+	 * @var array
+	*/
 	public $opt = array();
+	
+	/**
+	 * @var array
+	 */
 	public $files = array();
+	
+	/**
+	 * @var integer
+	 */
 	public $cdr_ofs = 0;
+	
+	/**
+	 * @var integer
+	 */
 	public $ofs = 0;
 	
 	/**
