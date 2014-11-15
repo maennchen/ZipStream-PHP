@@ -1,9 +1,14 @@
 <?php
 namespace ZipStreamTest;
 use \ZipStream\ZipStream;
-
 use \PHPUnit_Framework_TestCase;
 
+/**
+ * Test Class for the Main ZipStream CLass
+ * 
+ * @author Jonatan Männchen <jonatan@maennchen.ch>
+ * @copyright Copyright (c) 2014, Jonatan Männchen
+ */
 class ZipStreamTest extends PHPUnit_Framework_TestCase {
 	/**
 	 * @expectedException ZipStream\Exception\InvalidOptionException
