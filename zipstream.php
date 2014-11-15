@@ -143,7 +143,8 @@ class ZipStream {
       // set large file defaults: size = 20 megabytes
       'large_file_size' => 20 * 1024 * 1024,
       'large_file_method' => 'store',
-      'send_http_headers' => FALSE
+      'send_http_headers' => FALSE,
+      'http_header_callback' => 'header'
     );
     
     // merge and save options
@@ -151,6 +152,10 @@ class ZipStream {
       $defaults,
       $opt
     );
+
+    if (!isset($this->opt['output_stream'])) {
+      $this->opt['output_stream'] = fopen('php://output', 'w');
+    }
 
     $this->output_name = $name;
     $this->need_headers = $name || $this->opt['send_http_headers'];
@@ -396,8 +401,12 @@ class ZipStream {
     if ($meth_str == 'store') {
       // store method
       $meth = 0x00;
-      $crc  = unpack('V', hash_file($algo, $path, true));
-      $crc = $crc[1];
+      if (version_compare(PHP_VERSION, '5.2.6', '>')) {
+        $crc = hexdec(hash_file($algo, $path));
+      } else {
+        $crc = unpack('V', hash_file($algo, $path, true));
+        $crc = $crc[1];
+      }
     } elseif ($meth_str == 'deflate') {
       // deflate method
       $meth = 0x08;
@@ -598,8 +607,9 @@ class ZipStream {
       'Content-Transfer-Encoding' => 'binary',
     );
 
+    $call = $this->opt['http_header_callback'];
     foreach ($headers as $key => $val)
-      header("$key: $val");
+      $call("$key: $val");
   }
 
   /**
@@ -613,7 +623,7 @@ class ZipStream {
       $this->send_http_headers();
     $this->need_headers = false;
 
-    echo $str;
+    fwrite($this->opt['output_stream'], $str);
   }
 
   /**
