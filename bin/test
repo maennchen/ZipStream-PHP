@@ -1,0 +1,4 @@
+#!/bin/bash
+
+RELPATH=$(dirname $(dirname "$0"))
+"$RELPATH/vendor/bin/phpunit" --bootstrap "$RELPATH/vendor/autoload.php" "$RELPATH/test/ZipStreamTest.php";

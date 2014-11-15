@@ -8,12 +8,26 @@
 		{
 			"name": "Paul Duncan",
 			"email": "pabs@pablotron.org"
+		},
+		{
+			"name": "Jonatan Männchen",
+			"email": "jonatan@maennchen.ch"
+		},
+		{
+			"name": "Jesse Donat",
+			"email": "donatj@gmail.com"
 		}
 	],
 	"require": {
 		"php": ">= 5.3"
 	},
+	"require-dev": {
+		"phpunit/phpunit": "4.3.*"
+	},
   	"autoload": {
-     	"classmap": [ "zipstream.php" ] 
+     	"psr-4": {
+     		"ZipStream\\": "src/",
+     		"ZipStreamTest\\": "test/"
+     	}
     }
 }
