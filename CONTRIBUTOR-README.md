@@ -8,11 +8,13 @@ Double Slashes are used for an one line comment.
 
 Classes, Variables, Methods etc:
 
-    /**
-     * My comment
-     * 
-     * @myanotation like @param etc.
-     */
+```php
+/**
+ * My comment
+ * 
+ * @myanotation like @param etc.
+ */
+```
 
 ## Pull Requests
 Feel free to submit Pull Requests.
