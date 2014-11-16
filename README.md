@@ -6,35 +6,39 @@ latest version of this software is available at the following URL: https://githu
 ## Instalation
 Simply add a dependency on maennchen/zipstream-php to your project's composer.json file if you use Composer to manage the dependencies of your project. Here is a minimal example of a composer.json file.
 
-    {
-        "require": {
-            "maennchen/zipstream-php": "0.3.*"
-        }
+```json
+{
+    "require": {
+        "maennchen/zipstream-php": "0.3.*"
     }
+}
+```
 
 ## Overview
 A fast and simple streaming zip file downloader for PHP.  Here's a
 simple example:
-    # Autoload the dependencies
-    require 'vendor/autoload.php'
-    
-    # create a new zipstream object
-    $zip = new ZipStream\ZipStream('example.zip');
+```php
+# Autoload the dependencies
+require 'vendor/autoload.php'
 
-    # create a file named 'hello.txt' 
-    $zip->add_file('some_image.jpg', 'This is the contents of hello.txt');
+# create a new zipstream object
+$zip = new ZipStream\ZipStream('example.zip');
 
-    # add a file named 'image.jpg' from a local file 'path/to/image.jpg'
-    $zip->add_file_from_path('some_image.jpg', 'path/to/image.jpg');
+# create a file named 'hello.txt' 
+$zip->add_file('some_image.jpg', 'This is the contents of hello.txt');
 
-    # add a file named 'goodbye.txt' from an open stream resource
-    $fp = tmpfile();
-    fwrite($fp, 'The quick brown fox jumped over the lazy dog.');
-    $zip->add_file_from_stream('goodbye.txt', $fp);
-    fclose($fp);
+# add a file named 'image.jpg' from a local file 'path/to/image.jpg'
+$zip->add_file_from_path('some_image.jpg', 'path/to/image.jpg');
 
-    # finish the zip stream
-    $zip->finish();
+# add a file named 'goodbye.txt' from an open stream resource
+$fp = tmpfile();
+fwrite($fp, 'The quick brown fox jumped over the lazy dog.');
+$zip->add_file_from_stream('goodbye.txt', $fp);
+fclose($fp);
+
+# finish the zip stream
+$zip->finish();
+```
 
 You can also add comments, modify file timestamps, and customize (or
 disable) the HTTP headers.  See the class file for details.  There are a
