@@ -71,6 +71,14 @@ class ZipStream {
 
 	const METHOD_STORE = 'store';
 	const METHOD_DEFLATE = 'deflate';
+
+	const OPTION_LARGE_FILE_SIZE      = 'large_file_size';
+	const OPTION_LARGE_FILE_METHOD    = 'large_file_method';
+	const OPTION_SEND_HTTP_HEADERS    = 'send_http_headers';
+	const OPTION_HTTP_HEADER_CALLBACK = 'http_header_callback';
+	const OPTION_OUTPUT_STREAM        = 'output_stream';
+	const OPTION_CONTENT_TYPE         = 'content_type';
+	const OPTION_CONTENT_DISPOSITION  = 'content_disposition';
 	
 	/**
 	 * Global Options
@@ -173,24 +181,24 @@ class ZipStream {
 	 * own headers (including the filename), and still use this library.
 	 */
 	public function __construct($name = null, $opt = array()) {
-		
+
 		$defaults = array(
 			// set large file defaults: size = 20 megabytes
-			'large_file_size' => 20 * 1024 * 1024,
-			'large_file_method' => self::METHOD_STORE,
-			'send_http_headers' => FALSE,
-			'http_header_callback' => 'header'
+			self::OPTION_LARGE_FILE_SIZE      => 20 * 1024 * 1024,
+			self::OPTION_LARGE_FILE_METHOD    => self::METHOD_STORE,
+			self::OPTION_SEND_HTTP_HEADERS    => false,
+			self::OPTION_HTTP_HEADER_CALLBACK => 'header',
 		);
 		
 		// merge and save options
 		$this->opt = array_merge($defaults, $opt);
 		
-		if (!isset($this->opt['output_stream'])) {
-			$this->opt['output_stream'] = fopen('php://output', 'w');
+		if (!isset($this->opt[self::OPTION_OUTPUT_STREAM])) {
+			$this->opt[self::OPTION_OUTPUT_STREAM] = fopen('php://output', 'w');
 		}
 		
 		$this->output_name  = $name;
-		$this->need_headers = $name || $this->opt['send_http_headers'];
+		$this->need_headers = $name || $this->opt[self::OPTION_SEND_HTTP_HEADERS];
 	}
 	
 	/**
@@ -473,7 +481,7 @@ class ZipStream {
 		// calculate header attributes
 		$zlen = $len = $st['size'];
 		
-		$meth_str = $this->opt['large_file_method'];
+		$meth_str = $this->opt[self::OPTION_LARGE_FILE_METHOD];
 		if ($meth_str == self::METHOD_STORE) {
 			// store method
 			$meth = 0x00;
@@ -540,7 +548,7 @@ class ZipStream {
 	 */
 	protected function isLargeFile($path) {
 		$st = stat($path);
-		return ($this->opt['large_file_size'] > 0) && ($st['size'] > $this->opt['large_file_size']);
+		return ($this->opt[self::OPTION_LARGE_FILE_SIZE] > 0) && ($st['size'] > $this->opt[self::OPTION_LARGE_FILE_SIZE]);
 	}
 	
 	/**
@@ -752,14 +760,14 @@ class ZipStream {
 		
 		// grab content type from options
 		$content_type = 'application/x-zip';
-		if (isset($opt['content_type'])) {
-			$content_type = $this->opt['content_type'];
+		if (isset($opt[self::OPTION_CONTENT_TYPE])) {
+			$content_type = $this->opt[self::OPTION_CONTENT_TYPE];
 		}
 		
 		// grab content disposition 
 		$disposition = 'attachment';
-		if (isset($opt['content_disposition'])) {
-			$disposition = $opt['content_disposition'];
+		if (isset($opt[self::OPTION_CONTENT_DISPOSITION])) {
+			$disposition = $opt[self::OPTION_CONTENT_DISPOSITION];
 		}
 		
 		if ($this->output_name) {
@@ -774,7 +782,7 @@ class ZipStream {
 			'Content-Transfer-Encoding' => 'binary'
 		);
 		
-		$call = $this->opt['http_header_callback'];
+		$call = $this->opt[self::OPTION_HTTP_HEADER_CALLBACK];
 		foreach ($headers as $key => $val)
 			$call("$key: $val");
 	}
@@ -790,7 +798,7 @@ class ZipStream {
 			$this->sendHttpHeaders();
 		$this->need_headers = false;
 		
-		fwrite($this->opt['output_stream'], $str);
+		fwrite($this->opt[self::OPTION_OUTPUT_STREAM], $str);
 	}
 	
 	/**
