@@ -1,7 +1,7 @@
 <?php
 namespace ZipStreamTest;
 use \ZipStream\ZipStream;
-use \PHPUnit_Framework_TestCase;
+use \PHPUnit_Framework_TestCase; 
 
 /**
  * Test Class for the Main ZipStream CLass
