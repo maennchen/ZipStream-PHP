@@ -1,6 +1,8 @@
 # ZipStream 0.2.2 README
 
-Please see the file LICENSE for licensing and warranty information.  The
+[![Build Status](https://travis-ci.org/maennchen/ZipStream-PHP.svg?branch=develop)](https://travis-ci.org/maennchen/ZipStream-PHP)
+
+Please see the file LICENSE.md for licensing and warranty information.  The
 latest version of this software is available at the following URL: https://github.com/maennchen/ZipStream-PHP
 
 ## Instalation
