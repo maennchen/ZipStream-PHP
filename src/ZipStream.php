@@ -381,7 +381,7 @@ class ZipStream {
 	 * @param Integer $len
 	 * @return void
 	 */
-	private function addFileHeader($name, $opt, $meth, $crc, $zlen, $len) {
+	protected function addFileHeader($name, $opt, $meth, $crc, $zlen, $len) {
 		// strip leading slashes from file name
 		// (fixes bug in windows archive viewer)
 		$name = preg_replace('/^\\/+/', '', $name);
@@ -462,7 +462,7 @@ class ZipStream {
 	 * @return void
 	 * @throws \ZipStream\Exception\InvalidOptionException
 	 */
-	private function addLargeFile($name, $path, $opt = array()) {
+	protected function addLargeFile($name, $path, $opt = array()) {
 		$st         = stat($path);
 		$block_size = 1048576; // process in 1 megabyte chunks
 		$algo       = 'crc32b';
@@ -535,7 +535,7 @@ class ZipStream {
 	 * @param string $path
 	 * @return Boolean
 	 */
-	function isLargeFile($path) {
+	protected function isLargeFile($path) {
 		$st = stat($path);
 		return ($this->opt['large_file_size'] > 0) && ($st['size'] > $this->opt['large_file_size']);
 	}
@@ -572,7 +572,7 @@ class ZipStream {
 	 * @param array $args
 	 * @return void
 	 */
-	private function addCdrFile($args) {
+	protected function addCdrFile($args) {
 		list($name, $opt, $meth, $crc, $zlen, $len, $ofs) = $args;
 		
 		// get attributes
@@ -663,7 +663,7 @@ class ZipStream {
 	 * @param array $opt
 	 * @return void
 	 */
-	private function addCdrEof($opt = null) {
+	protected function addCdrEof($opt = null) {
 		$num     = count($this->files);
 		$cdr_len = $this->cdr_ofs;
 		$cdr_ofs = $this->ofs;
@@ -719,7 +719,7 @@ class ZipStream {
 	 * @param array $opt
 	 * @return void
 	 */
-	private function addCdr($opt = null) {
+	protected function addCdr($opt = null) {
 		foreach ($this->files as $file)
 			$this->addCdrFile($file);
 		$this->addCdrEof($opt);
@@ -731,7 +731,7 @@ class ZipStream {
 	 * 
 	 * @return void
 	 */
-	function clear() {
+	protected function clear() {
 		$this->files   = array();
 		$this->ofs     = 0;
 		$this->cdr_ofs = 0;
@@ -743,7 +743,7 @@ class ZipStream {
 	 * 
 	 * @return void
 	 */
-	private function sendHttpHeaders() {
+	protected function sendHttpHeaders() {
 		// grab options
 		$opt = $this->opt;
 		
@@ -782,7 +782,7 @@ class ZipStream {
 	 * @param String $str
 	 * @return void
 	 */
-	private function send($str) {
+	protected function send($str) {
 		if ($this->need_headers)
 			$this->sendHttpHeaders();
 		$this->need_headers = false;
@@ -796,7 +796,7 @@ class ZipStream {
 	 * @param Integer $when
 	 * @return DOS Timestamp
 	 */
-	function dostime($when = 0) {
+	protected final function dostime($when = 0) {
 		// get date array for timestamp
 		$d = getdate($when);
 		
@@ -826,7 +826,7 @@ class ZipStream {
 	 * @param array $fields
 	 * @return array
 	 */
-	function packFields($fields) {
+	protected function packFields($fields) {
 		list($fmt, $args) = array(
 			'',
 			array()
