@@ -799,7 +799,7 @@ class ZipStream {
 	 * @param Integer $when
 	 * @return Integer DOS Timestamp
 	 */
-	protected final function dostime($when = 0) {
+	protected final function dostime($when) {
 		// get date array for timestamp
 		$d = getdate($when);
 		
