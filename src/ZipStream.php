@@ -175,7 +175,7 @@ class ZipStream {
 			// set large file defaults: size = 20 megabytes
 			'large_file_size' => 20 * 1024 * 1024,
 			'large_file_method' => 'store',
-			'sendHttpHeaders' => FALSE,
+			'send_http_headers' => FALSE,
 			'http_header_callback' => 'header'
 		);
 		
@@ -187,7 +187,7 @@ class ZipStream {
 		}
 		
 		$this->output_name  = $name;
-		$this->need_headers = $name || $this->opt['sendHttpHeaders'];
+		$this->need_headers = $name || $this->opt['send_http_headers'];
 	}
 	
 	/**
