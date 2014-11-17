@@ -298,7 +298,7 @@ class ZipStream {
 	 * dds an open stream to the archive uncompressed
 	 *
 	 * @param String $name - path of file in archive (including directory).
-	 * @param Stream $stream - contents of file as a stream resource
+	 * @param Resource $stream - contents of file as a stream resource
 	 * @param array $opt - Hash of options for file (optional, see "File Options" below).
 	 * 
 	 * File Options:
@@ -369,11 +369,16 @@ class ZipStream {
 		$this->addCdr($this->opt);
 		$this->clear();
 	}
-	
+
 	/**
 	 * Create and send zip header for this file.
-	 * 
-	 * @todo: @param's
+	 *
+	 * @param String  $name
+	 * @param Array   $opt
+	 * @param Integer $meth
+	 * @param string  $crc
+	 * @param Integer $zlen
+	 * @param Integer $len
 	 * @return void
 	 */
 	private function addFileHeader($name, $opt, $meth, $crc, $zlen, $len) {
@@ -394,7 +399,7 @@ class ZipStream {
 				'V',
 				0x04034b50
 			), // local file header signature
-			
+
 			//array('v', (6 << 8) + 3),   // version needed to extract
 			array(
 				'v',
@@ -402,7 +407,7 @@ class ZipStream {
 			), // version needed to extract
 			//FIXED as mentioned in http://linlog.skepticats.com/entries/2012/02/Streaming_ZIP_files_in_PHP.php
 			//and http://stackoverflow.com/questions/5573211/dynamically-created-zip-files-by-zipstream-in-php-wont-open-in-osx
-			
+
 			array(
 				'v',
 				0x00
@@ -455,6 +460,7 @@ class ZipStream {
 	 * @param String $path
 	 * @param array $opt
 	 * @return void
+	 * @throws \ZipStream\Exception\InvalidOptionException
 	 */
 	private function addLargeFile($name, $path, $opt = array()) {
 		$st         = stat($path);
@@ -526,6 +532,7 @@ class ZipStream {
 	/**
 	 * Is this file larger than large_file_size?
 	 *
+	 * @param string $path
 	 * @return Boolean
 	 */
 	function isLargeFile($path) {
@@ -535,8 +542,15 @@ class ZipStream {
 	
 	/**
 	 * Save file attributes for trailing CDR record.
-	 * 
-	 * @todo: @param's
+	 *
+	 * @param String  $name
+	 * @param Array   $opt
+	 * @param Integer $meth
+	 * @param string  $crc
+	 * @param Integer $zlen
+	 * @param Integer $len
+	 * @param Integer $rec_len
+	 * @return void
 	 * @return void
 	 */
 	private function addToCdr($name, $opt, $meth, $crc, $zlen, $len, $rec_len) {
