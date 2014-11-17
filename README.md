@@ -1,4 +1,4 @@
-# ZipStream 0.2.2 README
+# ZipStream README
 
 [![Build Status](https://travis-ci.org/maennchen/ZipStream-PHP.svg?branch=develop)](https://travis-ci.org/maennchen/ZipStream-PHP)
 
