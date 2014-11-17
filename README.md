@@ -58,4 +58,4 @@ Please take a look at the CONTRIBUTOR-README.md File.
 ## About the Authors
 * Paul Duncan <pabs@pablotron.org> - http://pablotron.org/
 * Jonatan Männchen <jonatan@maennchen.ch> - http://commanders.ch
-* Jesse Donat <donatj@gmail.com> - https://donatstudios.com
+* Jesse G. Donat <donatj@gmail.com> - https://donatstudios.com
