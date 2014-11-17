@@ -340,13 +340,8 @@ class ZipStream {
 		rewind($stream);
 		$hash_ctx = hash_init($algo);
 		hash_update_stream($hash_ctx, $stream);
-		
-		if (version_compare(PHP_VERSION, '5.2.6', '>')) {
-			$crc = hexdec(hash_final($hash_ctx));
-		} else {
-			$crc = unpack('V', hash_final($hash_ctx, true));
-			$crc = $crc[1];
-		}
+
+		$crc = hexdec(hash_final($hash_ctx));
 		
 		// send file header
 		$this->addFileHeader($name, $opt, $meth, $crc, $zlen, $len);
@@ -485,12 +480,7 @@ class ZipStream {
 		if ($meth_str == self::METHOD_STORE) {
 			// store method
 			$meth = 0x00;
-			if (version_compare(PHP_VERSION, '5.2.6', '>')) {
-				$crc = hexdec(hash_file($algo, $path));
-			} else {
-				$crc = unpack('V', hash_file($algo, $path, true));
-				$crc = $crc[1];
-			}
+			$crc = hexdec(hash_file($algo, $path));
 		} elseif ($meth_str == self::METHOD_DEFLATE) {
 			// deflate method
 			$meth = 0x08;
@@ -509,14 +499,8 @@ class ZipStream {
 			
 			// close file and finalize crc
 			fclose($fh);
-			
-			if (version_compare(PHP_VERSION, '5.2.6', '>')) {
-				$crc = hexdec(hash_final($hash_ctx));
-			} else {
-				$crc = unpack('V', hash_final($hash_ctx, true));
-				$crc = $crc[1];
-			}
-			
+
+			$crc = hexdec(hash_final($hash_ctx));
 		} else {
 			throw new InvalidOptionException('large_file_method', array(self::METHOD_STORE, self::METHOD_DEFLATE), $meth_str);
 		}
