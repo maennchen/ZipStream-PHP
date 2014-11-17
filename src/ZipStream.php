@@ -68,6 +68,9 @@ use ZipStream\Exception\FileNotReadableException;
  */
 class ZipStream {
 	const VERSION = '0.3.0';
+
+	const METHOD_STORE = 'store';
+	const METHOD_DEFLATE = 'deflate';
 	
 	/**
 	 * Global Options
@@ -174,7 +177,7 @@ class ZipStream {
 		$defaults = array(
 			// set large file defaults: size = 20 megabytes
 			'large_file_size' => 20 * 1024 * 1024,
-			'large_file_method' => 'store',
+			'large_file_method' => self::METHOD_STORE,
 			'send_http_headers' => FALSE,
 			'http_header_callback' => 'header'
 		);
@@ -471,7 +474,7 @@ class ZipStream {
 		$zlen = $len = $st['size'];
 		
 		$meth_str = $this->opt['large_file_method'];
-		if ($meth_str == 'store') {
+		if ($meth_str == self::METHOD_STORE) {
 			// store method
 			$meth = 0x00;
 			if (version_compare(PHP_VERSION, '5.2.6', '>')) {
@@ -480,7 +483,7 @@ class ZipStream {
 				$crc = unpack('V', hash_file($algo, $path, true));
 				$crc = $crc[1];
 			}
-		} elseif ($meth_str == 'deflate') {
+		} elseif ($meth_str == self::METHOD_DEFLATE) {
 			// deflate method
 			$meth = 0x08;
 			
@@ -507,7 +510,7 @@ class ZipStream {
 			}
 			
 		} else {
-			throw new InvalidOptionException('large_file_method', array('store', 'deflate'), $meth_str);
+			throw new InvalidOptionException('large_file_method', array(self::METHOD_STORE, self::METHOD_DEFLATE), $meth_str);
 		}
 		
 		// send file header
