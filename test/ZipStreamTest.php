@@ -44,4 +44,22 @@ class ZipStreamTest extends PHPUnit_Framework_TestCase {
 	public function testFileNotReadableException() {
 		// TODO: How to test this?
 	}
+
+	public function testDostime() {
+		$zip = new ZipStream;
+
+		//Allows testing of private method
+		$class  = new \ReflectionClass ($zip);
+		$method = $class->getMethod('dostime');
+		$method->setAccessible(true);
+
+		$this->assertSame($method->invoke($zip, 1416246368), 1165069764);
+
+		//January 1 1980 - DOS Epoch.
+		$this->assertSame($method->invoke($zip, 315532800), 2162688);
+
+		// January 1 1970 -> January 1 1980 due to minimum DOS Epoch.  @todo Throw Exception?
+		$this->assertSame($method->invoke($zip, 0), 2162688);
+
+	}
 }
