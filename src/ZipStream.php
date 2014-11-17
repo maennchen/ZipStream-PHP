@@ -797,7 +797,7 @@ class ZipStream {
 	 * Convert a UNIX timestamp to a DOS timestamp.
 	 * 
 	 * @param Integer $when
-	 * @return DOS Timestamp
+	 * @return Integer DOS Timestamp
 	 */
 	protected final function dostime($when = 0) {
 		// get date array for timestamp
