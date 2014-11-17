@@ -1,3 +1,6 @@
+The MIT License
+===============
+
 Copyright (C) 2007-2009 Paul Duncan <pabs@pablotron.org>
 Copyright (C) 2014 Jonatan Männchen <jonatan@maennchen.ch>
 Copyright (C) 2014 Jesse Donat <donatj@gmail.com>
