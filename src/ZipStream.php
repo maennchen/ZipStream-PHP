@@ -68,6 +68,9 @@ use ZipStream\Exception\FileNotReadableException;
  */
 class ZipStream {
 	const VERSION = '0.3.0';
+
+	const METHOD_STORE = 'store';
+	const METHOD_DEFLATE = 'deflate';
 	
 	/**
 	 * Global Options
@@ -90,6 +93,16 @@ class ZipStream {
 	 * @var integer
 	 */
 	public $ofs = 0;
+
+	/**
+	 * @var bool
+	 */
+	protected $need_headers;
+
+	/**
+	 * @var null|String
+	 */
+	protected $output_name;
 	
 	/**
 	 * Create a new ZipStream object.
@@ -164,8 +177,8 @@ class ZipStream {
 		$defaults = array(
 			// set large file defaults: size = 20 megabytes
 			'large_file_size' => 20 * 1024 * 1024,
-			'large_file_method' => 'store',
-			'sendHttpHeaders' => FALSE,
+			'large_file_method' => self::METHOD_STORE,
+			'send_http_headers' => FALSE,
 			'http_header_callback' => 'header'
 		);
 		
@@ -177,7 +190,7 @@ class ZipStream {
 		}
 		
 		$this->output_name  = $name;
-		$this->need_headers = $name || $this->opt['sendHttpHeaders'];
+		$this->need_headers = $name || $this->opt['send_http_headers'];
 	}
 	
 	/**
@@ -288,7 +301,7 @@ class ZipStream {
 	 * dds an open stream to the archive uncompressed
 	 *
 	 * @param String $name - path of file in archive (including directory).
-	 * @param Stream $stream - contents of file as a stream resource
+	 * @param Resource $stream - contents of file as a stream resource
 	 * @param array $opt - Hash of options for file (optional, see "File Options" below).
 	 * 
 	 * File Options:
@@ -359,14 +372,19 @@ class ZipStream {
 		$this->addCdr($this->opt);
 		$this->clear();
 	}
-	
+
 	/**
 	 * Create and send zip header for this file.
-	 * 
-	 * @todo: @param's
+	 *
+	 * @param String  $name
+	 * @param Array   $opt
+	 * @param Integer $meth
+	 * @param string  $crc
+	 * @param Integer $zlen
+	 * @param Integer $len
 	 * @return void
 	 */
-	private function addFileHeader($name, $opt, $meth, $crc, $zlen, $len) {
+	protected function addFileHeader($name, $opt, $meth, $crc, $zlen, $len) {
 		// strip leading slashes from file name
 		// (fixes bug in windows archive viewer)
 		$name = preg_replace('/^\\/+/', '', $name);
@@ -384,7 +402,7 @@ class ZipStream {
 				'V',
 				0x04034b50
 			), // local file header signature
-			
+
 			//array('v', (6 << 8) + 3),   // version needed to extract
 			array(
 				'v',
@@ -392,7 +410,7 @@ class ZipStream {
 			), // version needed to extract
 			//FIXED as mentioned in http://linlog.skepticats.com/entries/2012/02/Streaming_ZIP_files_in_PHP.php
 			//and http://stackoverflow.com/questions/5573211/dynamically-created-zip-files-by-zipstream-in-php-wont-open-in-osx
-			
+
 			array(
 				'v',
 				0x00
@@ -445,8 +463,9 @@ class ZipStream {
 	 * @param String $path
 	 * @param array $opt
 	 * @return void
+	 * @throws \ZipStream\Exception\InvalidOptionException
 	 */
-	private function addLargeFile($name, $path, $opt = array()) {
+	protected function addLargeFile($name, $path, $opt = array()) {
 		$st         = stat($path);
 		$block_size = 1048576; // process in 1 megabyte chunks
 		$algo       = 'crc32b';
@@ -455,7 +474,7 @@ class ZipStream {
 		$zlen = $len = $st['size'];
 		
 		$meth_str = $this->opt['large_file_method'];
-		if ($meth_str == 'store') {
+		if ($meth_str == self::METHOD_STORE) {
 			// store method
 			$meth = 0x00;
 			if (version_compare(PHP_VERSION, '5.2.6', '>')) {
@@ -464,7 +483,7 @@ class ZipStream {
 				$crc = unpack('V', hash_file($algo, $path, true));
 				$crc = $crc[1];
 			}
-		} elseif ($meth_str == 'deflate') {
+		} elseif ($meth_str == self::METHOD_DEFLATE) {
 			// deflate method
 			$meth = 0x08;
 			
@@ -491,7 +510,7 @@ class ZipStream {
 			}
 			
 		} else {
-			throw new InvalidOptionException('large_file_method', array('store', 'deflate'), $meth_str);
+			throw new InvalidOptionException('large_file_method', array(self::METHOD_STORE, self::METHOD_DEFLATE), $meth_str);
 		}
 		
 		// send file header
@@ -516,17 +535,25 @@ class ZipStream {
 	/**
 	 * Is this file larger than large_file_size?
 	 *
+	 * @param string $path
 	 * @return Boolean
 	 */
-	function isLargeFile($path) {
+	protected function isLargeFile($path) {
 		$st = stat($path);
 		return ($this->opt['large_file_size'] > 0) && ($st['size'] > $this->opt['large_file_size']);
 	}
 	
 	/**
 	 * Save file attributes for trailing CDR record.
-	 * 
-	 * @todo: @param's
+	 *
+	 * @param String  $name
+	 * @param Array   $opt
+	 * @param Integer $meth
+	 * @param string  $crc
+	 * @param Integer $zlen
+	 * @param Integer $len
+	 * @param Integer $rec_len
+	 * @return void
 	 * @return void
 	 */
 	private function addToCdr($name, $opt, $meth, $crc, $zlen, $len, $rec_len) {
@@ -548,7 +575,7 @@ class ZipStream {
 	 * @param array $args
 	 * @return void
 	 */
-	private function addCdrFile($args) {
+	protected function addCdrFile($args) {
 		list($name, $opt, $meth, $crc, $zlen, $len, $ofs) = $args;
 		
 		// get attributes
@@ -639,7 +666,7 @@ class ZipStream {
 	 * @param array $opt
 	 * @return void
 	 */
-	private function addCdrEof($opt = null) {
+	protected function addCdrEof($opt = null) {
 		$num     = count($this->files);
 		$cdr_len = $this->cdr_ofs;
 		$cdr_ofs = $this->ofs;
@@ -695,7 +722,7 @@ class ZipStream {
 	 * @param array $opt
 	 * @return void
 	 */
-	private function addCdr($opt = null) {
+	protected function addCdr($opt = null) {
 		foreach ($this->files as $file)
 			$this->addCdrFile($file);
 		$this->addCdrEof($opt);
@@ -707,7 +734,7 @@ class ZipStream {
 	 * 
 	 * @return void
 	 */
-	function clear() {
+	protected function clear() {
 		$this->files   = array();
 		$this->ofs     = 0;
 		$this->cdr_ofs = 0;
@@ -719,7 +746,7 @@ class ZipStream {
 	 * 
 	 * @return void
 	 */
-	private function sendHttpHeaders() {
+	protected function sendHttpHeaders() {
 		// grab options
 		$opt = $this->opt;
 		
@@ -758,7 +785,7 @@ class ZipStream {
 	 * @param String $str
 	 * @return void
 	 */
-	private function send($str) {
+	protected function send($str) {
 		if ($this->need_headers)
 			$this->sendHttpHeaders();
 		$this->need_headers = false;
@@ -772,7 +799,7 @@ class ZipStream {
 	 * @param Integer $when
 	 * @return DOS Timestamp
 	 */
-	function dostime($when = 0) {
+	protected final function dostime($when = 0) {
 		// get date array for timestamp
 		$d = getdate($when);
 		
@@ -802,7 +829,7 @@ class ZipStream {
 	 * @param array $fields
 	 * @return array
 	 */
-	function packFields($fields) {
+	protected function packFields($fields) {
 		list($fmt, $args) = array(
 			'',
 			array()
