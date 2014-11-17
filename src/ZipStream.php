@@ -90,6 +90,16 @@ class ZipStream {
 	 * @var integer
 	 */
 	public $ofs = 0;
+
+	/**
+	 * @var bool
+	 */
+	protected $need_headers;
+
+	/**
+	 * @var null|String
+	 */
+	protected $output_name;
 	
 	/**
 	 * Create a new ZipStream object.
