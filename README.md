@@ -25,15 +25,15 @@ require 'vendor/autoload.php'
 $zip = new ZipStream\ZipStream('example.zip');
 
 # create a file named 'hello.txt' 
-$zip->add_file('some_image.jpg', 'This is the contents of hello.txt');
+$zip->addFile('some_image.jpg', 'This is the contents of hello.txt');
 
 # add a file named 'image.jpg' from a local file 'path/to/image.jpg'
-$zip->add_file_from_path('some_image.jpg', 'path/to/image.jpg');
+$zip->addFileFromPath('some_image.jpg', 'path/to/image.jpg');
 
 # add a file named 'goodbye.txt' from an open stream resource
 $fp = tmpfile();
 fwrite($fp, 'The quick brown fox jumped over the lazy dog.');
-$zip->add_file_from_stream('goodbye.txt', $fp);
+$zip->addFileFromStream('goodbye.txt', $fp);
 fclose($fp);
 
 # finish the zip stream
