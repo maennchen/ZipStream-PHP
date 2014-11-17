@@ -1,9 +1,9 @@
 The MIT License
 ===============
 
-Copyright (C) 2007-2009 Paul Duncan <pabs@pablotron.org>
-Copyright (C) 2014 Jonatan Männchen <jonatan@maennchen.ch>
-Copyright (C) 2014 Jesse Donat <donatj@gmail.com>
+Copyright (C) 2007-2009 Paul Duncan <pabs@pablotron.org>  
+Copyright (C) 2014 Jonatan Männchen <jonatan@maennchen.ch>  
+Copyright (C) 2014 Jesse G. Donat <donatj@gmail.com>  
  
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the
