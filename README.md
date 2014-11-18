@@ -21,7 +21,7 @@ A fast and simple streaming zip file downloader for PHP.  Here's a
 simple example:
 ```php
 # Autoload the dependencies
-require 'vendor/autoload.php'
+require 'vendor/autoload.php';
 
 # create a new zipstream object
 $zip = new ZipStream\ZipStream('example.zip');
