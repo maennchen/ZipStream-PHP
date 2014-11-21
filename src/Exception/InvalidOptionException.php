@@ -13,7 +13,7 @@ class InvalidOptionException extends Exception {
 	 * Constructor of the Exception
 	 * 
 	 * @param String $optionName - The name of the Option
-	 * @param array $expectedValues - All possible Values
+	 * @param string[] $expectedValues - All possible Values
 	 * @param String $givenValue
 	 */
 	public function __construct($optionName, $expectedValues = array(), $givenValue) {
