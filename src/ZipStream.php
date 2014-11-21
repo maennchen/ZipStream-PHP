@@ -819,7 +819,7 @@ class ZipStream {
 	 * pack() and return the result.
 	 * 
 	 * @param array $fields
-	 * @return array
+	 * @return string
 	 */
 	protected function packFields($fields) {
 		list($fmt, $args) = array(
