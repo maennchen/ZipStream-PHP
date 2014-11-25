@@ -114,6 +114,35 @@ class ZipStreamTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals(file_get_contents($tmpDir . '/test/sample.txt'), 'More Simple Sample Data');
 	}
 
+	public function testAddFileFromStream() {
+		list($tmp, $stream) = $this->getTmpFileStream();
+
+		$zip = new ZipStream(null, array(
+			ZipStream::OPTION_OUTPUT_STREAM => $stream
+		));
+
+		$streamExample = fopen('php://temp', 'w+');
+		fwrite($streamExample, "Sample String Data");
+		$zip->addFileFromStream('sample.txt', $streamExample);
+		fclose($streamExample);
+
+		$streamExample2 = fopen('php://temp', 'w+');
+		fwrite($streamExample2, "More Simple Sample Data");
+		$zip->addFileFromStream('test/sample.txt', $streamExample2);
+		fclose($streamExample2);
+
+		$zip->finish();
+		fclose($stream);
+
+		$tmpDir = $this->validateAndExtractZip($tmp);
+
+		$files = $this->getRecursiveFileList($tmpDir);
+		$this->assertEquals(array('sample.txt', 'test/sample.txt'), $files);
+
+		$this->assertEquals(file_get_contents($tmpDir . '/sample.txt'), 'Sample String Data');
+		$this->assertEquals(file_get_contents($tmpDir . '/test/sample.txt'), 'More Simple Sample Data');
+	}
+	
 	protected function getTmpFileStream() {
 		$tmp    = tempnam(sys_get_temp_dir(), 'zipstreamtest');
 		$stream = fopen($tmp, 'w+');
