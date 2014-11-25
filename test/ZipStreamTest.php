@@ -158,6 +158,9 @@ class ZipStreamTest extends PHPUnit_Framework_TestCase {
 		return $tmp;
 	}
 
+	/**
+	 * @param string $path
+	 */
 	protected function getRecursiveFileList( $path ) {
 		$data  = array();
 		$path  = realpath($path);
@@ -176,7 +179,7 @@ class ZipStreamTest extends PHPUnit_Framework_TestCase {
 	}
 
 	/**
-	 * @param $tmp
+	 * @param string $tmp
 	 * @return string
 	 */
 	protected function validateAndExtractZip( $tmp ) {
