@@ -79,7 +79,7 @@ class ZipStreamTest extends PHPUnit_Framework_TestCase {
 		$tmpDir = $this->validateAndExtractZip($tmp);
 
 		$files = $this->getRecursiveFileList($tmpDir);
-		$this->assertEquals(array('sample.txt', 'test/sample.txt'), $files);
+		$this->assertEquals(array( 'sample.txt', 'test/sample.txt' ), $files);
 
 		$this->assertEquals(file_get_contents($tmpDir . '/sample.txt'), 'Sample String Data');
 		$this->assertEquals(file_get_contents($tmpDir . '/test/sample.txt'), 'More Simple Sample Data');
@@ -108,7 +108,7 @@ class ZipStreamTest extends PHPUnit_Framework_TestCase {
 		$tmpDir = $this->validateAndExtractZip($tmp);
 
 		$files = $this->getRecursiveFileList($tmpDir);
-		$this->assertEquals(array('sample.txt', 'test/sample.txt'), $files);
+		$this->assertEquals(array( 'sample.txt', 'test/sample.txt' ), $files);
 
 		$this->assertEquals(file_get_contents($tmpDir . '/sample.txt'), 'Sample String Data');
 		$this->assertEquals(file_get_contents($tmpDir . '/test/sample.txt'), 'More Simple Sample Data');
@@ -137,7 +137,7 @@ class ZipStreamTest extends PHPUnit_Framework_TestCase {
 		$tmpDir = $this->validateAndExtractZip($tmp);
 
 		$files = $this->getRecursiveFileList($tmpDir);
-		$this->assertEquals(array('sample.txt', 'test/sample.txt'), $files);
+		$this->assertEquals(array( 'sample.txt', 'test/sample.txt' ), $files);
 
 		$this->assertEquals(file_get_contents($tmpDir . '/sample.txt'), 'Sample String Data');
 		$this->assertEquals(file_get_contents($tmpDir . '/test/sample.txt'), 'More Simple Sample Data');
@@ -182,6 +182,7 @@ class ZipStreamTest extends PHPUnit_Framework_TestCase {
 		}
 
 		sort($data);
+
 		return $data;
 	}
 
