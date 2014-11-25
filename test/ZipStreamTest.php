@@ -114,6 +114,39 @@ class ZipStreamTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals(file_get_contents($tmpDir . '/test/sample.txt'), 'More Simple Sample Data');
 	}
 
+	public function testAddFileFromPath_largeFileMethods() {
+		$methods = array(ZipStream::METHOD_STORE, ZipStream::METHOD_DEFLATE);
+		foreach($methods as $method) {
+			list($tmp, $stream) = $this->getTmpFileStream();
+
+			$zip = new ZipStream(null, array(
+				ZipStream::OPTION_OUTPUT_STREAM     => $stream,
+				ZipStream::OPTION_LARGE_FILE_METHOD => $method,
+				ZipStream::OPTION_LARGE_FILE_SIZE   => 5,
+			));
+
+			list($tmpExample, $streamExample) = $this->getTmpFileStream();
+			for( $i = 0; $i <= 100000; $i++ ) {
+				fwrite($streamExample, sha1($i));
+			}
+			fclose($streamExample);
+			$shaExample = sha1_file($tmpExample);
+			$zip->addFileFromPath('sample.txt', $tmpExample);
+			unlink($tmpExample);
+
+
+			$zip->finish();
+			fclose($stream);
+
+			$tmpDir = $this->validateAndExtractZip($tmp);
+
+			$files = $this->getRecursiveFileList($tmpDir);
+			$this->assertEquals(array( 'sample.txt' ), $files);
+
+			$this->assertEquals(sha1_file($tmpDir . '/sample.txt'), $shaExample, "SHA-1 Mismatch Method: {$method}");
+		}
+	}
+
 	public function testAddFileFromStream() {
 		list($tmp, $stream) = $this->getTmpFileStream();
 
