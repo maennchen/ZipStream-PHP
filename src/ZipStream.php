@@ -491,7 +491,8 @@ class ZipStream {
 			$zlen     = 0;
 			
 			// read each block, update crc and zlen
-			while ($data = fgets($fh, $block_size)) {
+			while (!feof($fh)) {
+				$data = fread($fh, $block_size);
 				hash_update($hash_ctx, $data);
 				$data = gzdeflate($data);
 				$zlen += strlen($data);
@@ -512,10 +513,12 @@ class ZipStream {
 		$fh = fopen($path, 'rb');
 		
 		// send file blocks
-		while ($data = fgets($fh, $block_size)) {
-			if ($meth_str == 'deflate')
+		while (!feof($fh)) {
+			$data = fread($fh, $block_size);
+			if ($meth_str == 'deflate') {
 				$data = gzdeflate($data);
-			
+			}
+
 			// send data
 			$this->send($data);
 		}
