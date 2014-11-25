@@ -142,7 +142,10 @@ class ZipStreamTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals(file_get_contents($tmpDir . '/sample.txt'), 'Sample String Data');
 		$this->assertEquals(file_get_contents($tmpDir . '/test/sample.txt'), 'More Simple Sample Data');
 	}
-	
+
+	/**
+	 * @return array
+	 */
 	protected function getTmpFileStream() {
 		$tmp    = tempnam(sys_get_temp_dir(), 'zipstreamtest');
 		$stream = fopen($tmp, 'w+');
@@ -150,6 +153,9 @@ class ZipStreamTest extends PHPUnit_Framework_TestCase {
 		return array( $tmp, $stream );
 	}
 
+	/**
+	 * @return string
+	 */
 	protected function getTmpDir() {
 		$tmp = tempnam(sys_get_temp_dir(), 'zipstreamtest');
 		unlink($tmp);
@@ -159,7 +165,8 @@ class ZipStreamTest extends PHPUnit_Framework_TestCase {
 	}
 
 	/**
-	 * @param string $path
+	 * @param $path
+	 * @return string[]
 	 */
 	protected function getRecursiveFileList( $path ) {
 		$data  = array();
