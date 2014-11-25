@@ -76,19 +76,7 @@ class ZipStreamTest extends PHPUnit_Framework_TestCase {
 		$zip->finish();
 		fclose($stream);
 
-		$tmpDir = $this->getTmpDir();
-
-		$zipArch = new \ZipArchive;
-		$res = $zipArch->open($tmp);
-		if( $res === true ) {
-			$this->assertEquals(0, $zipArch->status);
-			$this->assertEquals(0, $zipArch->statusSys);
-
-			$zipArch->extractTo($tmpDir);
-			$zipArch->close();
-		} else {
-			$this->fail("Failed to open {$tmp}. Code: $res");
-		}
+		$tmpDir = $this->validateAndExtractZip($tmp);
 
 		$files = $this->getRecursiveFileList($tmpDir);
 		$this->assertEquals(array('sample.txt', 'test/sample.txt'), $files);
@@ -117,19 +105,7 @@ class ZipStreamTest extends PHPUnit_Framework_TestCase {
 		$zip->finish();
 		fclose($stream);
 
-		$tmpDir = $this->getTmpDir();
-
-		$zipArch = new \ZipArchive;
-		$res = $zipArch->open($tmp);
-		if( $res === true ) {
-			$this->assertEquals(0, $zipArch->status);
-			$this->assertEquals(0, $zipArch->statusSys);
-
-			$zipArch->extractTo($tmpDir);
-			$zipArch->close();
-		} else {
-			$this->fail("Failed to open {$tmp}. Code: $res");
-		}
+		$tmpDir = $this->validateAndExtractZip($tmp);
 
 		$files = $this->getRecursiveFileList($tmpDir);
 		$this->assertEquals(array('sample.txt', 'test/sample.txt'), $files);
@@ -168,5 +144,29 @@ class ZipStreamTest extends PHPUnit_Framework_TestCase {
 
 		sort($data);
 		return $data;
+	}
+
+	/**
+	 * @param $tmp
+	 * @return string
+	 */
+	protected function validateAndExtractZip( $tmp ) {
+		$tmpDir = $this->getTmpDir();
+
+		$zipArch = new \ZipArchive;
+		$res     = $zipArch->open($tmp);
+		if( $res === true ) {
+			$this->assertEquals(0, $zipArch->status);
+			$this->assertEquals(0, $zipArch->statusSys);
+
+			$zipArch->extractTo($tmpDir);
+			$zipArch->close();
+
+			return $tmpDir;
+		} else {
+			$this->fail("Failed to open {$tmp}. Code: $res");
+
+			return $tmpDir;
+		}
 	}
 }
