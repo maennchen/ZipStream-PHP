@@ -347,7 +347,8 @@ class ZipStream {
 		$this->addFileHeader($name, $opt, $meth, $crc, $zlen, $len);
 		
 		rewind($stream);
-		while ($data = fgets($stream, $block_size)) {
+		while (!feof($stream)) {
+			$data = fread($stream, $block_size);
 			// send data
 			$this->send($data);
 		}
