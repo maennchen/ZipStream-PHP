@@ -495,9 +495,17 @@ class ZipStream {
 			while (!feof($fh)) {
 				$data = fread($fh, $block_size);
 				hash_update($hash_ctx, $data);
-				$data = gzdeflate($data);
+			}
+
+			rewind($fh);
+			stream_filter_append($fh, 'zlib.deflate', STREAM_FILTER_READ, 6);
+
+			while (!feof($fh)) {
+				$data = fread($fh, $block_size);
 				$zlen += strlen($data);
 			}
+
+			stream_filter_remove($fh);
 			
 			// close file and finalize crc
 			fclose($fh);
@@ -512,17 +520,20 @@ class ZipStream {
 		
 		// open input file
 		$fh = fopen($path, 'rb');
+
+		if ($meth_str == self::METHOD_DEFLATE) {
+			stream_filter_append($fh, 'zlib.deflate', STREAM_FILTER_READ, 6);
+		}
 		
 		// send file blocks
 		while (!feof($fh)) {
 			$data = fread($fh, $block_size);
-			if ($meth_str == 'deflate') {
-				$data = gzdeflate($data);
-			}
 
 			// send data
 			$this->send($data);
 		}
+
+		stream_filter_remove($fh);
 		
 		// close input file
 		fclose($fh);
