@@ -128,6 +128,9 @@ class ZipStreamTest extends PHPUnit_Framework_TestCase {
 			list($tmpExample, $streamExample) = $this->getTmpFileStream();
 			for( $i = 0; $i <= 100000; $i++ ) {
 				fwrite($streamExample, sha1($i));
+				if($i % 100 === 0) {
+					fwrite($streamExample, "\n");
+				}
 			}
 			fclose($streamExample);
 			$shaExample = sha1_file($tmpExample);
