@@ -498,14 +498,14 @@ class ZipStream {
 			}
 
 			rewind($fh);
-			stream_filter_append($fh, 'zlib.deflate', STREAM_FILTER_READ, 6);
+			$filter = stream_filter_append($fh, 'zlib.deflate', STREAM_FILTER_READ, 6);
 
 			while (!feof($fh)) {
 				$data = fread($fh, $block_size);
 				$zlen += strlen($data);
 			}
 
-			stream_filter_remove($fh);
+			stream_filter_remove($filter);
 			
 			// close file and finalize crc
 			fclose($fh);
@@ -522,7 +522,7 @@ class ZipStream {
 		$fh = fopen($path, 'rb');
 
 		if ($meth_str == self::METHOD_DEFLATE) {
-			stream_filter_append($fh, 'zlib.deflate', STREAM_FILTER_READ, 6);
+			$filter = stream_filter_append($fh, 'zlib.deflate', STREAM_FILTER_READ, 6);
 		}
 		
 		// send file blocks
@@ -533,7 +533,9 @@ class ZipStream {
 			$this->send($data);
 		}
 
-		stream_filter_remove($fh);
+		if (isset($filter) && is_resource($filter)) {
+			stream_filter_remove($filter);
+		}
 		
 		// close input file
 		fclose($fh);
@@ -793,8 +795,9 @@ class ZipStream {
 	 * @return void
 	 */
 	protected function send($str) {
-		if ($this->need_headers)
+		if ($this->need_headers) {
 			$this->sendHttpHeaders();
+		}
 		$this->need_headers = false;
 		
 		fwrite($this->opt[self::OPTION_OUTPUT_STREAM], $str);
