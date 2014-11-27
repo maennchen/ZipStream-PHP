@@ -201,7 +201,7 @@ class ZipStreamTest extends PHPUnit_Framework_TestCase {
 	}
 
 	/**
-	 * @param $path
+	 * @param string $path
 	 * @return string[]
 	 */
 	protected function getRecursiveFileList( $path ) {
