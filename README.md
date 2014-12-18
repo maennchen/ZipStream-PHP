@@ -3,6 +3,7 @@
 [![Build Status](https://travis-ci.org/maennchen/ZipStream-PHP.svg?branch=develop)](https://travis-ci.org/maennchen/ZipStream-PHP)
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/maennchen/ZipStream-PHP/badges/quality-score.png?b=develop)](https://scrutinizer-ci.com/g/maennchen/ZipStream-PHP/?branch=develop)
 [![Code Coverage](https://scrutinizer-ci.com/g/maennchen/ZipStream-PHP/badges/coverage.png?b=develop)](https://scrutinizer-ci.com/g/maennchen/ZipStream-PHP/?branch=develop)
+[![Build Status](https://travis-ci.org/maennchen/ZipStream-PHP.svg?branch=develop)](https://travis-ci.org/maennchen/ZipStream-PHP)
 > TODO: Change Links from develop to master when merging!
 
 Please see the file LICENSE.md for licensing and warranty information.  The
