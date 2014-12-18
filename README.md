@@ -52,8 +52,7 @@ following URL: http://pablotron.org/?cid=1535
 
 ## Requirements
 
-  * PHP version 5.3 or newer (specifically, the hash_init and
-    hash_file functions).
+  * PHP version 5.3 or newer.
 
 ## Contributors
 Please take a look at the CONTRIBUTOR-README.md File.
