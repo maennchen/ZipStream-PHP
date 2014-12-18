@@ -1,5 +1,5 @@
 <?php
 
-date_default_timezone_set('US/CST');
+date_default_timezone_set('UTC');
 
 require(__DIR__ . '/../vendor/autoload.php');
