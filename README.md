@@ -3,7 +3,6 @@
 [![Build Status](https://travis-ci.org/maennchen/ZipStream-PHP.svg?branch=master)](https://travis-ci.org/maennchen/ZipStream-PHP)
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/maennchen/ZipStream-PHP/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/maennchen/ZipStream-PHP/?branch=develop)
 [![Code Coverage](https://scrutinizer-ci.com/g/maennchen/ZipStream-PHP/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/maennchen/ZipStream-PHP/?branch=develop)
-> TODO: Change Links from develop to master when merging!
 
 Please see the file LICENSE.md for licensing and warranty information.  The
 latest version of this software is available at the following URL: https://github.com/maennchen/ZipStream-PHP
