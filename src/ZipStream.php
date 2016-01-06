@@ -399,6 +399,17 @@ class ZipStream {
 		// create dos timestamp
 		$opt['time'] = isset($opt['time']) && !empty($opt['time']) ? $opt['time'] : time();
 		$dts         = $this->dostime($opt['time']);
+                
+                // general purpose bit flag
+                $genb = 0x00;
+
+		if (mb_check_encoding($name, "UTF-8") && !mb_check_encoding($name, "ASCII"))
+		{
+			// Sets Bit 11: Language encoding flag (EFS).  If this bit is set,
+			// the filename and comment fields for this file
+			// MUST be encoded using UTF-8. (see APPENDIX D)
+			$genb |= 0x0800;
+		}
 		
 		// build file header
 		$fields = array( // (from V.A of APPNOTE.TXT)
@@ -417,7 +428,7 @@ class ZipStream {
 
 			array(
 				'v',
-				0x00
+				$genb
 			), // general purpose bit flag
 			array(
 				'v',
@@ -592,6 +603,17 @@ class ZipStream {
 		
 		// get dos timestamp
 		$dts = $this->dostime($opt['time']);
+                
+                // general purpose bit flag
+                $genb = 0x00;
+
+		if (mb_check_encoding($name, "UTF-8") && !mb_check_encoding($name, "ASCII"))
+		{
+			// Sets Bit 11: Language encoding flag (EFS).  If this bit is set,
+			// the filename and comment fields for this file
+			// MUST be encoded using UTF-8. (see APPENDIX D)
+			$genb |= 0x0800;
+		}
 		
 		$fields = array( // (from V,F of APPNOTE.TXT)
 			array(
@@ -608,7 +630,7 @@ class ZipStream {
 			), // version needed to extract
 			array(
 				'v',
-				0x00
+				$genb
 			), // general purpose bit flag
 			array(
 				'v',
