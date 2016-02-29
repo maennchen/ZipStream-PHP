@@ -29,9 +29,9 @@ require 'vendor/autoload.php';
 $zip = new ZipStream\ZipStream('example.zip');
 
 # create a file named 'hello.txt' 
-$zip->addFile('some_image.jpg', 'This is the contents of hello.txt');
+$zip->addFile('hello.txt', 'This is the contents of hello.txt');
 
-# add a file named 'image.jpg' from a local file 'path/to/image.jpg'
+# add a file named 'some_image.jpg' from a local file 'path/to/image.jpg'
 $zip->addFileFromPath('some_image.jpg', 'path/to/image.jpg');
 
 # add a file named 'goodbye.txt' from an open stream resource
