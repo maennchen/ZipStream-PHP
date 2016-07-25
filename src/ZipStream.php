@@ -67,11 +67,38 @@ use ZipStream\Exception\FileNotReadableException;
  *   $zip->finish();
  */
 class ZipStream {
-	const VERSION = '0.3.0';
+	const VERSION                      = '0.3.0';
+	const CRC_ALGORITHM                = 'crc32b';
+	const VALUE_DEFERRED_TO_DESCRIPTOR = 0; // value for len, zlen and crc when they are not known until the data descriptor header is sent.
+	const BLOCK_SIZE                   = 1048576; // 1 MB. When reading chunks of data on streams.
 
-	const METHOD_STORE = 'store';
-	const METHOD_DEFLATE = 'deflate';
+	// Compression methods
+	const METHOD_STORE       = 'store';
+	const METHOD_DEFLATE     = 'deflate';
+	const HEX_METHOD_STORE   = 0x0000;
+	const HEX_METHOD_DEFLATE = 0x0008;
 
+	// General bit flags
+	const GENB_FLAG_NONE = 0x0000;
+	const GENB_FLAG_ADD  = 0x0008; // File len, zlen, crc are not known until the full file has been streamed.
+	const GENB_FLAG_EFS  = 0x0800; // Language encoding flag (EFS).
+
+	// Zip signature headers. @see https://en.wikipedia.org/wiki/Zip_(file_format)#File_headers
+	const SIGNATURE_LOCAL_FILE_HEADER               = 0x04034b50;
+	const SIGNATURE_DATA_DESCRIPTIOR_HEADER         = 0x08074b50;
+	const SIGNATURE_CENTRAL_DIRECTORY_HEADER        = 0x02014b50;
+	const SIGNATURE_END_OF_CENTRAL_DIRECTORY_HEADER = 0x06054b50;
+
+	// Static fields values
+	const FIELD_VERSION_NEEDED_TO_EXTRACT = 0x000A; // (6 << 8) + 3
+	const FIELD_EXTRA_DATA_LEN            = 0;
+	const FIELD_DISK_NUMBER_START         = 0;
+	const FIELD_INTERNAL_FILE_ATTR        = 0;
+	const FIELD_EXTERNAL_FILE_ATTR        = 32;
+	const FIELD_THIS_DISK_NUMBER          = 0;
+	const FIELD_NUMBER_OF_DISK_WITH_CDR   = 0;
+
+	// Options
 	const OPTION_LARGE_FILE_SIZE      = 'large_file_size';
 	const OPTION_LARGE_FILE_METHOD    = 'large_file_method';
 	const OPTION_SEND_HTTP_HEADERS    = 'send_http_headers';
@@ -238,11 +265,13 @@ class ZipStream {
 		$crc  = crc32($data);
 		$zlen = strlen($zdata);
 		$len  = strlen($data);
-		$meth = 0x08;
+		$meth = self::HEX_METHOD_DEFLATE;
 
 		// send file header
-		$cdr_len = $this->addFileHeader($name, $opt, $meth, $crc, $zlen, $len);
-		$this->addToCdr($name, $opt, $meth, $crc, $zlen, $len, $cdr_len);
+		$num_bytes_written = $this->sendLocalFileHeader($name, $opt, $meth, $crc, $zlen, $len);
+		// Total bytes written for this file.
+		$num_bytes_written += $zlen;
+		$this->addToCdr($name, $opt, $meth, $crc, $zlen, $len, $num_bytes_written);
 
 		// print data
 		$this->send($zdata);
@@ -309,6 +338,10 @@ class ZipStream {
 	 *
 	 * dds an open stream to the archive uncompressed
 	 *
+	 * NOTE: We only support compression method 'store' atm.
+	 * Adding support for deflate should be trivial but would be better to do this at the same time while
+	 * deprecating addLargeFile() method in favor of using this method instead for large files.
+	 *
 	 * @param String $name - path of file in archive (including directory).
 	 * @param Resource $stream - contents of file as a stream resource
 	 * @param array $opt - Hash of options for file (optional, see "File Options" below).
@@ -330,56 +363,71 @@ class ZipStream {
 	 * @return void
 	 */
 	public function addFileFromStream($name, $stream, $opt = array()) {
-		$block_size = 1048576; // process in 1 megabyte chunks
-		$algo       = 'crc32b';
-		$meth       = 0x00;
-		// General bit flag. For remote resources, we don't know the content size nor the crc until the full data has been sent.
-		$genb       = 0x08;
-		$zlen       = $len = $crc = 0;
-		$hash_ctx   = hash_init($algo);
+		// Initialize
+		$meth     = self::HEX_METHOD_STORE;
+		$genb     = self::GENB_FLAG_ADD;
+		$zlen     = $len = $crc = self::VALUE_DEFERRED_TO_DESCRIPTOR;
+		$hash_ctx = hash_init(self::CRC_ALGORITHM);
 
 		// send local file header.
-		$initial_cdr_len = $this->addFileHeader($name, $opt, $meth, $crc, $zlen, $len, $genb);
+		$num_bytes_written = $this->sendLocalFileHeader($name, $opt, $meth, $crc, $zlen, $len, $genb);
 
+		//  Read data in chunks and send it to the output as soon as it comes in.
 		while (!feof($stream)) {
-			$data = fread($stream, $block_size);
-			hash_update($hash_ctx, $data);
-			// $zlen and $len are the same since we don't use deflate atm.
-			$zlen = $len += strlen($data);
-			// send data
+			// Read and send.
+			$data = fread($stream, self::BLOCK_SIZE);
 			$this->send($data);
+
+			// Update crc and data lengths.
+			hash_update($hash_ctx, $data);
+			$len  += strlen($data);
+			$zlen += strlen($data);
 		}
 
-		$crc           = hexdec(hash_final($hash_ctx));
+		// Calculate the actual crc.
+		$crc = hexdec(hash_final($hash_ctx));
+
 		// Send the data descriptor right after sending the data content.
 		// Now we know the actual content len, zlen and crc.
-		$dd_len        = $this->addDataDescriptorHeader($len, $zlen, $crc);
-		// The actual cdr_len if we knew what the $zlen was since the beginning.
-		$final_cdr_len = $initial_cdr_len + $zlen;
-		// The full record length for this file.
-		$rec_leng      =  $final_cdr_len + $dd_len;
+		$data_descriptor_len = $this->sendDataDescriptorHeader($len, $zlen, $crc);
+
+		// Calculate how many bytes have been written in total.
+		$num_bytes_written += $zlen + $data_descriptor_len;
+
 		// add to central directory record and increment offset
-		$this->addToCdr($name, $opt, $meth, $crc, $zlen, $len, $rec_leng);
+		$this->addToCdr($name, $opt, $meth, $crc, $zlen, $len, $num_bytes_written, $genb);
 	}
 
 	/**
 	 * @param Integer  $len
 	 * @param Integer  $zlen
 	 * @param String   $crc
-	 * @return Integer $ret_len
+	 * @return Integer $num_bytes_written. Num bytes written to zip stream output.
 	 */
-	protected function addDataDescriptorHeader($len, $zlen, $crc) {
+	protected function sendDataDescriptorHeader($len, $zlen, $crc) {
         $fields = array(
-            array('V', 0x08074b50), // data descriptor signature. Although optional, some clients will show warnings if not found.
-            array('V', $crc),       // CRC-32
-            array('V', $zlen),      // compressed size
-            array('V', $len),       // uncompressed size
+            array(
+            	'V',
+            	self::SIGNATURE_DATA_DESCRIPTIOR_HEADER
+            ), // data descriptor signature. Although optional, some clients will show warnings if not found.
+            array(
+	            'V',
+    	        $crc
+            ),  // CRC-32
+            array(
+            	'V',
+            	$zlen
+            ), // compressed size
+            array(
+            	'V',
+            	$len
+            ), // uncompressed size
         );
-        $ret     = $this->packFields($fields);
-        $ret_len = strlen($ret);
+        $ret               = $this->packFields($fields);
+        $num_bytes_written = strlen($ret);
         $this->send($ret);
 
-        return $ret_len;
+        return $num_bytes_written;
     }
 
 	/**
@@ -401,7 +449,7 @@ class ZipStream {
 	 */
 	public function finish() {
 		// add trailing cdr record
-		$this->addCdr($this->opt);
+		$this->sendCdr($this->opt);
 		$this->clear();
 	}
 
@@ -414,9 +462,10 @@ class ZipStream {
 	 * @param string   $crc
 	 * @param Integer  $zlen
 	 * @param Integer  $len
-	 * @return Integer $cdr_len
+	 * @param Hex      $genb.
+	 * @return Integer $num_bytes_written. Num bytes written to zip stream output.
 	 */
-	protected function addFileHeader($name, &$opt, $meth, $crc, $zlen, $len, $genb = 0x00) {
+	protected function sendLocalFileHeader($name, &$opt, $meth, $crc, $zlen, $len, $genb = self::GENB_FLAG_NONE) {
 		// strip leading slashes from file name
 		// (fixes bug in windows archive viewer)
 		$name = preg_replace('/^\\/+/', '', $name);
@@ -432,20 +481,20 @@ class ZipStream {
 			// Sets Bit 11: Language encoding flag (EFS).  If this bit is set,
 			// the filename and comment fields for this file
 			// MUST be encoded using UTF-8. (see APPENDIX D)
-			$genb |= 0x0800;
+			$genb |= self::GENB_FLAG_EFS;
 		}
 
 		// build file header
 		$fields = array( // (from V.A of APPNOTE.TXT)
 			array(
 				'V',
-				0x04034b50
+				self::SIGNATURE_LOCAL_FILE_HEADER
 			), // local file header signature
 
 			//array('v', (6 << 8) + 3),   // version needed to extract
 			array(
 				'v',
-				0x000A
+				self::FIELD_VERSION_NEEDED_TO_EXTRACT
 			), // version needed to extract
 			//FIXED as mentioned in http://linlog.skepticats.com/entries/2012/02/Streaming_ZIP_files_in_PHP.php
 			//and http://stackoverflow.com/questions/5573211/dynamically-created-zip-files-by-zipstream-in-php-wont-open-in-osx
@@ -480,19 +529,19 @@ class ZipStream {
 			), // filename length
 			array(
 				'v',
-				0
+				self::FIELD_EXTRA_DATA_LEN
 			) // extra data len
 		);
 
 		// pack fields and calculate "total" length
-		$ret     = $this->packFields($fields);
-		$header  = $ret . $name;
-		$cdr_len = strlen($header) + $zlen;
+		$ret               = $this->packFields($fields);
+		$header            = $ret . $name;
+		$num_bytes_written = strlen($header);
 
 		// print header and filename
 		$this->send($header);
 
-		return $cdr_len;
+		return $num_bytes_written;
 	}
 
 	/**
@@ -505,30 +554,27 @@ class ZipStream {
 	 * @throws \ZipStream\Exception\InvalidOptionException
 	 */
 	protected function addLargeFile($name, $path, $opt = array()) {
-		$st         = stat($path);
-		$block_size = 1048576; // process in 1 megabyte chunks
-		$algo       = 'crc32b';
-
+		$st = stat($path);
 		// calculate header attributes
 		$zlen = $len = $st['size'];
 
 		$meth_str = $this->opt[self::OPTION_LARGE_FILE_METHOD];
 		if ($meth_str == self::METHOD_STORE) {
 			// store method
-			$meth = 0x00;
-			$crc = hexdec(hash_file($algo, $path));
+			$meth = self::HEX_METHOD_STORE;
+			$crc  = hexdec(hash_file(self::CRC_ALGORITHM, $path));
 		} elseif ($meth_str == self::METHOD_DEFLATE) {
 			// deflate method
-			$meth = 0x08;
+			$meth = self::HEX_METHOD_DEFLATE;
 
 			// open file, calculate crc and compressed file length
 			$fh       = fopen($path, 'rb');
-			$hash_ctx = hash_init($algo);
+			$hash_ctx = hash_init(self::CRC_ALGORITHM);
 			$zlen     = 0;
 
 			// read each block, update crc and zlen
 			while (!feof($fh)) {
-				$data = fread($fh, $block_size);
+				$data = fread($fh, self::BLOCK_SIZE);
 				hash_update($hash_ctx, $data);
 			}
 
@@ -536,7 +582,7 @@ class ZipStream {
 			$filter = stream_filter_append($fh, 'zlib.deflate', STREAM_FILTER_READ, 6);
 
 			while (!feof($fh)) {
-				$data = fread($fh, $block_size);
+				$data = fread($fh, self::BLOCK_SIZE);
 				$zlen += strlen($data);
 			}
 
@@ -551,8 +597,11 @@ class ZipStream {
 		}
 
 		// send file header
-		$cdr_len = $this->addFileHeader($name, $opt, $meth, $crc, $zlen, $len);
-		$this->addToCdr($name, $opt, $meth, $crc, $zlen, $len, $cdr_len);
+		$num_bytes_written = $this->sendLocalFileHeader($name, $opt, $meth, $crc, $zlen, $len);
+		// Even though the data content hasn't been sent already, we know beforehand how many bytes are going to
+		// be written ($zlen).
+		$num_bytes_written += $zlen;
+		$this->addToCdr($name, $opt, $meth, $crc, $zlen, $len, $num_bytes_written);
 
 		// open input file
 		$fh = fopen($path, 'rb');
@@ -563,7 +612,7 @@ class ZipStream {
 
 		// send file blocks
 		while (!feof($fh)) {
-			$data = fread($fh, $block_size);
+			$data = fread($fh, self::BLOCK_SIZE);
 
 			// send data
 			$this->send($data);
@@ -598,10 +647,11 @@ class ZipStream {
 	 * @param Integer $zlen
 	 * @param Integer $len
 	 * @param Integer $rec_len
+	 * @param Hex     $genb.
 	 * @return void
 	 * @return void
 	 */
-	protected function addToCdr($name, $opt, $meth, $crc, $zlen, $len, $rec_len) {
+	protected function addToCdr($name, $opt, $meth, $crc, $zlen, $len, $rec_len, $genb = self::GENB_FLAG_NONE) {
 		$this->files[] = array(
 			$name,
 			$opt,
@@ -609,7 +659,8 @@ class ZipStream {
 			$crc,
 			$zlen,
 			$len,
-			$this->ofs
+			$this->ofs,
+			$genb
 		);
 		$this->ofs += $rec_len;
 	}
@@ -620,8 +671,8 @@ class ZipStream {
 	 * @param array $args
 	 * @return void
 	 */
-	protected function addCdrFile($args) {
-		list($name, $opt, $meth, $crc, $zlen, $len, $ofs) = $args;
+	protected function sendCdrFile($args) {
+		list($name, $opt, $meth, $crc, $zlen, $len, $ofs, $genb) = $args;
 
 		// get attributes
 		$comment = isset($opt['comment']) && !empty($opt['comment']) ? $opt['comment'] : '';
@@ -629,29 +680,26 @@ class ZipStream {
 		// get dos timestamp
 		$dts = $this->dostime($opt['time']);
 
-                // general purpose bit flag
-                $genb = 0x00;
-
 		if (mb_check_encoding($name, "UTF-8") && !mb_check_encoding($name, "ASCII"))
 		{
 			// Sets Bit 11: Language encoding flag (EFS).  If this bit is set,
 			// the filename and comment fields for this file
 			// MUST be encoded using UTF-8. (see APPENDIX D)
-			$genb |= 0x0800;
+			$genb |= self::GENB_FLAG_EFS;
 		}
 
 		$fields = array( // (from V,F of APPNOTE.TXT)
 			array(
 				'V',
-				0x02014b50
+				self::SIGNATURE_CENTRAL_DIRECTORY_HEADER
 			), // central file header signature
 			array(
 				'v',
-				(6 << 8) + 3
+				self::FIELD_VERSION_NEEDED_TO_EXTRACT
 			), // version made by
 			array(
 				'v',
-				(6 << 8) + 3
+				self::FIELD_VERSION_NEEDED_TO_EXTRACT
 			), // version needed to extract
 			array(
 				'v',
@@ -683,7 +731,7 @@ class ZipStream {
 			), // filename length
 			array(
 				'v',
-				0
+				self::FIELD_EXTRA_DATA_LEN
 			), // extra data len
 			array(
 				'v',
@@ -691,15 +739,15 @@ class ZipStream {
 			), // file comment length
 			array(
 				'v',
-				0
+				self::FIELD_DISK_NUMBER_START
 			), // disk number start
 			array(
 				'v',
-				0
+				self::FIELD_INTERNAL_FILE_ATTR
 			), // internal file attributes
 			array(
 				'V',
-				32
+				self::FIELD_EXTERNAL_FILE_ATTR
 			), // external file attributes
 			array(
 				'V',
@@ -722,7 +770,7 @@ class ZipStream {
 	 * @param array $opt
 	 * @return void
 	 */
-	protected function addCdrEof($opt = null) {
+	protected function sendCdrEof($opt = null) {
 		$num     = count($this->files);
 		$cdr_len = $this->cdr_ofs;
 		$cdr_ofs = $this->ofs;
@@ -736,15 +784,15 @@ class ZipStream {
 		$fields = array( // (from V,F of APPNOTE.TXT)
 			array(
 				'V',
-				0x06054b50
+				self::SIGNATURE_END_OF_CENTRAL_DIRECTORY_HEADER
 			), // end of central file header signature
 			array(
 				'v',
-				0x00
+				self::FIELD_THIS_DISK_NUMBER
 			), // this disk number
 			array(
 				'v',
-				0x00
+				self::FIELD_NUMBER_OF_DISK_WITH_CDR
 			), // number of disk with cdr
 			array(
 				'v',
@@ -777,10 +825,10 @@ class ZipStream {
 	 *
 	 * @return void
 	 */
-	protected function addCdr($opt = null) {
+	protected function sendCdr($opt = null) {
 		foreach ($this->files as $file)
-			$this->addCdrFile($file);
-		$this->addCdrEof($opt);
+			$this->sendCdrFile($file);
+		$this->sendCdrEof($opt);
 	}
 
 	/**
