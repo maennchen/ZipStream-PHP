@@ -1,11 +1,14 @@
 <?php
+declare(strict_types = 1);
+
 namespace ZipStream;
 
+use Throwable;
+
 /**
- * This class is only for inheriting
- * 
- * @author Jonatan Männchen <jonatan@maennchen.ch>
- * @copyright Copyright (c) 2014, Jonatan Männchen
+ * Interface Exception
+ * @package ZipStream
  */
-abstract class Exception extends \Exception {
+interface Exception extends Throwable
+{
 }
