@@ -159,11 +159,13 @@ class ZipStreamTest extends PHPUnit_Framework_TestCase {
 
 		$streamExample = fopen('php://temp', 'w+');
 		fwrite($streamExample, "Sample String Data");
+		fseek($streamExample, SEEK_SET, 0); // rewind to the start, otherwise there will be no content.
 		$zip->addFileFromStream('sample.txt', $streamExample);
 		fclose($streamExample);
 
 		$streamExample2 = fopen('php://temp', 'w+');
 		fwrite($streamExample2, "More Simple Sample Data");
+		fseek($streamExample2, SEEK_SET, 0); // rewind to the start, otherwise there will be no content.
 		$zip->addFileFromStream('test/sample.txt', $streamExample2);
 		fclose($streamExample2);
 
