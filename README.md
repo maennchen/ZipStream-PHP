@@ -51,10 +51,7 @@ following URL: http://pablotron.org/?cid=1535
 
 ## Requirements
 
-  * PHP version 5.3 or newer.
-
-## Contributors
-Please take a look at the CONTRIBUTOR-README.md File.
+  * PHP version 7.0 or newer.
 
 ## About the Authors
 * Paul Duncan <pabs@pablotron.org> - http://pablotron.org/
