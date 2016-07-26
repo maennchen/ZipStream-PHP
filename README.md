@@ -28,7 +28,7 @@ require 'vendor/autoload.php';
 # create a new zipstream object
 $zip = new ZipStream\ZipStream('example.zip');
 
-# create a file named 'hello.txt' 
+# create a file named 'hello.txt'
 $zip->addFile('hello.txt', 'This is the contents of hello.txt');
 
 # add a file named 'some_image.jpg' from a local file 'path/to/image.jpg'
@@ -37,7 +37,13 @@ $zip->addFileFromPath('some_image.jpg', 'path/to/image.jpg');
 # add a file named 'goodbye.txt' from an open stream resource
 $fp = tmpfile();
 fwrite($fp, 'The quick brown fox jumped over the lazy dog.');
+rewind($fp); // Put the file pointer back to the start (fwrite() moved it forward)
 $zip->addFileFromStream('goodbye.txt', $fp);
+fclose($fp);
+
+# add a big image named 'big-remote-image.jpg' from an open remote stream resource, without compromising memory.
+$fp = fopen('http://example.com/big/image.jpg');
+zip->addFileFromStream('big-remote-image.jpg', $fp);
 fclose($fp);
 
 # finish the zip stream
