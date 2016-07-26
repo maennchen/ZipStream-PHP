@@ -6,20 +6,20 @@ use ZipStream\Exception\FileNotReadableException;
 
 /**
  * ZipStream
- * 
+ *
  * Streamed, dynamically generated zip archives.
  *
  * @author Paul Duncan <pabs@pablotron.org>
  * @copyright Copyright (C) 2007-2009 Paul Duncan <pabs@pablotron.org>
- * 
+ *
  * @author Jonatan Männchen <jonatan@maennchen.ch>
  * @copyright Copyright (C) 2014 Jonatan Männchen <jonatan@maennchen.ch>
- * 
+ *
  * @author Jesse Donat <donatj@gmail.com>
  * @copyright Copyright (C) 2014 Jesse Donat <donatj@gmail.com>
  *
  * @license https://raw.githubusercontent.com/maennchen/ZipStream-PHP/master/LICENCE
- * 
+ *
  *
  * Requirements:
  *
@@ -62,7 +62,7 @@ use ZipStream\Exception\FileNotReadableException;
  *   // read and add each file to the archive
  *   foreach ($files as $path)
  *     $zip->addFile($path, file_get_contents($path));
- * 
+ *
  *   // write archive footer to stream
  *   $zip->finish();
  */
@@ -79,24 +79,24 @@ class ZipStream {
 	const OPTION_OUTPUT_STREAM        = 'output_stream';
 	const OPTION_CONTENT_TYPE         = 'content_type';
 	const OPTION_CONTENT_DISPOSITION  = 'content_disposition';
-	
+
 	/**
 	 * Global Options
 	 *
 	 * @var array
 	*/
 	public $opt = array();
-	
+
 	/**
 	 * @var array
 	 */
 	public $files = array();
-	
+
 	/**
 	 * @var integer
 	 */
 	public $cdr_ofs = 0;
-	
+
 	/**
 	 * @var integer
 	 */
@@ -111,7 +111,7 @@ class ZipStream {
 	 * @var null|String
 	 */
 	protected $output_name;
-	
+
 	/**
 	 * Create a new ZipStream object.
 	 *
@@ -125,7 +125,7 @@ class ZipStream {
 	 *
 	 *   comment             - Comment for this archive.
 	 *   content_type        - HTTP Content-Type.  Defaults to 'application/x-zip'.
-	 *   content_disposition - HTTP Content-Disposition.  Defaults to 
+	 *   content_disposition - HTTP Content-Disposition.  Defaults to
 	 *                         'attachment; filename=\"FILENAME\"', where
 	 *                         FILENAME is the specified filename.
 	 *   large_file_size     - Size, in bytes, of the largest file to try
@@ -189,29 +189,29 @@ class ZipStream {
 			self::OPTION_SEND_HTTP_HEADERS    => false,
 			self::OPTION_HTTP_HEADER_CALLBACK => 'header',
 		);
-		
+
 		// merge and save options
 		$this->opt = array_merge($defaults, $opt);
-		
+
 		if (!isset($this->opt[self::OPTION_OUTPUT_STREAM])) {
 			$this->opt[self::OPTION_OUTPUT_STREAM] = fopen('php://output', 'w');
 		}
-		
+
 		$this->output_name  = $name;
 		$this->need_headers = $name || $this->opt[self::OPTION_SEND_HTTP_HEADERS];
 	}
-	
+
 	/**
 	 * addFile
-	 * 
+	 *
 	 * add a file to the archive
-	 *   
+	 *
 	 *  @param String $name - path of file in archive (including directory).
 	 *  @param String $data - contents of file
 	 *  @param array $opt  - Hash of options for file (optional, see "File Options"
-	 *          below).  
+	 *          below).
 	 *
-	 * File Options: 
+	 * File Options:
 	 *  time     - Last-modified timestamp (seconds since the epoch) of
 	 *             this file.  Defaults to the current time.
 	 *  comment  - Comment related to this file.
@@ -221,7 +221,7 @@ class ZipStream {
 	 *   // add a file named 'foo.txt'
 	 *   $data = file_get_contents('foo.txt');
 	 *   $zip->addFile('foo.txt', $data);
-	 * 
+	 *
 	 *   // add a file named 'bar.jpg' with a comment and a last-modified
 	 *   // time of two hours ago
 	 *   $data = file_get_contents('bar.jpg');
@@ -233,36 +233,38 @@ class ZipStream {
 	public function addFile($name, $data, $opt = array()) {
 		// compress data
 		$zdata = gzdeflate($data);
-		
+
 		// calculate header attributes
 		$crc  = crc32($data);
 		$zlen = strlen($zdata);
 		$len  = strlen($data);
 		$meth = 0x08;
-		
+
 		// send file header
-		$this->addFileHeader($name, $opt, $meth, $crc, $zlen, $len);
-		
+		$num_bytes_written = $this->addFileHeader($name, $opt, $meth, $crc, $zlen, $len);
+		$num_bytes_written += $zlen;
+		$this->addToCdr($name, $opt, $meth, $crc, $zlen, $len, $num_bytes_written);
+
 		// print data
 		$this->send($zdata);
 	}
-	
+
 	/**
 	 * addFileFromPath
-	 * 
+	 *
 	 * add a file at path to the archive.
 	 *
 	 * Note that large files may be compresed differently than smaller
 	 * files; see the "Large File Support" section above for more
 	 * information.
-	 *   
+	 *
 	 *  @param String $name - name of file in archive (including directory path).
 	 *  @param String $path - path to file on disk (note: paths should be encoded using
 	 *          UNIX-style forward slashes -- e.g '/path/to/some/file').
 	 *  @param array $opt  - Hash of options for file (optional, see "File Options"
-	 *          below).  
+	 *          below).
 	 *
-	 * File Options: 
+	 * File Options:
 	 *  time     - Last-modified timestamp (seconds since the epoch) of
 	 *             this file.  Defaults to the current time.
 	 *  comment  - Comment related to this file.
@@ -271,7 +273,7 @@ class ZipStream {
 	 *
 	 *   // add a file named 'foo.txt' from the local file '/tmp/foo.txt'
 	 *   $zip->addFileFromPath('foo.txt', '/tmp/foo.txt');
-	 * 
+	 *
 	 *   // add a file named 'bigfile.rar' from the local file
 	 *   // '/usr/share/bigfile.rar' with a comment and a last-modified
 	 *   // time of two hours ago
@@ -280,7 +282,7 @@ class ZipStream {
 	 *     'time'    => time() - 2 * 3600,
 	 *     'comment' => 'this is a comment about bar.jpg',
 	 *   ));
-	 * 
+	 *
 	 * @return void
 	 * @throws \ZipStream\Exception\FileNotFoundException
 	 * @throws \ZipStream\Exception\FileNotReadableException
@@ -302,16 +304,16 @@ class ZipStream {
 			$this->addFile($name, $data, $opt);
 		}
 	}
-	
+
 	/**
 	 * addFile_from_stream
-	 * 
+	 *
 	 * dds an open stream to the archive uncompressed
 	 *
 	 * @param String $name - path of file in archive (including directory).
 	 * @param Resource $stream - contents of file as a stream resource
 	 * @param array $opt - Hash of options for file (optional, see "File Options" below).
-	 * 
+	 *
 	 * File Options:
 	 *  time     - Last-modified timestamp (seconds since the epoch) of
 	 *             this file.  Defaults to the current time.
@@ -332,43 +334,86 @@ class ZipStream {
 		$block_size = 1048576; // process in 1 megabyte chunks
 		$algo       = 'crc32b';
 		$meth       = 0x00;
-		
-		// calculate header attributes
-		fseek($stream, 0, SEEK_END);
-		$zlen = $len = ftell($stream);
-		
-		rewind($stream);
-		$hash_ctx = hash_init($algo);
-		hash_update_stream($hash_ctx, $stream);
+		$genb       = 0x08;
+		$crc        = $zlen = $len = 0;
+		$hash_ctx   = hash_init($algo);
 
-		$crc = hexdec(hash_final($hash_ctx));
-		
-		// send file header
-		$this->addFileHeader($name, $opt, $meth, $crc, $zlen, $len);
-		
-		rewind($stream);
+		// send local file header.
+		$num_bytes_written = $this->addFileHeader($name, $opt, $meth, $crc, $zlen, $len, $genb);
+
+		//  Read data in chunks and send it to the output as soon as it comes in.
 		while (!feof($stream)) {
+			// Read and send.
 			$data = fread($stream, $block_size);
-			// send data
 			$this->send($data);
+
+			// Update crc and data lengths.
+			hash_update($hash_ctx, $data);
+			$len  += strlen($data);
+			$zlen += strlen($data);
 		}
+
+		// Calculate the actual crc.
+		$crc = hexdec(hash_final($hash_ctx));
+
+		// Send the data descriptor right after sending the data content.
+		// Now we know the actual content len, zlen and crc.
+		$data_descriptor_len = $this->addDataDescriptorHeader($len, $zlen, $crc);
+
+		// Calculate how many bytes have been written in total.
+		$num_bytes_written += $zlen + $data_descriptor_len;
+
+		// add to central directory record and increment offset
+		$this->addToCdr($name, $opt, $meth, $crc, $zlen, $len, $num_bytes_written, $genb);
 	}
-	
+
+	/**
+	 * @param Integer  $len
+	 * @param Integer  $zlen
+	 * @param String   $crc
+	 * @return Integer $num_bytes_written. Num bytes written to zip stream output.
+	 */
+	protected function addDataDescriptorHeader($len, $zlen, $crc) {
+        $fields = array(
+            array(
+            	'V',
+            	0x08074b50
+            ), // data descriptor signature. Although optional, some clients will show warnings if not found.
+            array(
+	            'V',
+    	        $crc
+            ),  // CRC-32
+            array(
+            	'V',
+            	$zlen
+            ), // compressed size
+            array(
+            	'V',
+            	$len
+            ), // uncompressed size
+        );
+        $ret               = $this->packFields($fields);
+        $num_bytes_written = strlen($ret);
+        $this->send($ret);
+
+        return $num_bytes_written;
+    }
+
 	/**
 	 * finish
-	 * 
+	 *
 	 * Write zip footer to stream.
-	 * 
+	 *
 	 *  Example:
 	 *
 	 *   // add a list of files to the archive
 	 *   $files = array('foo.txt', 'bar.jpg');
 	 *   foreach ($files as $path)
 	 *     $zip->addFile($path, file_get_contents($path));
-	 * 
+	 *
 	 *   // write footer to stream
 	 *   $zip->finish();
-	 * 
+	 *
 	 * @return void
 	 */
 	public function finish() {
@@ -386,22 +431,20 @@ class ZipStream {
 	 * @param string  $crc
 	 * @param Integer $zlen
 	 * @param Integer $len
-	 * @return void
+	 * @param Hex     $genb
+	 * @return Integer $num_bytes_written
 	 */
-	protected function addFileHeader($name, $opt, $meth, $crc, $zlen, $len) {
+	protected function addFileHeader($name, &$opt, $meth, $crc, $zlen, $len, $genb = 0x00) {
 		// strip leading slashes from file name
 		// (fixes bug in windows archive viewer)
 		$name = preg_replace('/^\\/+/', '', $name);
-		
+
 		// calculate name length
 		$nlen = strlen($name);
-		
+
 		// create dos timestamp
 		$opt['time'] = isset($opt['time']) && !empty($opt['time']) ? $opt['time'] : time();
 		$dts         = $this->dostime($opt['time']);
-                
-                // general purpose bit flag
-                $genb = 0x00;
 
 		if (mb_check_encoding($name, "UTF-8") && !mb_check_encoding($name, "ASCII"))
 		{
@@ -410,7 +453,7 @@ class ZipStream {
 			// MUST be encoded using UTF-8. (see APPENDIX D)
 			$genb |= 0x0800;
 		}
-		
+
 		// build file header
 		$fields = array( // (from V.A of APPNOTE.TXT)
 			array(
@@ -459,18 +502,18 @@ class ZipStream {
 				0
 			) // extra data len
 		);
-		
+
 		// pack fields and calculate "total" length
-		$ret     = $this->packFields($fields);
-		$cdr_len = strlen($ret) + $nlen + $zlen;
-		
+		$ret               = $this->packFields($fields);
+		$header            = $ret . $name;
+		$num_bytes_written = strlen($header);
+
 		// print header and filename
-		$this->send($ret . $name);
-		
-		// add to central directory record and increment offset
-		$this->addToCdr($name, $opt, $meth, $crc, $zlen, $len, $cdr_len);
+		$this->send($header);
+
+		return $num_bytes_written;
 	}
-	
+
 	/**
 	 * Add a large file from the given path.
 	 *
@@ -484,10 +527,10 @@ class ZipStream {
 		$st         = stat($path);
 		$block_size = 1048576; // process in 1 megabyte chunks
 		$algo       = 'crc32b';
-		
+
 		// calculate header attributes
 		$zlen = $len = $st['size'];
-		
+
 		$meth_str = $this->opt[self::OPTION_LARGE_FILE_METHOD];
 		if ($meth_str == self::METHOD_STORE) {
 			// store method
@@ -496,12 +539,12 @@ class ZipStream {
 		} elseif ($meth_str == self::METHOD_DEFLATE) {
 			// deflate method
 			$meth = 0x08;
-			
+
 			// open file, calculate crc and compressed file length
 			$fh       = fopen($path, 'rb');
 			$hash_ctx = hash_init($algo);
 			$zlen     = 0;
-			
+
 			// read each block, update crc and zlen
 			while (!feof($fh)) {
 				$data = fread($fh, $block_size);
@@ -517,7 +560,7 @@ class ZipStream {
 			}
 
 			stream_filter_remove($filter);
-			
+
 			// close file and finalize crc
 			fclose($fh);
 
@@ -525,17 +568,19 @@ class ZipStream {
 		} else {
 			throw new InvalidOptionException('large_file_method', array(self::METHOD_STORE, self::METHOD_DEFLATE), $meth_str);
 		}
-		
+
 		// send file header
-		$this->addFileHeader($name, $opt, $meth, $crc, $zlen, $len);
-		
+		$num_bytes_written = $this->addFileHeader($name, $opt, $meth, $crc, $zlen, $len);
+		$num_bytes_written += $zlen;
+		$this->addToCdr($name, $opt, $meth, $crc, $zlen, $len, $num_bytes_written);
+
 		// open input file
 		$fh = fopen($path, 'rb');
 
 		if ($meth_str == self::METHOD_DEFLATE) {
 			$filter = stream_filter_append($fh, 'zlib.deflate', STREAM_FILTER_READ, 6);
 		}
-		
+
 		// send file blocks
 		while (!feof($fh)) {
 			$data = fread($fh, $block_size);
@@ -547,11 +592,11 @@ class ZipStream {
 		if (isset($filter) && is_resource($filter)) {
 			stream_filter_remove($filter);
 		}
-		
+
 		// close input file
 		fclose($fh);
 	}
-	
+
 	/**
 	 * Is this file larger than large_file_size?
 	 *
@@ -562,21 +607,21 @@ class ZipStream {
 		$st = stat($path);
 		return ($this->opt[self::OPTION_LARGE_FILE_SIZE] > 0) && ($st['size'] > $this->opt[self::OPTION_LARGE_FILE_SIZE]);
 	}
-	
+
 	/**
 	 * Save file attributes for trailing CDR record.
 	 *
-	 * @param String  $name
-	 * @param Array   $opt
-	 * @param Integer $meth
-	 * @param string  $crc
-	 * @param Integer $zlen
-	 * @param Integer $len
-	 * @param Integer $rec_len
-	 * @return void
-	 * @return void
+	 * @param String   $name
+	 * @param Array    $opt
+	 * @param Integer  $meth
+	 * @param string   $crc
+	 * @param Integer  $zlen
+	 * @param Integer  $len
+	 * @param Integer  $rec_len
+	 * @param Hex      $genb
+	 * @return Integer $num_bytes_written
 	 */
-	private function addToCdr($name, $opt, $meth, $crc, $zlen, $len, $rec_len) {
+	private function addToCdr($name, $opt, $meth, $crc, $zlen, $len, $rec_len, $genb = 0x00) {
 		$this->files[] = array(
 			$name,
 			$opt,
@@ -584,28 +629,26 @@ class ZipStream {
 			$crc,
 			$zlen,
 			$len,
-			$this->ofs
+			$this->ofs,
+			$genb
 		);
 		$this->ofs += $rec_len;
 	}
-	
+
 	/**
 	 * Send CDR record for specified file.
-	 * 
+	 *
 	 * @param array $args
 	 * @return void
 	 */
 	protected function addCdrFile($args) {
-		list($name, $opt, $meth, $crc, $zlen, $len, $ofs) = $args;
-		
+		list($name, $opt, $meth, $crc, $zlen, $len, $ofs, $genb) = $args;
+
 		// get attributes
 		$comment = isset($opt['comment']) && !empty($opt['comment']) ? $opt['comment'] : '';
-		
+
 		// get dos timestamp
 		$dts = $this->dostime($opt['time']);
-                
-                // general purpose bit flag
-                $genb = 0x00;
 
 		if (mb_check_encoding($name, "UTF-8") && !mb_check_encoding($name, "ASCII"))
 		{
@@ -614,7 +657,7 @@ class ZipStream {
 			// MUST be encoded using UTF-8. (see APPENDIX D)
 			$genb |= 0x0800;
 		}
-		
+
 		$fields = array( // (from V,F of APPNOTE.TXT)
 			array(
 				'V',
@@ -681,19 +724,19 @@ class ZipStream {
 				$ofs
 			) // relative offset of local header
 		);
-		
+
 		// pack fields, then append name and comment
 		$ret = $this->packFields($fields) . $name . $comment;
-		
+
 		$this->send($ret);
-		
+
 		// increment cdr offset
 		$this->cdr_ofs += strlen($ret);
 	}
-	
+
 	/**
 	 * Send CDR EOF (Central Directory Record End-of-File) record.
-	 * 
+	 *
 	 * @param array $opt
 	 * @return void
 	 */
@@ -701,13 +744,13 @@ class ZipStream {
 		$num     = count($this->files);
 		$cdr_len = $this->cdr_ofs;
 		$cdr_ofs = $this->ofs;
-		
+
 		// grab comment (if specified)
 		$comment = '';
 		if ($opt && isset($opt['comment'])) {
 			$comment = $opt['comment'];
 		}
-		
+
 		$fields = array( // (from V,F of APPNOTE.TXT)
 			array(
 				'V',
@@ -742,14 +785,14 @@ class ZipStream {
 				strlen($comment)
 			) // zip file comment length
 		);
-		
+
 		$ret = $this->packFields($fields) . $comment;
 		$this->send($ret);
 	}
-	
+
 	/**
 	 * Add CDR (Central Directory Record) footer.
-	 * 
+	 *
 	 * @param array $opt
 	 * @return void
 	 */
@@ -758,11 +801,11 @@ class ZipStream {
 			$this->addCdrFile($file);
 		$this->addCdrEof($opt);
 	}
-	
+
 	/**
 	 * Clear all internal variables.  Note that the stream object is not
 	 * usable after this.
-	 * 
+	 *
 	 * @return void
 	 */
 	protected function clear() {
@@ -771,32 +814,32 @@ class ZipStream {
 		$this->cdr_ofs = 0;
 		$this->opt     = array();
 	}
-	
+
 	/**
 	 *  Send HTTP headers for this stream.
-	 * 
+	 *
 	 * @return void
 	 */
 	protected function sendHttpHeaders() {
 		// grab options
 		$opt = $this->opt;
-		
+
 		// grab content type from options
 		$content_type = 'application/x-zip';
 		if (isset($opt[self::OPTION_CONTENT_TYPE])) {
 			$content_type = $this->opt[self::OPTION_CONTENT_TYPE];
 		}
-		
-		// grab content disposition 
+
+		// grab content disposition
 		$disposition = 'attachment';
 		if (isset($opt[self::OPTION_CONTENT_DISPOSITION])) {
 			$disposition = $opt[self::OPTION_CONTENT_DISPOSITION];
 		}
-		
+
 		if ($this->output_name) {
 			$disposition .= "; filename=\"{$this->output_name}\"";
 		}
-		
+
 		$headers = array(
 			'Content-Type' => $content_type,
 			'Content-Disposition' => $disposition,
@@ -804,15 +847,15 @@ class ZipStream {
 			'Cache-Control' => 'public, must-revalidate',
 			'Content-Transfer-Encoding' => 'binary'
 		);
-		
+
 		$call = $this->opt[self::OPTION_HTTP_HEADER_CALLBACK];
 		foreach ($headers as $key => $val)
 			$call("$key: $val");
 	}
-	
+
 	/**
 	 * Send string, sending HTTP headers if necessary.
-	 * 
+	 *
 	 * @param String $str
 	 * @return void
 	 */
@@ -821,20 +864,20 @@ class ZipStream {
 			$this->sendHttpHeaders();
 		}
 		$this->need_headers = false;
-		
+
 		fwrite($this->opt[self::OPTION_OUTPUT_STREAM], $str);
 	}
-	
+
 	/**
 	 * Convert a UNIX timestamp to a DOS timestamp.
-	 * 
+	 *
 	 * @param Integer $when
 	 * @return Integer DOS Timestamp
 	 */
 	protected final function dostime($when) {
 		// get date array for timestamp
 		$d = getdate($when);
-		
+
 		// set lower-bound on dates
 		if ($d['year'] < 1980) {
 			$d = array(
@@ -846,18 +889,18 @@ class ZipStream {
 				'seconds' => 0
 			);
 		}
-		
+
 		// remove extra years from 1980
 		$d['year'] -= 1980;
-		
+
 		// return date string
 		return ($d['year'] << 25) | ($d['mon'] << 21) | ($d['mday'] << 16) | ($d['hours'] << 11) | ($d['minutes'] << 5) | ($d['seconds'] >> 1);
 	}
-	
+
 	/**
 	 * Create a format string and argument list for pack(), then call
 	 * pack() and return the result.
-	 * 
+	 *
 	 * @param array $fields
 	 * @return string
 	 */
@@ -866,16 +909,16 @@ class ZipStream {
 			'',
 			array()
 		);
-		
+
 		// populate format string and argument list
 		foreach ($fields as $field) {
 			$fmt .= $field[0];
 			$args[] = $field[1];
 		}
-		
+
 		// prepend format string to argument list
 		array_unshift($args, $fmt);
-		
+
 		// build output string from header and compressed data
 		return call_user_func_array('pack', $args);
 	}

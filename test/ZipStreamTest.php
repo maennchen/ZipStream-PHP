@@ -159,11 +159,13 @@ class ZipStreamTest extends PHPUnit_Framework_TestCase {
 
 		$streamExample = fopen('php://temp', 'w+');
 		fwrite($streamExample, "Sample String Data");
+		rewind($streamExample); // move the pointer back to the beginning of file.
 		$zip->addFileFromStream('sample.txt', $streamExample);
 		fclose($streamExample);
 
 		$streamExample2 = fopen('php://temp', 'w+');
 		fwrite($streamExample2, "More Simple Sample Data");
+		rewind($streamExample2); // move the pointer back to the beginning of file.
 		$zip->addFileFromStream('test/sample.txt', $streamExample2);
 		fclose($streamExample2);
 
