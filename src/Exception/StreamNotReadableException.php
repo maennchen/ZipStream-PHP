@@ -15,6 +15,6 @@ class StreamNotReadableException extends Exception {
 	 * @param String fileName - The name of the file which the stream belongs to.
 	 */
 	public function __construct($fileName) {
-		parent::__construct("Ths stream for $fileName could not be read.");
+		parent::__construct("The stream for $fileName could not be read.");
 	}
 }

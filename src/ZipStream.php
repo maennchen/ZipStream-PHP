@@ -378,10 +378,8 @@ class ZipStream {
 		// If there was a read error, we still want the cdr to be appended, this way we ensure
 		// the zip file can be opened if the exception thrown below is handled by the invoker.
 		// E.g, in the catch block, we could add an explanatory 'ERROR.txt' so the enduser knows
-		// something went wrong. If the exception is not caught, then the enduser will end with a corrupted
-		// zip file, in which case it will be clear that the download failed. Warning: if this error handling
-		// is not performed, the user can potentially end with an apparently valid zip file but with an unkown
-		// number of missing files due to a broken stream.
+		// something went wrong. If this error handling is not performed, the end user can potentially
+		// end with a valid zip file but with incomplete or missing files.
 
 		if ($readError) {
 			throw new StreamNotReadableException($name);
