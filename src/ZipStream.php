@@ -3,6 +3,7 @@ namespace ZipStream;
 use ZipStream\Exception\InvalidOptionException;
 use ZipStream\Exception\FileNotFoundException;
 use ZipStream\Exception\FileNotReadableException;
+use ZipStream\Exception\StreamNotReadableException;
 
 /**
  * ZipStream
@@ -341,10 +342,18 @@ class ZipStream {
 		// send local file header.
 		$num_bytes_written = $this->addFileHeader($name, $opt, $meth, $crc, $zlen, $len, $genb);
 
-		//  Read data in chunks and send it to the output as soon as it comes in.
+		$readError = false;
+		// Read data in chunks and send it to the output as soon as it comes in.
 		while (!feof($stream)) {
 			// Read and send.
 			$data = fread($stream, $block_size);
+
+			// Exist if fread failed, and flag the error for post-handling.
+			if ($data === false) {
+				$readError = true;
+				break;
+			}
+
 			$this->send($data);
 
 			// Update crc and data lengths.
@@ -365,6 +374,18 @@ class ZipStream {
 
 		// add to central directory record and increment offset
 		$this->addToCdr($name, $opt, $meth, $crc, $zlen, $len, $num_bytes_written, $genb);
+
+		// If there was a read error, we still want the cdr to be appended, this way we ensure
+		// the zip file can be opened if the exception thrown below is handled by the invoker.
+		// E.g, in the catch block, we could add an explanatory 'ERROR.txt' so the enduser knows
+		// something went wrong. If the exception is not caught, then the enduser will end with a corrupted
+		// zip file, in which case it will be clear that the download failed. Warning: if this error handling
+		// is not performed, the user can potentially end with an apparently valid zip file but with an unkown
+		// number of missing files due to a broken stream.
+
+		if ($readError) {
+			throw new StreamNotReadableException($name);
+		}
 	}
 
 	/**
