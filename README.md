@@ -13,7 +13,7 @@ Simply add a dependency on maennchen/zipstream-php to your project's composer.js
 ```json
 {
     "require": {
-        "maennchen/zipstream-php": "0.4.*"
+        "maennchen/zipstream-php": "^0.4.1"
     }
 }
 ```
