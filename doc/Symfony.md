@@ -67,4 +67,6 @@ public function zipStreamAction()
 ```
 In the above example, files on AWS S3 are being streamed from S3 to the Symfony application via fopen call when the s3Client has registerStreamWrapper applied.  This stream is then passed to ZipStream via the addFileFromStream() function, which ZipStream then streams as a zip to the client browser via Symfony's StreamedResponse. No Zip is created server side, which makes this approach a more efficient solution for streaming zips to the client browser especially for larger files.
 
+For the above use case you will need to have installed [aws/aws-sdk-php-symfony](https://github.com/aws/aws-sdk-php-symfony) to support accessing S3 objects in your Symfony web application. This is not required for locally stored files on you server you intend to stream via ZipStream.
+
 See official Symfony documentation for details on [Symfony's StreamedResponse (Symfony\Component\HttpFoundation\StreamedResponse)](https://symfony.com/doc/current/components/http_foundation.html#streaming-a-response) 
