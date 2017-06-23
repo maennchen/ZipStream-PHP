@@ -53,6 +53,10 @@ following URL: http://pablotron.org/?cid=1535
 
   * PHP version 5.6 or newer.
 
+## Further Documentation
+
+  * [Using ZipStream in Symfony](/doc/Symfony.md)
+
 ## Contributors
 Please take a look at the CONTRIBUTOR-README.md File.
 
