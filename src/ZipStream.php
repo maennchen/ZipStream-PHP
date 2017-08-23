@@ -684,11 +684,11 @@ class ZipStream {
 			), // central file header signature
 			array(
 				'v',
-				(6 << 8) + 3
+				0x003F // Ver 6.3, OS_FAT
 			), // version made by
 			array(
 				'v',
-				(6 << 8) + 3
+				0x0014 // Ver 2.0, OS_FAT
 			), // version needed to extract
 			array(
 				'v',
