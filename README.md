@@ -45,7 +45,9 @@ $zip->finish();
 ```
 
 You can also add comments, modify file timestamps, and customize (or
-disable) the HTTP headers.  See the class file for details.  There are a
+disable) the HTTP headers. It is also possible to specify the storage method when adding files,
+the current default storage method is 'deflate' i.e files are stored with Compression mode 0x08.
+  See the class file for details.  There are a
 couple of additional examples in the initial release announcement at the
 following URL: http://pablotron.org/?cid=1535
 
