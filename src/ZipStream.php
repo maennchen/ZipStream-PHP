@@ -73,6 +73,9 @@ class ZipStream {
 	const METHOD_STORE = 'store';
 	const METHOD_DEFLATE = 'deflate';
 
+    const COMPRESS = 0x08;
+    const NOCOMPRESS = 0x00;
+
 	const OPTION_LARGE_FILE_SIZE      = 'large_file_size';
 	const OPTION_LARGE_FILE_METHOD    = 'large_file_method';
 	const OPTION_SEND_HTTP_HEADERS    = 'send_http_headers';
@@ -209,6 +212,7 @@ class ZipStream {
 	 *
 	 *  @param String $name - path of file in archive (including directory).
 	 *  @param String $data - contents of file
+     *  @param String $storage_method - storage method for file, could be "store" or "deflate"
 	 *  @param array $opt  - Hash of options for file (optional, see "File Options"
 	 *          below).
 	 *
@@ -231,15 +235,15 @@ class ZipStream {
 	 *     'comment' => 'this is a comment about bar.jpg',
 	 *   ));
 	 */
-	public function addFile($name, $data, $opt = array()) {
+	public function addFile($name, $data,  $opt = array(), $storage_method = 'deflate') {
 		// compress data
-		$zdata = gzdeflate($data);
+        $meth = $this->getStorageConstant($storage_method);
+        $zdata = $meth == self::COMPRESS ? gzdeflate($data) : $data;
 
 		// calculate header attributes
 		$crc  = crc32($data);
 		$zlen = strlen($zdata);
 		$len  = strlen($data);
-		$meth = 0x08;
 
 		// send file header
 		$num_bytes_written = $this->addFileHeader($name, $opt, $meth, $crc, $zlen, $len);
@@ -262,6 +266,7 @@ class ZipStream {
 	 *  @param String $name - name of file in archive (including directory path).
 	 *  @param String $path - path to file on disk (note: paths should be encoded using
 	 *          UNIX-style forward slashes -- e.g '/path/to/some/file').
+     * @param String $storage_method - storage method for the file: either 'deflate' or 'store'
 	 *  @param array $opt  - Hash of options for file (optional, see "File Options"
 	 *          below).
 	 *
@@ -288,21 +293,23 @@ class ZipStream {
 	 * @throws \ZipStream\Exception\FileNotFoundException
 	 * @throws \ZipStream\Exception\FileNotReadableException
 	 */
-	public function addFileFromPath($name, $path, $opt = array()) {
+	public function addFileFromPath($name, $path, $opt = array(), $storage_method = "deflate") {
 		if(!is_readable($path)) {
 			if(!file_exists($path)) {
 				throw new FileNotFoundException($path);
 			}
 			throw new FileNotReadableException($path);
 		}
+
 		if ($this->isLargeFile($path)) {
 			// file is too large to be read into memory; add progressively
 			$this->addLargeFile($name, $path, $opt);
 		} else {
 			// file is small enough to read into memory; read file contents and
 			// handle with addFile()
+
 			$data = file_get_contents($path);
-			$this->addFile($name, $data, $opt);
+			$this->addFile($name, $data, $opt, $storage_method);
 		}
 	}
 
@@ -331,10 +338,10 @@ class ZipStream {
 	 *
 	 * @return void
 	 */
-	public function addFileFromStream($name, $stream, $opt = array()) {
+	public function addFileFromStream($name, $stream, $opt = array(), $storage_method = 'deflate') {
 		$block_size = 1048576; // process in 1 megabyte chunks
 		$algo       = 'crc32b';
-		$meth       = 0x00;
+		$meth       = $this->getStorageConstant($storage_method);
 		$genb       = 0x08;
 		$crc        = $zlen = $len = 0;
 		$hash_ctx   = hash_init($algo);
@@ -354,12 +361,14 @@ class ZipStream {
 				break;
 			}
 
-			$this->send($data);
+            $zdata = $meth == self::COMPRESS ? gzdeflate($data) : $data;
+
+			$this->send($zdata);
 
 			// Update crc and data lengths.
-			hash_update($hash_ctx, $data);
+			hash_update($hash_ctx, $zdata);
 			$len  += strlen($data);
-			$zlen += strlen($data);
+			$zlen += strlen($zdata);
 		}
 
 		// Calculate the actual crc.
@@ -941,4 +950,9 @@ class ZipStream {
 		// build output string from header and compressed data
 		return call_user_func_array('pack', $args);
 	}
+
+    protected function getStorageConstant($storage_method)
+    {
+        return $storage_method == self::METHOD_STORE ? self::NOCOMPRESS : self::COMPRESS;
+    }
 }
