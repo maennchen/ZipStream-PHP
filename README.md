@@ -8,14 +8,10 @@ Please see the file LICENSE.md for licensing and warranty information.  The
 latest version of this software is available at the following URL: https://github.com/maennchen/ZipStream-PHP
 
 ## Installation
-Simply add a dependency on maennchen/zipstream-php to your project's composer.json file if you use Composer to manage the dependencies of your project. Here is a minimal example of a composer.json file.
+Simply add a dependency on maennchen/zipstream-php to your project's composer.json file if you use Composer to manage the dependencies of your project. Use following command to add the package to your project's dependencies:
 
-```json
-{
-    "require": {
-        "maennchen/zipstream-php": "^0.4.1"
-    }
-}
+```bash
+composer require maennchen/zipstream-php
 ```
 
 ## Overview
