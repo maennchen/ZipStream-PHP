@@ -53,7 +53,7 @@ following URL: http://pablotron.org/?cid=1535
 
 ## Requirements
 
-  * PHP version 5.6 or newer.
+  * PHP version 7.0 or newer.
 
 ## Further Documentation
 
