@@ -2,7 +2,7 @@
 
 namespace ZipStreamTest;
 
-use PHPUnit_Framework_TestCase;
+use PHPUnit\Framework\TestCase;
 use ZipStream\ZipStream;
 
 /**
@@ -11,7 +11,7 @@ use ZipStream\ZipStream;
  * @author Jonatan Männchen <jonatan@maennchen.ch>
  * @copyright Copyright (c) 2014, Jonatan Männchen
  */
-class ZipStreamTest extends PHPUnit_Framework_TestCase
+class ZipStreamTest extends TestCase
 {
     const OSX_ARCHIVE_UTILITY = '/System/Library/CoreServices/Applications/Archive Utility.app/Contents/MacOS/Archive Utility';
 
@@ -51,6 +51,7 @@ class ZipStreamTest extends PHPUnit_Framework_TestCase
     public function testFileNotReadableException()
     {
         // TODO: How to test this?
+        $this->markTestIncomplete('How to test this?');
     }
 
     public function testDostime()
