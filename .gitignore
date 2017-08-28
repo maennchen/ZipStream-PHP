@@ -1,2 +1,4 @@
 vendor/
 clover.xml
+phpunit.xml
+.idea

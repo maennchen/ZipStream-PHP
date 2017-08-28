@@ -85,6 +85,30 @@ class ZipStreamTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals(file_get_contents($tmpDir . '/test/sample.txt'), 'More Simple Sample Data');
 	}
 
+    public function testAddFileWithStorageMethod()
+    {
+        list($tmp, $stream) = $this->getTmpFileStream();
+
+        $zip = new ZipStream(null, array(
+            ZipStream::OPTION_OUTPUT_STREAM => $stream
+        ));
+
+        $zip->addFile('sample.txt', 'Sample String Data', [], ZipStream::METHOD_STORE);
+        $zip->addFile('test/sample.txt', 'More Simple Sample Data');
+        $zip->finish();
+        fclose($stream);
+
+        $zipArch = new \ZipArchive();
+        $zipArch->open($tmp);
+
+        $sample1 = $zipArch->statName('sample.txt');
+        $sample12 = $zipArch->statName('test/sample.txt');
+        $this->assertEquals($sample1['comp_method'], ZipStream::NOCOMPRESS);
+        $this->assertEquals($sample12['comp_method'], ZipStream::COMPRESS);
+
+        $zipArch->close();
+    }
+
 	public function testAddFileFromPath() {
 		list($tmp, $stream) = $this->getTmpFileStream();
 
@@ -113,6 +137,39 @@ class ZipStreamTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals(file_get_contents($tmpDir . '/sample.txt'), 'Sample String Data');
 		$this->assertEquals(file_get_contents($tmpDir . '/test/sample.txt'), 'More Simple Sample Data');
 	}
+
+    public function testAddFileFromPathWithStorageMethod()
+    {
+        list($tmp, $stream) = $this->getTmpFileStream();
+
+        $zip = new ZipStream(null, array(
+            ZipStream::OPTION_OUTPUT_STREAM => $stream
+        ));
+
+        list($tmpExample, $streamExample) = $this->getTmpFileStream();
+        fwrite($streamExample, "Sample String Data");
+        fclose($streamExample);
+        $zip->addFileFromPath('sample.txt', $tmpExample, [], ZipStream::METHOD_STORE);
+
+        list($tmpExample, $streamExample) = $this->getTmpFileStream();
+        fwrite($streamExample, "More Simple Sample Data");
+        fclose($streamExample);
+        $zip->addFileFromPath('test/sample.txt', $tmpExample);
+
+        $zip->finish();
+        fclose($stream);
+
+        $zipArch = new \ZipArchive();
+        $zipArch->open($tmp);
+
+        $sample1 = $zipArch->statName('sample.txt');
+        $this->assertEquals(ZipStream::NOCOMPRESS, $sample1['comp_method']);
+
+        $sample2 = $zipArch->statName('test/sample.txt');
+        $this->assertEquals(ZipStream::COMPRESS, $sample2['comp_method']);
+
+        $zipArch->close();
+    }
 
 	public function testAddFileFromPath_largeFileMethods() {
 		$methods = array(ZipStream::METHOD_STORE, ZipStream::METHOD_DEFLATE);
@@ -180,6 +237,41 @@ class ZipStreamTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals(file_get_contents($tmpDir . '/sample.txt'), 'Sample String Data');
 		$this->assertEquals(file_get_contents($tmpDir . '/test/sample.txt'), 'More Simple Sample Data');
 	}
+
+    public function addFileFromStreamWithStorageMethod()
+    {
+        list($tmp, $stream) = $this->getTmpFileStream();
+
+        $zip = new ZipStream(null, array(
+            ZipStream::OPTION_OUTPUT_STREAM => $stream
+        ));
+
+        $streamExample = fopen('php://temp', 'w+');
+        fwrite($streamExample, "Sample String Data");
+        rewind($streamExample); // move the pointer back to the beginning of file.
+        $zip->addFileFromStream('sample.txt', $streamExample, [], ZipStream::METHOD_STORE);
+        fclose($streamExample);
+
+        $streamExample2 = fopen('php://temp', 'w+');
+        fwrite($streamExample2, "More Simple Sample Data");
+        rewind($streamExample2); // move the pointer back to the beginning of file.
+        $zip->addFileFromStream('test/sample.txt', $streamExample2, []);
+        fclose($streamExample2);
+
+        $zip->finish();
+        fclose($stream);
+
+        $zipArch = new \ZipArchive();
+        $zipArch->open($tmp);
+
+        $sample1 = $zipArch->statName('sample.txt');
+        $this->assertEquals(ZipStream::NOCOMPRESS, $sample1['comp_method']);
+
+        $sample2 = $zipArch->statName('test/sample.txt');
+        $this->assertEquals(ZipStream::COMPRESS, $sample2['comp_method']);
+
+        $zipArch->close();
+    }
 
 	/**
 	 * @return array
