@@ -718,7 +718,7 @@ class ZipStream
             $this->send($zdata);
 
             // Update crc and data lengths.
-            hash_update($hash_ctx, $zdata);
+            hash_update($hash_ctx, $data);
             $len += strlen($data);
             $zlen += strlen($zdata);
         }
