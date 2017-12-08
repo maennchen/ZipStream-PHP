@@ -689,7 +689,7 @@ class ZipStream
      *
      * @return void
      */
-    public function addFileFromStream($name, $stream, $opt = array(), $storage_method = 'deflate')
+    public function addFileFromStream($name, $stream, $opt = array(), $storage_method = self::METHOD_DEFLATE)
     {
         $block_size = 1048576; // process in 1 megabyte chunks
         $algo = 'crc32b';
@@ -697,6 +697,15 @@ class ZipStream
         $genb = 0x08;
         $crc = $zlen = $len = 0;
         $hash_ctx = hash_init($algo);
+
+        if ($storage_method == self::METHOD_DEFLATE)
+        {
+            $deflateCtx = deflate_init(ZLIB_ENCODING_RAW, ['level' => 6]);
+        }
+        else
+        {
+            $deflateCtx = null;
+        }
 
         // send local file header.
         $num_bytes_written = $this->addFileHeader($name, $opt, $meth, $crc, $zlen, $len, $genb);
@@ -713,7 +722,14 @@ class ZipStream
                 break;
             }
 
-            $zdata = $meth == self::COMPRESS ? gzdeflate($data) : $data;
+            if ($deflateCtx !== null)
+            {
+                $zdata = deflate_add($deflateCtx, $data, ZLIB_NO_FLUSH);
+            }
+            else
+            {
+                $zdata = $data;
+            }
 
             $this->send($zdata);
 
@@ -721,6 +737,14 @@ class ZipStream
             hash_update($hash_ctx, $data);
             $len += strlen($data);
             $zlen += strlen($zdata);
+        }
+
+        if ($deflateCtx !== null)
+        {
+            //finalize the compressed data
+            $zdata = deflate_add($deflateCtx, '', ZLIB_FINISH);
+            $zlen += strlen($zdata);
+            $this->send($zdata);
         }
 
         // Calculate the actual crc.
