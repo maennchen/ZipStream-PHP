@@ -24,7 +24,7 @@ require 'vendor/autoload.php';
 # create a new zipstream object
 $zip = new ZipStream\ZipStream('example.zip');
 
-# create a file named 'hello.txt' 
+# create a file named 'hello.txt'
 $zip->addFile('hello.txt', 'This is the contents of hello.txt');
 
 # add a file named 'some_image.jpg' from a local file 'path/to/image.jpg'
@@ -43,9 +43,9 @@ $zip->finish();
 You can also add comments, modify file timestamps, and customize (or
 disable) the HTTP headers. It is also possible to specify the storage method when adding files,
 the current default storage method is 'deflate' i.e files are stored with Compression mode 0x08.
-  See the class file for details.  There are a
+  See the class file for details.<!--  There are a
 couple of additional examples in the initial release announcement at the
-following URL: http://pablotron.org/?cid=1535
+following URL: http://pablotron.org/?cid=1535 -->
 
 ## Requirements
 
