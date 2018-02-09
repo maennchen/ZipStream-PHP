@@ -71,6 +71,9 @@ use ZipStream\Exception\StreamNotReadableException;
  */
 class ZipStream
 {
+    /**
+     * @deprecated deprecated since version 0.3.0, use composer version
+     */
     const VERSION = '0.3.0';
 
     const METHOD_STORE = 'store';
