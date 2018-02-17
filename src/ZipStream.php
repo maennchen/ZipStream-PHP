@@ -625,10 +625,10 @@ class ZipStream
         $zlen = $len = $st['size'];
 
         $meth = $this->opt[self::OPTION_LARGE_FILE_METHOD];
-        if ($meth == static::METHOD_STORE) {
+        if ($meth === static::METHOD_STORE) {
             // store method
             $crc = hexdec(hash_file($algo, $path));
-        } elseif ($meth == static::METHOD_DEFLATE) {
+        } elseif ($meth === static::METHOD_DEFLATE) {
             // deflate method
             // open file, calculate crc and compressed file length
             $fh       = fopen($path, 'rb');
