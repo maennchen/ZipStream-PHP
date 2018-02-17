@@ -523,16 +523,15 @@ class ZipStream
                 ['V', 0xFFFFFFFF],                      // Length of compressed data (Forced to 0xFFFFFFFF for 64bit extension)
                 ['V', 0xFFFFFFFF],                      // Length of original data (Forced to 0xFFFFFFFF for 64bit extension)
                 ['v', $nlen],                           // Length of filename
-                ['v', 32],                              // Extra data (32 bytes)
+                ['v', 28],                              // Extra data (see below)
             ];
 
             $fields64 = [
-                ['v', 0x0001],                          // 64Bit Extension
-                ['v', 28],                              // 28bytes of data follows
+                ['v', 0x0001],                          // 64bit Extension
+                ['v', 24],                              // Length of data block
                 ['P', 0x0000000000000000],              // Length of original data (0 -> moved to data descriptor footer)
                 ['P', 0x0000000000000000],              // Length of compressed data (0 -> moved to data descriptor footer)
                 ['P', 0x0000000000000000],              // Relative Header Offset
-                ['V', 0x00000000]                       // Disk number
             ];
         }
         else
@@ -757,7 +756,7 @@ class ZipStream
                 ['V', 0xFFFFFFFF],                      // Compressed Data Length (Forced to 0xFFFFFFFF for 64bit Extension)
                 ['V', 0xFFFFFFFF],                      // Original Data Length (Forced to 0xFFFFFFFF for 64bit Extension)
                 ['v', strlen($name)],                   // Length of filename
-                ['v', 32],                              // Extra data len (32bytes of 64bit Extension)
+                ['v', 28],                              // Extra data len (see below)
                 ['v', strlen($comment)],                // Length of comment
                 ['v', 0],                               // Disk number
                 ['v', 0],                               // Internal File Attributes
@@ -766,12 +765,11 @@ class ZipStream
             ];
 
             $fields64 = [
-                ['v', 0x0001],                          // 64Bit Extension
-                ['v', 28],                              // 28bytes of data follows
+                ['v', 0x0001],                          // 64bit Extension
+                ['v', 24],                              // Length of data block
                 ['P', $len],                            // Length of original data (0 -> moved to data descriptor footer)
                 ['P', $zlen],                           // Length of compressed data (0 -> moved to data descriptor footer)
                 ['P', $offset],                         // Relative Header Offset
-                ['V', 0]                                // Disk number
             ];
         }
         else
