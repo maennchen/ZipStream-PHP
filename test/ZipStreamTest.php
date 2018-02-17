@@ -29,6 +29,9 @@ class ZipStreamTest extends TestCase
         // Set large_file_method to a wrong value
         $zip->opt['large_file_method'] = 'xy';
 
+        // Avoid fill console with binary data if exception is not thrown
+        $zip->opt['output_stream'] = fopen('/dev/null', 'w');
+
         // Trigger error by adding a file
         $zip->addFileFromPath('foobar.php', __FILE__);
     }
