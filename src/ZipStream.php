@@ -117,12 +117,12 @@ class ZipStream
     /**
      * @var integer
      */
-    public $cdr_ofs = 0;
+    public $cdr_ofs;
 
     /**
      * @var integer
      */
-    public $ofs = 0;
+    public $ofs;
 
     /**
      * @var bool
@@ -223,6 +223,9 @@ class ZipStream
 
         $this->output_name  = $name;
         $this->need_headers = $name || $this->opt[self::OPTION_SEND_HTTP_HEADERS];
+
+        $this->cdr_ofs = new Bigint;
+        $this->ofs = new Bigint;
     }
 
     /**
@@ -598,7 +601,7 @@ class ZipStream
 
         $this->send($footer);
 
-        $total_length = $hlen + $zlen + $flen;
+        $total_length = Bigint::init($hlen)->add($zlen)->add($flen);
 
         $opt['time'] = isset($opt['time']) && !empty($opt['time']) ? $opt['time'] : time();
 
@@ -722,7 +725,7 @@ class ZipStream
             $len,
             $this->ofs
         );
-        $this->ofs += $rec_len;
+        $this->ofs = $this->ofs->add($rec_len);
     }
 
     /**
@@ -804,7 +807,7 @@ class ZipStream
         $this->send($ret);
 
         // increment cdr offset
-        $this->cdr_ofs += strlen($ret);
+        $this->cdr_ofs = $this->cdr_ofs->add(strlen($ret));
     }
 
     /**
@@ -851,7 +854,7 @@ class ZipStream
         $fields = [
             ['V', static::ZIP64_CDR_LOCATOR_SIGNATURE], // ZIP64 end of central file header signature
             ['V', 0x00],                                // Disc number containing CDR64EOF
-            ['P', $cdr_offset + $cdr_length],           // CDR offset
+            ['P', $cdr_offset->add($cdr_length)],       // CDR offset
             ['V', 1],                                   // Total number of disks
         ];
 
@@ -929,8 +932,8 @@ class ZipStream
     protected function clear()
     {
         $this->files   = array();
-        $this->ofs     = 0;
-        $this->cdr_ofs = 0;
+        $this->ofs     = new Bigint;
+        $this->cdr_ofs = new Bigint;
         $this->opt     = array();
     }
 
@@ -1038,8 +1041,23 @@ class ZipStream
 
         // populate format string and argument list
         foreach ($fields as $field) {
-            $fmt .= $field[0];
-            $args[] = $field[1];
+            $format = $field[0];
+            $value = $field[1];
+            if ($format == 'P') {
+                $fmt .= 'VV';
+                if ($value instanceof Bigint) {
+                    $args[] = $value->getLow32();
+                    $args[] = $value->getHigh32();
+                } else {
+                    $args[] = $value;
+                    $args[] = 0;
+                }
+            } else {
+                if ($value instanceof Bigint)
+                    $value = $value->getLow32();
+                $fmt .= $format;
+                $args[] = $value;
+            }
         }
 
         // prepend format string to argument list
