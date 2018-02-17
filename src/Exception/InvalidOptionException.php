@@ -19,9 +19,11 @@ class InvalidOptionException extends Exception
      * @param string[] $expectedValues - All possible Values
      * @param String $givenValue
      */
-    public function __construct($optionName, $expectedValues = array(), $givenValue)
+    public function __construct($optionName, $expectedValues, $givenValue)
     {
-        parent::__construct("Invalid Option $optionName. EXPECTED: " . implode(", ",
-                $expectedValues) . " GIVEN: $givenValue");
+        parent::__construct("Invalid Option $optionName. EXPECTED: " . implode(
+            ", ",
+            $expectedValues
+        ) . " GIVEN: $givenValue");
     }
 }
