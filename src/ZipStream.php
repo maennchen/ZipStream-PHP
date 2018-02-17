@@ -21,12 +21,16 @@ use ZipStream\Exception\StreamNotReadableException;
  * @author Jesse Donat <donatj@gmail.com>
  * @copyright Copyright (C) 2014 Jesse Donat <donatj@gmail.com>
  *
- * @license https://raw.githubusercontent.com/maennchen/ZipStream-PHP/master/LICENCE
+ * @author Nik Barham <github@brokencube.co.uk>
+ * @copyright Copyright (C) 2016 Nik Barham <github@brokencube.co.uk>
+ *
+ * @license https://raw.githubusercontent.com/brokencube/ZipStream64/master/LICENCE
  *
  *
  * Requirements:
  *
- * * PHP version 5.1.2 or newer.
+ * * PHP version 5.6 or newer.
+ * * PHP 64-bit
  *
  * Usage:
  *
@@ -76,19 +80,27 @@ class ZipStream
      */
     const VERSION = '0.3.0';
 
-    const METHOD_STORE = 'store';
-    const METHOD_DEFLATE = 'deflate';
+    const ZIP_VERSION = 0x000A;
+    const ZIP_VERSION_64 = 0x002D;
 
-    const COMPRESS = 0x08;
-    const NOCOMPRESS = 0x00;
+    const METHOD_STORE = 0x00;
+    const METHOD_DEFLATE = 0x08;
 
-    const OPTION_LARGE_FILE_SIZE = 'large_file_size';
-    const OPTION_LARGE_FILE_METHOD = 'large_file_method';
-    const OPTION_SEND_HTTP_HEADERS = 'send_http_headers';
+    const FILE_HEADER_SIGNATURE = 0x04034b50;
+    const CDR_FILE_SIGNATURE = 0x02014b50;
+    const CDR_EOF_SIGNATURE = 0x06054b50;
+    const DATA_DESCRIPTOR_SIGNATURE = 0x08074b50;
+    const ZIP64_CDR_EOF_SIGNATURE = 0x06064b50;
+    const ZIP64_CDR_LOCATOR_SIGNATURE = 0x07064b50;
+
+    const OPTION_LARGE_FILE_SIZE      = 'large_file_size';
+    const OPTION_LARGE_FILE_METHOD    = 'large_file_method';
+    const OPTION_SEND_HTTP_HEADERS    = 'send_http_headers';
     const OPTION_HTTP_HEADER_CALLBACK = 'http_header_callback';
-    const OPTION_OUTPUT_STREAM = 'output_stream';
-    const OPTION_CONTENT_TYPE = 'content_type';
-    const OPTION_CONTENT_DISPOSITION = 'content_disposition';
+    const OPTION_OUTPUT_STREAM        = 'output_stream';
+    const OPTION_CONTENT_TYPE         = 'content_type';
+    const OPTION_CONTENT_DISPOSITION  = 'content_disposition';
+    const OPTION_USE_ZIP64            = 'use_zip64';
 
     /**
      * Global Options
@@ -128,7 +140,7 @@ class ZipStream
      * Parameters:
      *
      * @param String $name - Name of output file (optional).
-     * @param array $opt - Hash of archive options (optional, see "Archive Options"
+     * @param array $opt  - Hash of archive options (optional, see "Archive Options"
      *           below).
      *
      * Archive Options:
@@ -195,10 +207,11 @@ class ZipStream
 
         $defaults = array(
             // set large file defaults: size = 20 megabytes
-            self::OPTION_LARGE_FILE_SIZE => 20 * 1024 * 1024,
-            self::OPTION_LARGE_FILE_METHOD => self::METHOD_STORE,
-            self::OPTION_SEND_HTTP_HEADERS => false,
+            self::OPTION_LARGE_FILE_SIZE      => 20 * 1024 * 1024,
+            self::OPTION_LARGE_FILE_METHOD    => static::METHOD_STORE,
+            self::OPTION_SEND_HTTP_HEADERS    => false,
             self::OPTION_HTTP_HEADER_CALLBACK => 'header',
+            self::OPTION_USE_ZIP64            => true
         );
 
         // merge and save options
@@ -208,7 +221,7 @@ class ZipStream
             $this->opt[self::OPTION_OUTPUT_STREAM] = fopen('php://output', 'w');
         }
 
-        $this->output_name = $name;
+        $this->output_name  = $name;
         $this->need_headers = $name || $this->opt[self::OPTION_SEND_HTTP_HEADERS];
     }
 
@@ -217,10 +230,9 @@ class ZipStream
      *
      * add a file to the archive
      *
-     * @param String $name - path of file in archive (including directory).
-     * @param String $data - contents of file
-     * @param String $storage_method - storage method for file, could be "store" or "deflate"
-     * @param array $opt - Hash of options for file (optional, see "File Options"
+     *  @param String $name - path of file in archive (including directory).
+     *  @param String $data - contents of file
+     *  @param array $opt  - Hash of options for file (optional, see "File Options"
      *          below).
      *
      * File Options:
@@ -242,24 +254,27 @@ class ZipStream
      *     'comment' => 'this is a comment about bar.jpg',
      *   ));
      */
-    public function addFile($name, $data, $opt = array(), $storage_method = 'deflate')
+    public function addFile($name, $data, $opt = array())
     {
+        $name = $this->filterFilename($name);
+
         // compress data
-        $meth = $this->getStorageConstant($storage_method);
-        $zdata = $meth == self::COMPRESS ? gzdeflate($data) : $data;
+        $zdata = gzdeflate($data);
 
         // calculate header attributes
-        $crc = crc32($data);
+        $crc  = crc32($data);
         $zlen = strlen($zdata);
-        $len = strlen($data);
+        $len  = strlen($data);
+        $meth = static::METHOD_DEFLATE;
 
         // send file header
-        $num_bytes_written = $this->addFileHeader($name, $opt, $meth, $crc, $zlen, $len);
-        $num_bytes_written += $zlen;
-        $this->addToCdr($name, $opt, $meth, $crc, $zlen, $len, $num_bytes_written);
+        $hlen = $this->addFileHeader($name, $opt, $meth);
 
         // print data
         $this->send($zdata);
+
+        // send file footer
+        $this->addFileFooter($name, $opt, $meth, $crc, $zlen, $len, $hlen);
     }
 
     /**
@@ -271,11 +286,10 @@ class ZipStream
      * files; see the "Large File Support" section above for more
      * information.
      *
-     * @param String $name - name of file in archive (including directory path).
-     * @param String $path - path to file on disk (note: paths should be encoded using
+     *  @param String $name - name of file in archive (including directory path).
+     *  @param String $path - path to file on disk (note: paths should be encoded using
      *          UNIX-style forward slashes -- e.g '/path/to/some/file').
-     * @param String $storage_method - storage method for the file: either 'deflate' or 'store'
-     * @param array $opt - Hash of options for file (optional, see "File Options"
+     *  @param array $opt  - Hash of options for file (optional, see "File Options"
      *          below).
      *
      * File Options:
@@ -301,24 +315,24 @@ class ZipStream
      * @throws \ZipStream\Exception\FileNotFoundException
      * @throws \ZipStream\Exception\FileNotReadableException
      */
-    public function addFileFromPath($name, $path, $opt = array(), $storage_method = "deflate")
+    public function addFileFromPath($name, $path, $opt = array())
     {
+        $name = $this->filterFilename($name);
+
         if (!is_readable($path)) {
-            if (!file_exists($path)) {
+            if(!file_exists($path)) {
                 throw new FileNotFoundException($path);
             }
             throw new FileNotReadableException($path);
         }
-
         if ($this->isLargeFile($path)) {
             // file is too large to be read into memory; add progressively
             $this->addLargeFile($name, $path, $opt);
         } else {
             // file is small enough to read into memory; read file contents and
             // handle with addFile()
-
             $data = file_get_contents($path);
-            $this->addFile($name, $data, $opt, $storage_method);
+            $this->addFile($name, $data, $opt);
         }
     }
 
@@ -347,86 +361,89 @@ class ZipStream
      *
      * @return void
      */
-    public function addFileFromStream($name, $stream, $opt = array(), $storage_method = self::METHOD_DEFLATE)
+    public function addFileFromStream($name, $stream, $opt = array())
     {
+        $name = $this->filterFilename($name);
+
         $block_size = 1048576; // process in 1 megabyte chunks
-        $algo = 'crc32b';
-        $meth = $this->getStorageConstant($storage_method);
-        $genb = 0x08;
-        $crc = $zlen = $len = 0;
+        $algo       = 'crc32b';
+        $meth       = static::METHOD_STORE;
+
+        // calculate header attributes
+        fseek($stream, 0, SEEK_END);
+        $zlen = $len = ftell($stream);
+
+        // send file header
+        $hlen = $this->addFileHeader($name, $opt, $meth);
+
+        // Stream data + calculate CRC32
+        rewind($stream);
         $hash_ctx = hash_init($algo);
-
-        if ($storage_method == self::METHOD_DEFLATE)
-        {
-            $deflateCtx = deflate_init(ZLIB_ENCODING_RAW, ['level' => 6]);
-        }
-        else
-        {
-            $deflateCtx = null;
-        }
-
-        // send local file header.
-        $num_bytes_written = $this->addFileHeader($name, $opt, $meth, $crc, $zlen, $len, $genb);
-
-        $readError = false;
-        // Read data in chunks and send it to the output as soon as it comes in.
         while (!feof($stream)) {
-            // Read and send.
             $data = fread($stream, $block_size);
-
-            // Exist if fread failed, and flag the error for post-handling.
-            if ($data === false) {
-                $readError = true;
-                break;
-            }
-
-            if ($deflateCtx !== null)
-            {
-                $zdata = deflate_add($deflateCtx, $data, ZLIB_NO_FLUSH);
-            }
-            else
-            {
-                $zdata = $data;
-            }
-
-            $this->send($zdata);
-
-            // Update crc and data lengths.
             hash_update($hash_ctx, $data);
-            $len += strlen($data);
-            $zlen += strlen($zdata);
+            // send data
+            $this->send($data);
         }
-
-        if ($deflateCtx !== null)
-        {
-            //finalize the compressed data
-            $zdata = deflate_add($deflateCtx, '', ZLIB_FINISH);
-            $zlen += strlen($zdata);
-            $this->send($zdata);
-        }
-
-        // Calculate the actual crc.
         $crc = hexdec(hash_final($hash_ctx));
 
-        // Send the data descriptor right after sending the data content.
-        // Now we know the actual content len, zlen and crc.
-        $data_descriptor_len = $this->addDataDescriptorHeader($len, $zlen, $crc);
+        // send file footer
+        $this->addFileFooter($name, $opt, $meth, $crc, $zlen, $len, $hlen);
+    }
 
-        // Calculate how many bytes have been written in total.
-        $num_bytes_written += $zlen + $data_descriptor_len;
+    /**
+     * addFile_from_Psr7Stream
+     *
+     * dds an open stream to the archive uncompressed
+     *
+     * @param String $name - path of file in archive (including directory).
+     * @param Resource $stream - contents of file as a stream resource
+     * @param array $opt - Hash of options for file (optional, see "File Options" below).
+     *
+     * File Options:
+     *  time     - Last-modified timestamp (seconds since the epoch) of
+     *             this file.  Defaults to the current time.
+     *  comment  - Comment related to this file.
+     *
+     * Examples:
+     *
+     *   // create a temporary file stream and write text to it
+     *   $fp = tmpfile();
+     *   fwrite($fp, 'The quick brown fox jumped over the lazy dog.');
+     *
+     *   // add a file named 'streamfile.txt' from the content of the stream
+     *   $x->addFile_from_stream('streamfile.txt', $fp);
+     *
+     * @return void
+     */
+    public function addFileFromPsr7Stream($name, \Psr\Http\Message\StreamInterface $stream, $opt = array())
+    {
+        $name = $this->filterFilename($name);
 
-        // add to central directory record and increment offset
-        $this->addToCdr($name, $opt, $meth, $crc, $zlen, $len, $num_bytes_written, $genb);
+        $block_size = 1048576; // process in 1 megabyte chunks
+        $algo       = 'crc32b';
+        $meth       = static::METHOD_STORE;
 
-        // If there was a read error, we still want the cdr to be appended, this way we ensure
-        // the zip file can be opened if the exception thrown below is handled by the invoker.
-        // E.g, in the catch block, we could add an explanatory 'ERROR.txt' so the enduser knows
-        // something went wrong. If this error handling is not performed, the end user can potentially
-        // end with a valid zip file but with incomplete or missing files.
+        // calculate header attributes
+        $stream->seek(0, SEEK_END);
+        $zlen = $len = $stream->tell();
 
-        if ($readError) {
-            throw new StreamNotReadableException($name);
+        // send file header
+        $hlen = $this->addFileHeader($name, $opt, $meth);
+
+        // Stream data and calculate CRC32
+        $stream->rewind();
+        $hash_ctx = hash_init($algo);
+        while (!$stream->eof()) {
+            $data = $stream->read($block_size);
+            hash_update($hash_ctx, $data);
+            // send data
+            $this->send($data);
         }
+        $crc = hexdec(hash_final($hash_ctx));
+
+        // send file footer + CDR record
+        $this->addFileFooter($name, $opt, $meth, $crc, $zlen, $len, $hlen);
     }
 
     /**
@@ -448,24 +465,35 @@ class ZipStream
      */
     public function finish()
     {
-        // add trailing cdr record
-        $this->addCdr($this->opt);
+        // add trailing cdr file records
+        foreach ($this->files as $file) $this->addCdrFile($file);
+
+        // Add 64bit headers (if applicable)
+        if ($this->opt[static::OPTION_USE_ZIP64])
+        {
+            $this->addCdr64Eof($this->opt);
+            $this->addCdr64Locator($this->opt);
+        }
+
+        // add trailing cdr eof record
+        $this->addCdrEof($this->opt);
+
+        // The End
         $this->clear();
     }
 
     /**
      * Create and send zip header for this file.
      *
-     * @param String $name
-     * @param Array $opt
+     * @param String  $name
+     * @param Array   $opt
      * @param Integer $meth
-     * @param string $crc
+     * @param string  $crc
      * @param Integer $zlen
      * @param Integer $len
-     * @param Hex $genb
-     * @return Integer $num_bytes_written
+     * @return void
      */
-    protected function addFileHeader($name, &$opt, $meth, $crc, $zlen, $len, $genb = 0x00)
+    protected function addFileHeader($name, $opt, $meth)
     {
         // strip leading slashes from file name
         // (fixes bug in windows archive viewer)
@@ -476,116 +504,106 @@ class ZipStream
 
         // create dos timestamp
         $opt['time'] = isset($opt['time']) && !empty($opt['time']) ? $opt['time'] : time();
-        $dts = $this->dostime($opt['time']);
-
-        if (mb_check_encoding($name, "UTF-8") && !mb_check_encoding($name, "ASCII")) {
-            // Sets Bit 11: Language encoding flag (EFS).  If this bit is set,
-            // the filename and comment fields for this file
-            // MUST be encoded using UTF-8. (see APPENDIX D)
-            $genb |= 0x0800;
-        }
+        $time        = $this->dostime($opt['time']);
 
         // build file header
-        $fields = array( // (from V.A of APPNOTE.TXT)
-            array(
-                'V',
-                0x04034b50
-            ),
-            // local file header signature
+        if ($this->opt[static::OPTION_USE_ZIP64])
+        {
+            $fields = [
+                // Header
+                ['V', static::FILE_HEADER_SIGNATURE],
+                ['v', static::ZIP_VERSION_64],          // Version needed to Extract
+                ['v', 0b00001000],                      // General purpose bit flags - data descriptor flag set
+                ['v', $meth],                           // Compression method
+                ['V', $time],                           // Timestamp (DOS Format)
+                ['V', 0x00000000],                      // CRC32 of data (0 -> moved to data descriptor footer)
+                ['V', 0xFFFFFFFF],                      // Length of compressed data (Forced to 0xFFFFFFFF for 64bit extension)
+                ['V', 0xFFFFFFFF],                      // Length of original data (Forced to 0xFFFFFFFF for 64bit extension)
+                ['v', $nlen],                           // Length of filename
+                ['v', 32],                              // Extra data (32 bytes)
+            ];
 
-            //array('v', (6 << 8) + 3),   // version needed to extract
-            array(
-                'v',
-                0x000A
-            ),
-            // version needed to extract
-            //FIXED as mentioned in http://linlog.skepticats.com/entries/2012/02/Streaming_ZIP_files_in_PHP.php
-            //and http://stackoverflow.com/questions/5573211/dynamically-created-zip-files-by-zipstream-in-php-wont-open-in-osx
+            $fields64 = [
+                ['v', 0x0001],                          // 64Bit Extension
+                ['v', 28],                              // 28bytes of data follows
+                ['P', 0x0000000000000000],              // Length of original data (0 -> moved to data descriptor footer)
+                ['P', 0x0000000000000000],              // Length of compressed data (0 -> moved to data descriptor footer)
+                ['P', 0x0000000000000000],              // Relative Header Offset
+                ['V', 0x00000000]                       // Disk number
+            ];
+        }
+        else
+        {
+            $fields = [
+                // Header
+                ['V', static::FILE_HEADER_SIGNATURE],
+                ['v', static::ZIP_VERSION],             // Version needed to Extract
+                ['v', 0b00001000],                      // General purpose bit flags - data descriptor flag set
+                ['v', $meth],                           // Compression method
+                ['V', $time],                           // Timestamp (DOS Format)
+                ['V', 0x00000000],                      // CRC32 of data (0 -> moved to data descriptor footer)
+                ['V', 0x00000000],                      // Length of compressed data (0 -> moved to data descriptor footer)
+                ['V', 0x00000000],                      // Length of original data (0 -> moved to data descriptor footer)
+                ['v', $nlen],                           // Length of filename
+                ['v', 0],                               // Extra data (0 bytes)
+            ];
 
-            array(
-                'v',
-                $genb
-            ),
-            // general purpose bit flag
-            array(
-                'v',
-                $meth
-            ),
-            // compresion method (deflate or store)
-            array(
-                'V',
-                $dts
-            ),
-            // dos timestamp
-            array(
-                'V',
-                $crc
-            ),
-            // crc32 of data
-            array(
-                'V',
-                $zlen
-            ),
-            // compressed data length
-            array(
-                'V',
-                $len
-            ),
-            // uncompressed data length
-            array(
-                'v',
-                $nlen
-            ),
-            // filename length
-            array(
-                'v',
-                0
-            )
-            // extra data len
-        );
+            $fields64 = [];
+        }
 
         // pack fields and calculate "total" length
-        $ret = $this->packFields($fields);
-        $header = $ret . $name;
-        $num_bytes_written = strlen($header);
+        $header = $this->packFields($fields);
+        $header64 = $this->packFields($fields64);
 
         // print header and filename
-        $this->send($header);
+        $this->send($header . $name . $header64);
 
-        return $num_bytes_written;
+        // Return header length
+        return strlen($header) + $nlen + strlen($header64);
     }
 
     /**
-     * @param Integer $len
+     * Create and send data descriptor footer for this file.
+     *
+     * @param string  $crc
      * @param Integer $zlen
-     * @param String $crc
-     * @return Integer $num_bytes_written. Num bytes written to zip stream output.
+     * @param Integer $len
+     * @return void
      */
-    protected function addDataDescriptorHeader($len, $zlen, $crc)
-    {
-        $fields = array(
-            array(
-                'V',
-                0x08074b50
-            ), // data descriptor signature. Although optional, some clients will show warnings if not found.
-            array(
-                'V',
-                $crc
-            ),  // CRC-32
-            array(
-                'V',
-                $zlen
-            ), // compressed size
-            array(
-                'V',
-                $len
-            ), // uncompressed size
-        );
-        $ret = $this->packFields($fields);
-        $num_bytes_written = strlen($ret);
-        $this->send($ret);
 
-        return $num_bytes_written;
+    protected function addFileFooter($name, $opt, $meth, $crc, $zlen, $len, $hlen)
+    {
+        if ($this->opt[static::OPTION_USE_ZIP64])
+        {
+            $fields = [
+                ['V', static::DATA_DESCRIPTOR_SIGNATURE],
+                ['V', $crc],                            // CRC32
+                ['P', $zlen],                           // Length of compressed data
+                ['P', $len],                            // Length of original data
+            ];
+            $flen = 24;
+        }
+        else
+        {
+            $fields = [
+                ['V', static::DATA_DESCRIPTOR_SIGNATURE],
+                ['V', $crc],                            // CRC32
+                ['V', $zlen],                           // Length of compressed data
+                ['V', $len],                            // Length of original data
+            ];
+            $flen = 16;
+        }
+
+        $footer = $this->packFields($fields);
+
+        $this->send($footer);
+
+        $total_length = $hlen + $zlen + $flen;
+
+        $opt['time'] = isset($opt['time']) && !empty($opt['time']) ? $opt['time'] : time();
+
+        // add to central directory record and increment offset
+        $this->addToCdr($name, $opt, $meth, $crc, $zlen, $len, $total_length);
     }
 
     /**
@@ -599,26 +617,23 @@ class ZipStream
      */
     protected function addLargeFile($name, $path, $opt = array())
     {
-        $st = stat($path);
+        $st         = stat($path);
         $block_size = 1048576; // process in 1 megabyte chunks
-        $algo = 'crc32b';
+        $algo       = 'crc32b';
 
         // calculate header attributes
         $zlen = $len = $st['size'];
 
-        $meth_str = $this->opt[self::OPTION_LARGE_FILE_METHOD];
-        if ($meth_str == self::METHOD_STORE) {
+        $meth = $this->opt[self::OPTION_LARGE_FILE_METHOD];
+        if ($meth == static::METHOD_STORE) {
             // store method
-            $meth = 0x00;
             $crc = hexdec(hash_file($algo, $path));
-        } elseif ($meth_str == self::METHOD_DEFLATE) {
+        } elseif ($meth == static::METHOD_DEFLATE) {
             // deflate method
-            $meth = 0x08;
-
             // open file, calculate crc and compressed file length
-            $fh = fopen($path, 'rb');
+            $fh       = fopen($path, 'rb');
             $hash_ctx = hash_init($algo);
-            $zlen = 0;
+            $zlen     = 0;
 
             // read each block, update crc and zlen
             while (!feof($fh)) {
@@ -641,19 +656,16 @@ class ZipStream
 
             $crc = hexdec(hash_final($hash_ctx));
         } else {
-            throw new InvalidOptionException('large_file_method', array(self::METHOD_STORE, self::METHOD_DEFLATE),
-                $meth_str);
+            throw new InvalidOptionException('large_file_method', array(static::METHOD_STORE, static::METHOD_DEFLATE), $meth);
         }
 
         // send file header
-        $num_bytes_written = $this->addFileHeader($name, $opt, $meth, $crc, $zlen, $len);
-        $num_bytes_written += $zlen;
-        $this->addToCdr($name, $opt, $meth, $crc, $zlen, $len, $num_bytes_written);
+        $hlen = $this->addFileHeader($name, $opt, $meth);
 
         // open input file
         $fh = fopen($path, 'rb');
 
-        if ($meth_str == self::METHOD_DEFLATE) {
+        if ($meth == static::METHOD_DEFLATE) {
             $filter = stream_filter_append($fh, 'zlib.deflate', STREAM_FILTER_READ, 6);
         }
 
@@ -671,6 +683,9 @@ class ZipStream
 
         // close input file
         fclose($fh);
+
+        // send file footer
+        $this->addFileFooter($name, $opt, $meth, $crc, $zlen, $len, $hlen);
     }
 
     /**
@@ -688,18 +703,16 @@ class ZipStream
     /**
      * Save file attributes for trailing CDR record.
      *
-     * @param String $name
-     * @param Array $opt
+     * @param String  $name
+     * @param Array   $opt
      * @param Integer $meth
-     * @param string $crc
+     * @param string  $crc
      * @param Integer $zlen
      * @param Integer $len
      * @param Integer $rec_len
-     * @param Hex $genb
-     * @return Integer $num_bytes_written
+     * @return void
      */
-    private function addToCdr($name, $opt, $meth, $crc, $zlen, $len, $rec_len, $genb = 0x00)
-    {
+    private function addToCdr($name, $opt, $meth, $crc, $zlen, $len, $rec_len) {
         $this->files[] = array(
             $name,
             $opt,
@@ -707,8 +720,7 @@ class ZipStream
             $crc,
             $zlen,
             $len,
-            $this->ofs,
-            $genb
+            $this->ofs
         );
         $this->ofs += $rec_len;
     }
@@ -721,95 +733,130 @@ class ZipStream
      */
     protected function addCdrFile($args)
     {
-        list($name, $opt, $meth, $crc, $zlen, $len, $ofs, $genb) = $args;
+        list($name, $opt, $meth, $crc, $zlen, $len, $offset) = $args;
 
         // get attributes
         $comment = isset($opt['comment']) && !empty($opt['comment']) ? $opt['comment'] : '';
 
         // get dos timestamp
-        $dts = $this->dostime($opt['time']);
+        $time = $this->dostime($opt['time']);
 
-        if (mb_check_encoding($name, "UTF-8") && !mb_check_encoding($name, "ASCII")) {
-            // Sets Bit 11: Language encoding flag (EFS).  If this bit is set,
-            // the filename and comment fields for this file
-            // MUST be encoded using UTF-8. (see APPENDIX D)
-            $genb |= 0x0800;
+        if ($this->opt[static::OPTION_USE_ZIP64])
+        {
+            $fields = [
+                ['V', static::CDR_FILE_SIGNATURE],      // Central file header signature
+                ['v', static::ZIP_VERSION_64],          // Made by version
+                ['v', static::ZIP_VERSION_64],          // Extract by version
+                ['v', 0b00001000],                      // General purpose bit flags - data descriptor flag set
+                ['v', $meth],                           // Compression method
+                ['V', $time],                           // Timestamp (DOS Format)
+                ['V', $crc],                            // CRC32
+                ['V', 0xFFFFFFFF],                      // Compressed Data Length (Forced to 0xFFFFFFFF for 64bit Extension)
+                ['V', 0xFFFFFFFF],                      // Original Data Length (Forced to 0xFFFFFFFF for 64bit Extension)
+                ['v', strlen($name)],                   // Length of filename
+                ['v', 32],                              // Extra data len (32bytes of 64bit Extension)
+                ['v', strlen($comment)],                // Length of comment
+                ['v', 0],                               // Disk number
+                ['v', 0],                               // Internal File Attributes
+                ['V', 32],                              // External File Attributes
+                ['V', 0xFFFFFFFF]                       // Relative offset of local header (Forced to 0xFFFFFFFF for 64bit Extension)
+            ];
+
+            $fields64 = [
+                ['v', 0x0001],                          // 64Bit Extension
+                ['v', 28],                              // 28bytes of data follows
+                ['P', $len],                            // Length of original data (0 -> moved to data descriptor footer)
+                ['P', $zlen],                           // Length of compressed data (0 -> moved to data descriptor footer)
+                ['P', $offset],                         // Relative Header Offset
+                ['V', 0]                                // Disk number
+            ];
+        }
+        else
+        {
+            $fields = [
+                ['V', static::CDR_FILE_SIGNATURE],      // Central file header signature
+                ['v', static::ZIP_VERSION],             // Made by version
+                ['v', static::ZIP_VERSION],             // Extract by version
+                ['v', 0b00001000],                      // General purpose bit flags - data descriptor flag set
+                ['v', $meth],                           // Compression method
+                ['V', $time],                           // Timestamp (DOS Format)
+                ['V', $crc],                            // CRC32
+                ['V', $zlen],                           // Compressed Data Length
+                ['V', $len],                            // Original Data Length
+                ['v', strlen($name)],                   // Length of filename
+                ['v', 0],                               // Extra data len (0bytes)
+                ['v', strlen($comment)],                // Length of comment
+                ['v', 0],                               // Disk number
+                ['v', 0],                               // Internal File Attributes
+                ['V', 32],                              // External File Attributes
+                ['V', $offset]                          // Relative offset of local header
+            ];
+
+            $fields64 = [];
         }
 
-        $fields = array( // (from V,F of APPNOTE.TXT)
-            array(
-                'V',
-                0x02014b50
-            ), // central file header signature
-            array(
-                'v',
-                0x003F // Ver 6.3, OS_FAT
-            ), // version made by
-            array(
-                'v',
-                0x0014 // Ver 2.0, OS_FAT
-            ), // version needed to extract
-            array(
-                'v',
-                $genb
-            ), // general purpose bit flag
-            array(
-                'v',
-                $meth
-            ), // compresion method (deflate or store)
-            array(
-                'V',
-                $dts
-            ), // dos timestamp
-            array(
-                'V',
-                $crc
-            ), // crc32 of data
-            array(
-                'V',
-                $zlen
-            ), // compressed data length
-            array(
-                'V',
-                $len
-            ), // uncompressed data length
-            array(
-                'v',
-                strlen($name)
-            ), // filename length
-            array(
-                'v',
-                0
-            ), // extra data len
-            array(
-                'v',
-                strlen($comment)
-            ), // file comment length
-            array(
-                'v',
-                0
-            ), // disk number start
-            array(
-                'v',
-                0
-            ), // internal file attributes
-            array(
-                'V',
-                32
-            ), // external file attributes
-            array(
-                'V',
-                $ofs
-            ) // relative offset of local header
-        );
-
         // pack fields, then append name and comment
-        $ret = $this->packFields($fields) . $name . $comment;
+        $header = $this->packFields($fields);
+        $footer = $this->packFields($fields64);
+
+        $ret = $header . $name . $comment . $footer;
 
         $this->send($ret);
 
         // increment cdr offset
         $this->cdr_ofs += strlen($ret);
+    }
+
+    /**
+     * Send ZIP64 CDR EOF (Central Directory Record End-of-File) record.
+     *
+     * @param array $opt
+     * @return void
+     */
+    protected function addCdr64Eof($opt = null)
+    {
+        $num     = count($this->files);
+        $cdr_length = $this->cdr_ofs;
+        $cdr_offset = $this->ofs;
+
+        $fields = [
+            ['V', static::ZIP64_CDR_EOF_SIGNATURE],     // ZIP64 end of central file header signature
+            ['P', 44],                                  // Length of data below this header (length of block - 12) = 44
+            ['v', static::ZIP_VERSION_64],              // Made by version
+            ['v', static::ZIP_VERSION_64],              // Extract by version
+            ['V', 0x00],                                // disk number
+            ['V', 0x00],                                // no of disks
+            ['P', $num],                                // no of entries on disk
+            ['P', $num],                                // no of entries in cdr
+            ['P', $cdr_length],                         // CDR size
+            ['P', $cdr_offset],                         // CDR offset
+        ];
+
+        $ret = $this->packFields($fields);
+        $this->send($ret);
+    }
+
+    /**
+     * Send ZIP64 CDR Locator (Central Directory Record Locator) record.
+     *
+     * @param array $opt
+     * @return void
+     */
+    protected function addCdr64Locator($opt = null)
+    {
+        $num     = count($this->files);
+        $cdr_length = $this->cdr_ofs;
+        $cdr_offset = $this->ofs;
+
+        $fields = [
+            ['V', static::ZIP64_CDR_LOCATOR_SIGNATURE], // ZIP64 end of central file header signature
+            ['V', 0x00],                                // Disc number containing CDR64EOF
+            ['P', $cdr_offset + $cdr_length],           // CDR offset
+            ['V', 1],                                   // Total number of disks
+        ];
+
+        $ret = $this->packFields($fields);
+        $this->send($ret);
     }
 
     /**
@@ -820,7 +867,7 @@ class ZipStream
      */
     protected function addCdrEof($opt = null)
     {
-        $num = count($this->files);
+        $num     = count($this->files);
         $cdr_len = $this->cdr_ofs;
         $cdr_ofs = $this->ofs;
 
@@ -830,40 +877,32 @@ class ZipStream
             $comment = $opt['comment'];
         }
 
-        $fields = array( // (from V,F of APPNOTE.TXT)
-            array(
-                'V',
-                0x06054b50
-            ), // end of central file header signature
-            array(
-                'v',
-                0x00
-            ), // this disk number
-            array(
-                'v',
-                0x00
-            ), // number of disk with cdr
-            array(
-                'v',
-                $num
-            ), // number of entries in the cdr on this disk
-            array(
-                'v',
-                $num
-            ), // number of entries in the cdr
-            array(
-                'V',
-                $cdr_len
-            ), // cdr size
-            array(
-                'V',
-                $cdr_ofs
-            ), // cdr ofs
-            array(
-                'v',
-                strlen($comment)
-            ) // zip file comment length
-        );
+        if ($this->opt[static::OPTION_USE_ZIP64])
+        {
+            $fields = [
+                ['V', static::CDR_EOF_SIGNATURE],   // end of central file header signature
+                ['v', 0x00],                        // disk number
+                ['v', 0x00],                        // no of disks
+                ['v', $num],                        // no of entries on disk
+                ['v', $num],                        // no of entries in cdr
+                ['V', 0xFFFFFFFF],                  // CDR size (Force to 0xFFFFFFFF for Zip64)
+                ['V', 0xFFFFFFFF],                  // CDR offset (Force to 0xFFFFFFFF for Zip64)
+                ['v', strlen($comment)],            // Zip Comment size
+            ];
+        }
+        else
+        {
+            $fields = [
+                ['V', static::CDR_EOF_SIGNATURE],   // end of central file header signature
+                ['v', 0x00],                        // disk number
+                ['v', 0x00],                        // no of disks
+                ['v', $num],                        // no of entries on disk
+                ['v', $num],                        // no of entries in cdr
+                ['V', $cdr_len],                    // CDR size
+                ['V', $cdr_ofs],                    // CDR offset
+                ['v', strlen($comment)],            // Zip Comment size
+            ];
+        }
 
         $ret = $this->packFields($fields) . $comment;
         $this->send($ret);
@@ -877,9 +916,7 @@ class ZipStream
      */
     protected function addCdr($opt = null)
     {
-        foreach ($this->files as $file) {
-            $this->addCdrFile($file);
-        }
+        foreach ($this->files as $file) $this->addCdrFile($file);
         $this->addCdrEof($opt);
     }
 
@@ -891,10 +928,10 @@ class ZipStream
      */
     protected function clear()
     {
-        $this->files = array();
-        $this->ofs = 0;
+        $this->files   = array();
+        $this->ofs     = 0;
         $this->cdr_ofs = 0;
-        $this->opt = array();
+        $this->opt     = array();
     }
 
     /**
@@ -920,7 +957,12 @@ class ZipStream
         }
 
         if ($this->output_name) {
-            $disposition .= "; filename=\"{$this->output_name}\"";
+            // Various different browsers dislike various characters here. Strip them all for safety.
+            $safe_output = trim(str_replace(['"', "'", '\\', ';', "\n", "\r"], '', $this->output_name));
+
+            // Check if we need to UTF-8 encode the filename
+            $urlencoded = rawurlencode($safe_output);
+            $disposition .= "; filename*=UTF-8''{$urlencoded}";
         }
 
         $headers = array(
@@ -932,9 +974,8 @@ class ZipStream
         );
 
         $call = $this->opt[self::OPTION_HTTP_HEADER_CALLBACK];
-        foreach ($headers as $key => $val) {
+        foreach ($headers as $key => $val)
             $call("$key: $val");
-        }
     }
 
     /**
@@ -992,10 +1033,8 @@ class ZipStream
      */
     protected function packFields($fields)
     {
-        list($fmt, $args) = array(
-            '',
-            array()
-        );
+        $fmt = '';
+        $args = [];
 
         // populate format string and argument list
         foreach ($fields as $field) {
@@ -1010,8 +1049,14 @@ class ZipStream
         return call_user_func_array('pack', $args);
     }
 
-    protected function getStorageConstant($storage_method)
+    /**
+     * Strip characters that are not legal in Windows filenames to prevent compatibility issues
+     *
+     * @param string $filename Unprocessed filename
+     * @return string
+     */
+    protected function filterFilename($filename)
     {
-        return $storage_method == self::METHOD_STORE ? self::NOCOMPRESS : self::COMPRESS;
+        return str_replace(['\\', ':', '*', '?', '"', '<', '>', '|'], '_', $filename);
     }
 }
