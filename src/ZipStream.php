@@ -237,11 +237,14 @@ class ZipStream
      *  @param String $data - contents of file
      *  @param array $opt  - Hash of options for file (optional, see "File Options"
      *          below).
+     *  @param String $method - storage method for file, could be "store" or "deflate"
+     *          (for backwards compatibility, overrides $opt['method'])
      *
      * File Options:
      *  time     - Last-modified timestamp (seconds since the epoch) of
      *             this file.  Defaults to the current time.
      *  comment  - Comment related to this file.
+     *  method   - Storage method for file ("store" or "deflate")
      *
      * Examples:
      *
@@ -257,24 +260,24 @@ class ZipStream
      *     'comment' => 'this is a comment about bar.jpg',
      *   ));
      */
-    public function addFile($name, $data, $opt = array())
+    public function addFile($name, $data, $opt = array(), $method = 'deflate')
     {
         $name = $this->filterFilename($name);
+        $meth = $this->parseMethod(@$opt['method'], $method);
+        $len  = strlen($data);
+        $crc  = crc32($data);
 
         // compress data
-        $zdata = gzdeflate($data);
+        if ($meth == static::METHOD_DEFLATE)
+            $data = gzdeflate($data);
 
-        // calculate header attributes
-        $crc  = crc32($data);
-        $zlen = strlen($zdata);
-        $len  = strlen($data);
-        $meth = static::METHOD_DEFLATE;
+        $zlen = strlen($data);
 
         // send file header
         $hlen = $this->addFileHeader($name, $opt, $meth);
 
         // print data
-        $this->send($zdata);
+        $this->send($data);
 
         // send file footer
         $this->addFileFooter($name, $opt, $meth, $crc, $zlen, $len, $hlen);
@@ -294,11 +297,14 @@ class ZipStream
      *          UNIX-style forward slashes -- e.g '/path/to/some/file').
      *  @param array $opt  - Hash of options for file (optional, see "File Options"
      *          below).
+     *  @param String $method - storage method for file, could be "store" or "deflate"
+     *          (for backwards compatibility, overrides $opt['method'])
      *
      * File Options:
      *  time     - Last-modified timestamp (seconds since the epoch) of
      *             this file.  Defaults to the current time.
      *  comment  - Comment related to this file.
+     *  method   - Storage method for file ("store" or "deflate")
      *
      * Examples:
      *
@@ -318,7 +324,7 @@ class ZipStream
      * @throws \ZipStream\Exception\FileNotFoundException
      * @throws \ZipStream\Exception\FileNotReadableException
      */
-    public function addFileFromPath($name, $path, $opt = array())
+    public function addFileFromPath($name, $path, $opt = array(), $method = 'deflate')
     {
         $name = $this->filterFilename($name);
 
@@ -335,7 +341,7 @@ class ZipStream
             // file is small enough to read into memory; read file contents and
             // handle with addFile()
             $data = file_get_contents($path);
-            $this->addFile($name, $data, $opt);
+            $this->addFile($name, $data, $opt, $method);
         }
     }
 
@@ -626,11 +632,11 @@ class ZipStream
         // calculate header attributes
         $zlen = $len = $st['size'];
 
-        $meth = $this->opt[self::OPTION_LARGE_FILE_METHOD];
-        if ($meth === static::METHOD_STORE) {
+        $meth = $this->parseMethod(@$this->opt[self::OPTION_LARGE_FILE_METHOD]);
+        if ($meth == static::METHOD_STORE) {
             // store method
             $crc = hexdec(hash_file($algo, $path));
-        } elseif ($meth === static::METHOD_DEFLATE) {
+        } elseif ($meth == static::METHOD_DEFLATE) {
             // deflate method
             // open file, calculate crc and compressed file length
             $fh       = fopen($path, 'rb');
@@ -657,8 +663,6 @@ class ZipStream
             fclose($fh);
 
             $crc = hexdec(hash_final($hash_ctx));
-        } else {
-            throw new InvalidOptionException('large_file_method', array(static::METHOD_STORE, static::METHOD_DEFLATE), $meth);
         }
 
         // send file header
@@ -1074,5 +1078,15 @@ class ZipStream
     protected function filterFilename($filename)
     {
         return str_replace(['\\', ':', '*', '?', '"', '<', '>', '|'], '_', $filename);
+    }
+
+    protected function parseMethod($method, $default=null)
+    {
+        if ($method === null) $method = $default;
+        if ($method === 'deflate') $method = static::METHOD_DEFLATE;
+        if ($method === 'store') $method = static::METHOD_STORE;
+        if (!in_array($method, array(static::METHOD_STORE, static::METHOD_DEFLATE), true))
+            throw new InvalidOptionException('large_file_method', array(), $method);
+        return $method;
     }
 }

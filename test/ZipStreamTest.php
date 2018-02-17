@@ -187,8 +187,8 @@ class ZipStreamTest extends TestCase
 
         $sample1 = $zipArch->statName('sample.txt');
         $sample12 = $zipArch->statName('test/sample.txt');
-        $this->assertEquals($sample1['comp_method'], ZipStream::NOCOMPRESS);
-        $this->assertEquals($sample12['comp_method'], ZipStream::COMPRESS);
+        $this->assertEquals($sample1['comp_method'], ZipStream::METHOD_STORE);
+        $this->assertEquals($sample12['comp_method'], ZipStream::METHOD_DEFLATE);
 
         $zipArch->close();
     }
@@ -275,10 +275,10 @@ class ZipStreamTest extends TestCase
         $zipArch->open($tmp);
 
         $sample1 = $zipArch->statName('sample.txt');
-        $this->assertEquals(ZipStream::NOCOMPRESS, $sample1['comp_method']);
+        $this->assertEquals(ZipStream::METHOD_STORE, $sample1['comp_method']);
 
         $sample2 = $zipArch->statName('test/sample.txt');
-        $this->assertEquals(ZipStream::COMPRESS, $sample2['comp_method']);
+        $this->assertEquals(ZipStream::METHOD_DEFLATE, $sample2['comp_method']);
 
         $zipArch->close();
     }
