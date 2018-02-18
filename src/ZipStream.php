@@ -529,15 +529,14 @@ class ZipStream
                 ['V', 0xFFFFFFFF],                      // Length of compressed data (Forced to 0xFFFFFFFF for 64bit extension)
                 ['V', 0xFFFFFFFF],                      // Length of original data (Forced to 0xFFFFFFFF for 64bit extension)
                 ['v', $nlen],                           // Length of filename
-                ['v', 28],                              // Extra data (see below)
+                ['v', 20],                              // Extra data (see below)
             ];
 
             $fields64 = [
                 ['v', 0x0001],                          // 64bit Extension
-                ['v', 24],                              // Length of data block
+                ['v', 16],                              // Length of data block
                 ['P', 0x0000000000000000],              // Length of original data (0 -> moved to data descriptor footer)
                 ['P', 0x0000000000000000],              // Length of compressed data (0 -> moved to data descriptor footer)
-                ['P', 0x0000000000000000],              // Relative Header Offset
             ];
         }
         else
