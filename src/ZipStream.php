@@ -30,7 +30,6 @@ use ZipStream\Exception\StreamNotReadableException;
  * Requirements:
  *
  * * PHP version 5.6 or newer.
- * * PHP 64-bit
  *
  * Usage:
  *
@@ -55,7 +54,7 @@ use ZipStream\Exception\StreamNotReadableException;
  *     $zip->finish();
  *
  * You can also add an archive comment, add comments to individual files,
- * and adjust the timestamp of files.  See the API documentation for each
+ * and adjust the timestamp of files. See the API documentation for each
  * method below for additional information.
  *
  * Example:
@@ -140,8 +139,8 @@ class ZipStream
      * Parameters:
      *
      * @param String $name - Name of output file (optional).
-     * @param array $opt  - Hash of archive options (optional, see "Archive Options"
-     *           below).
+     * @param array $opt   - Hash of archive options (optional, see "Archive Options"
+     *         below).
      *
      * Archive Options:
      *
@@ -162,7 +161,7 @@ class ZipStream
      *                         and is much, much slower.  Note that deflate
      *                         must compress the file twice and extremely
      *                         slow.
-     *   sendHttpHeaders   - Boolean indicating whether or not to send
+     *   sendHttpHeaders     - Boolean indicating whether or not to send
      *                         the HTTP headers for this file.
      *
      * Note that content_type and content_disposition do nothing if you are
@@ -233,9 +232,9 @@ class ZipStream
      *
      * add a file to the archive
      *
-     *  @param String $name - path of file in archive (including directory).
-     *  @param String $data - contents of file
-     *  @param array $opt  - Hash of options for file (optional, see "File Options"
+     *  @param String $name   - path of file in archive (including directory).
+     *  @param String $data   - contents of file
+     *  @param array $opt     - Hash of options for file (optional, see "File Options"
      *          below).
      *  @param String $method - storage method for file, could be "store" or "deflate"
      *          (for backwards compatibility, overrides $opt['method'])
@@ -292,10 +291,10 @@ class ZipStream
      * files; see the "Large File Support" section above for more
      * information.
      *
-     *  @param String $name - name of file in archive (including directory path).
-     *  @param String $path - path to file on disk (note: paths should be encoded using
+     *  @param String $name   - name of file in archive (including directory path).
+     *  @param String $path   - path to file on disk (note: paths should be encoded using
      *          UNIX-style forward slashes -- e.g '/path/to/some/file').
-     *  @param array $opt  - Hash of options for file (optional, see "File Options"
+     *  @param array $opt     - Hash of options for file (optional, see "File Options"
      *          below).
      *  @param String $method - storage method for file, could be "store" or "deflate"
      *          (for backwards compatibility, overrides $opt['method'])
