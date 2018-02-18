@@ -887,8 +887,8 @@ class ZipStream
                 ['V', static::CDR_EOF_SIGNATURE],   // end of central file header signature
                 ['v', 0x00],                        // disk number
                 ['v', 0x00],                        // no of disks
-                ['v', $num],                        // no of entries on disk
-                ['v', $num],                        // no of entries in cdr
+                ['v', min($num, 0xFFFF)],           // no of entries on disk
+                ['v', min($num, 0xFFFF)],           // no of entries in cdr
                 ['V', 0xFFFFFFFF],                  // CDR size (Force to 0xFFFFFFFF for Zip64)
                 ['V', 0xFFFFFFFF],                  // CDR offset (Force to 0xFFFFFFFF for Zip64)
                 ['v', strlen($comment)],            // Zip Comment size
