@@ -4,6 +4,7 @@ namespace ZipStreamTest;
 
 use PHPUnit\Framework\TestCase;
 use ZipStream\ZipStream;
+use ZipStream\File;
 
 /**
  * Test Class for the Main ZipStream CLass
@@ -59,20 +60,18 @@ class ZipStreamTest extends TestCase
 
     public function testDostime()
     {
-        $zip = new ZipStream;
-
-        //Allows testing of private method
-        $class = new \ReflectionClass ($zip);
+        // Allows testing of protected method
+        $class = new \ReflectionClass (File::class);
         $method = $class->getMethod('dostime');
         $method->setAccessible(true);
 
-        $this->assertSame($method->invoke($zip, 1416246368), 1165069764);
+        $this->assertSame($method->invoke(null, 1416246368), 1165069764);
 
-        //January 1 1980 - DOS Epoch.
-        $this->assertSame($method->invoke($zip, 315532800), 2162688);
+        // January 1 1980 - DOS Epoch.
+        $this->assertSame($method->invoke(null, 315532800), 2162688);
 
         // January 1 1970 -> January 1 1980 due to minimum DOS Epoch.  @todo Throw Exception?
-        $this->assertSame($method->invoke($zip, 0), 2162688);
+        $this->assertSame($method->invoke(null, 0), 2162688);
     }
 
     public function testAddFile()
