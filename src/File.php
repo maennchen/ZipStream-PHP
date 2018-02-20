@@ -254,7 +254,7 @@ class File
 
         if (!empty($fields)) {
             if (!$this->zip->opt[ZipStream::OPTION_ZIP64])
-                throw new OverflowException('File size exceeds limit of 32 bit integer. Please enable "zip64" option.');
+                throw new OverflowException();
 
             array_unshift($fields,
                 ['v', 0x0001],                      // 64 bit extension

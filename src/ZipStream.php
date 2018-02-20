@@ -3,6 +3,7 @@
 namespace ZipStream;
 
 use ZipStream\Exception\InvalidOptionException;
+use ZipStream\Exception\OverflowException;
 use Psr\Http\Message\StreamInterface;
 
 /**
@@ -418,10 +419,15 @@ class ZipStream
         foreach ($this->files as $file) $file->addCdrFile();
 
         // Add 64bit headers (if applicable)
-        if ($this->opt[static::OPTION_ZIP64])
+        if (count($this->files) >= 0xFFFF ||
+            $this->cdr_ofs->isOver32() ||
+            $this->ofs->isOver32())
         {
-            $this->addCdr64Eof($this->opt);
-            $this->addCdr64Locator($this->opt);
+            if (true || !$this->zip->opt[ZipStream::OPTION_ZIP64])
+                throw new OverflowException();
+
+            $this->addCdr64Eof();
+            $this->addCdr64Locator();
         }
 
         // add trailing cdr eof record
@@ -460,12 +466,11 @@ class ZipStream
     /**
      * Send ZIP64 CDR EOF (Central Directory Record End-of-File) record.
      *
-     * @param array $opt
      * @return void
      */
-    protected function addCdr64Eof($opt = null)
+    protected function addCdr64Eof()
     {
-        $num     = count($this->files);
+        $num_files  = count($this->files);
         $cdr_length = $this->cdr_ofs;
         $cdr_offset = $this->ofs;
 
@@ -476,8 +481,8 @@ class ZipStream
             ['v', static::ZIP_VERSION_64],              // Extract by version
             ['V', 0x00],                                // disk number
             ['V', 0x00],                                // no of disks
-            ['P', $num],                                // no of entries on disk
-            ['P', $num],                                // no of entries in cdr
+            ['P', $num_files],                          // no of entries on disk
+            ['P', $num_files],                          // no of entries in cdr
             ['P', $cdr_length],                         // CDR size
             ['P', $cdr_offset],                         // CDR offset
         ];
@@ -489,19 +494,16 @@ class ZipStream
     /**
      * Send ZIP64 CDR Locator (Central Directory Record Locator) record.
      *
-     * @param array $opt
      * @return void
      */
-    protected function addCdr64Locator($opt = null)
+    protected function addCdr64Locator()
     {
-        $num     = count($this->files);
-        $cdr_length = $this->cdr_ofs;
-        $cdr_offset = $this->ofs;
+        $cdr_offset = $this->ofs->add($this->cdr_ofs);
 
         $fields = [
             ['V', static::ZIP64_CDR_LOCATOR_SIGNATURE], // ZIP64 end of central file header signature
             ['V', 0x00],                                // Disc number containing CDR64EOF
-            ['P', $cdr_offset->add($cdr_length)],       // CDR offset
+            ['P', $cdr_offset],                         // CDR offset
             ['V', 1],                                   // Total number of disks
         ];
 
@@ -512,47 +514,27 @@ class ZipStream
     /**
      * Send CDR EOF (Central Directory Record End-of-File) record.
      *
-     * @param array $opt
      * @return void
      */
-    protected function addCdrEof($opt = null)
+    protected function addCdrEof()
     {
-        $num     = count($this->files);
-        $cdr_len = $this->cdr_ofs;
-        $cdr_ofs = $this->ofs;
+        $num_files  = count($this->files);
+        $cdr_length = $this->cdr_ofs;
+        $cdr_offset = $this->ofs;
 
         // grab comment (if specified)
-        $comment = '';
-        if ($opt && isset($opt['comment'])) {
-            $comment = $opt['comment'];
-        }
+        $comment = @$this->opt['comment'];
 
-        if ($this->opt[static::OPTION_ZIP64])
-        {
-            $fields = [
-                ['V', static::CDR_EOF_SIGNATURE],   // end of central file header signature
-                ['v', 0x00],                        // disk number
-                ['v', 0x00],                        // no of disks
-                ['v', min($num, 0xFFFF)],           // no of entries on disk
-                ['v', min($num, 0xFFFF)],           // no of entries in cdr
-                ['V', 0xFFFFFFFF],                  // CDR size (Force to 0xFFFFFFFF for Zip64)
-                ['V', 0xFFFFFFFF],                  // CDR offset (Force to 0xFFFFFFFF for Zip64)
-                ['v', strlen($comment)],            // Zip Comment size
-            ];
-        }
-        else
-        {
-            $fields = [
-                ['V', static::CDR_EOF_SIGNATURE],   // end of central file header signature
-                ['v', 0x00],                        // disk number
-                ['v', 0x00],                        // no of disks
-                ['v', $num],                        // no of entries on disk
-                ['v', $num],                        // no of entries in cdr
-                ['V', $cdr_len],                    // CDR size
-                ['V', $cdr_ofs],                    // CDR offset
-                ['v', strlen($comment)],            // Zip Comment size
-            ];
-        }
+        $fields = [
+            ['V', static::CDR_EOF_SIGNATURE],   // end of central file header signature
+            ['v', 0x00],                        // disk number
+            ['v', 0x00],                        // no of disks
+            ['v', min($num_files, 0xFFFF)],     // no of entries on disk
+            ['v', min($num_files, 0xFFFF)],     // no of entries in cdr
+            ['V', $cdr_length->getLowFF()],     // CDR size
+            ['V', $cdr_offset->getLowFF()],     // CDR offset
+            ['v', strlen($comment)],            // Zip Comment size
+        ];
 
         $ret = $this->packFields($fields) . $comment;
         $this->send($ret);
@@ -561,13 +543,12 @@ class ZipStream
     /**
      * Add CDR (Central Directory Record) footer.
      *
-     * @param array $opt
      * @return void
      */
-    protected function addCdr($opt = null)
+    protected function addCdr()
     {
         foreach ($this->files as $file) $this->addCdrFile($file);
-        $this->addCdrEof($opt);
+        $this->addCdrEof();
     }
 
     /**
