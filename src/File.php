@@ -14,6 +14,7 @@ class File
     const HASH_ALGO = 'crc32b';
 
     const BIT_ZERO_HEADER = 0x0008;
+    const BIT_EFS_UTF8 = 0x0800;
 
     const COMPUTE = 1;
     const SEND = 2;
@@ -205,7 +206,7 @@ class File
                     'File name and comment should use UTF-8 ' .
                     'if one of them does not fit into ASCII range.'
                 );
-            $this->bits |= 0x0800;
+            $this->bits |= self::BIT_EFS_UTF8;
         }
 
         // build file header
