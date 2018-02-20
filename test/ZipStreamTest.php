@@ -170,6 +170,72 @@ class ZipStreamTest extends TestCase
         return $data;
     }
 
+    public function testAddFileUtf8NameComment()
+    {
+        list($tmp, $stream) = $this->getTmpFileStream();
+
+        $zip = new ZipStream(null, array(
+            ZipStream::OPTION_OUTPUT_STREAM => $stream
+        ));
+
+        $name = 'árvíztűrő tükörfúrógép.txt';
+        $content = 'Sample String Data';
+        $comment =
+            'Filename has every special characters ' .
+            'from Hungarian language in lowercase. ' .
+            'In uppercase: ÁÍŰŐÜÖÚÓÉ';
+
+        $zip->addFile($name, $content, ['comment' => $comment]);
+        $zip->finish();
+        fclose($stream);
+
+        $tmpDir = $this->validateAndExtractZip($tmp);
+
+        $files = $this->getRecursiveFileList($tmpDir);
+        $this->assertEquals(array($name), $files);
+        $this->assertEquals(file_get_contents($tmpDir . '/' . $name), $content);
+
+        $zipArch = new \ZipArchive();
+        $zipArch->open($tmp);
+        $this->assertEquals($comment, $zipArch->getCommentName($name));
+    }
+
+    /**
+     * @expectedException \ZipStream\Exception\EncodingException
+     */
+    public function testAddFileUtf8NameNonUtfComment()
+    {
+        list($tmp, $stream) = $this->getTmpFileStream();
+
+        $zip = new ZipStream(null, array(
+            ZipStream::OPTION_OUTPUT_STREAM => $stream
+        ));
+
+        $name = 'á.txt';
+        $content = 'any';
+        $comment = 'á';
+
+        $zip->addFile($name, $content, ['comment' => mb_convert_encoding($comment, 'ISO-8859-2', 'UTF-8')]);
+    }
+
+    /**
+     * @expectedException \ZipStream\Exception\EncodingException
+     */
+    public function testAddFileNonUtf8NameUtfComment()
+    {
+        list($tmp, $stream) = $this->getTmpFileStream();
+
+        $zip = new ZipStream(null, array(
+            ZipStream::OPTION_OUTPUT_STREAM => $stream
+        ));
+
+        $name = 'á.txt';
+        $content = 'any';
+        $comment = 'á';
+
+        $zip->addFile(mb_convert_encoding($name, 'ISO-8859-2', 'UTF-8'), $content, ['comment' => $comment]);
+    }
+
     public function testAddFileWithStorageMethod()
     {
         list($tmp, $stream) = $this->getTmpFileStream();

@@ -5,6 +5,7 @@ namespace ZipStream;
 use ZipStream\Exception\FileNotFoundException;
 use ZipStream\Exception\FileNotReadableException;
 use ZipStream\Exception\IncompatibleOptionsException;
+use ZipStream\Exception\EncodingException;
 
 use Psr\Http\Message\StreamInterface;
 
@@ -195,6 +196,18 @@ class File
         $this->time = isset($opt['time']) && !empty($opt['time']) ? $opt['time'] : time();
         $time = $this->dostime($this->time);
 
+        if (!mb_check_encoding($name, 'ASCII') || !mb_check_encoding(@$this->opt['comment'], 'ASCII')) {
+            // Sets Bit 11: Language encoding flag (EFS).  If this bit is set,
+            // the filename and comment fields for this file
+            // MUST be encoded using UTF-8. (see APPENDIX D)
+            if (!mb_check_encoding($name, 'UTF-8') || !mb_check_encoding(@$this->opt['comment'], 'UTF-8'))
+                throw new EncodingException(
+                    'File name and comment should use UTF-8 ' .
+                    'if one of them does not fit into ASCII range.'
+                );
+            $this->bits |= 0x0800;
+        }
+
         // build file header
         if ($this->zip->opt[ZipStream::OPTION_ZIP64]) {
             $fields = [
@@ -291,7 +304,7 @@ class File
         $name = $this->filterFilename($this->name);
 
         // get attributes
-        $comment = isset($opt['comment']) && !empty($opt['comment']) ? $opt['comment'] : '';
+        $comment = @$this->opt['comment'];
 
         // get dos timestamp
         $time = $this->dostime($this->time);
@@ -353,7 +366,7 @@ class File
         $header = ZipStream::packFields($fields);
         $footer = ZipStream::packFields($fields64);
 
-        $ret = $header . $name . $comment . $footer;
+        $ret = $header . $name . $footer . $comment;
 
         $this->zip->send($ret);
 
