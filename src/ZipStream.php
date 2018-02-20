@@ -27,7 +27,8 @@ use Psr\Http\Message\StreamInterface;
  *
  * Requirements:
  *
- * * PHP version 5.6 or newer.
+ * PHP version 5.6 or newer
+ * PHP extension mbstring
  *
  * Usage:
  *
