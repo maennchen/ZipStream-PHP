@@ -287,37 +287,46 @@ class ZipStreamTest extends TestCase
     public function testAddLargeFileFromPath()
     {
         $methods = array(ZipStream::METHOD_DEFLATE, ZipStream::METHOD_STORE);
+        $headers = array(false, true);
         foreach ($methods as $method) {
-            list($tmp, $stream) = $this->getTmpFileStream();
-
-            $zip = new ZipStream(null, array(
-                ZipStream::OPTION_OUTPUT_STREAM => $stream,
-                ZipStream::OPTION_LARGE_FILE_METHOD => $method,
-                ZipStream::OPTION_LARGE_FILE_SIZE => 5,
-            ));
-
-            list($tmpExample, $streamExample) = $this->getTmpFileStream();
-            for ($i = 0; $i <= 100000; $i++) {
-                fwrite($streamExample, sha1($i));
-                if ($i % 100 === 0) {
-                    fwrite($streamExample, "\n");
-                }
+            foreach ($headers as $header) {
+                $this->addLargeFileFileFromPath($method, $header);
             }
-            fclose($streamExample);
-            $shaExample = sha1_file($tmpExample);
-            $zip->addFileFromPath('sample.txt', $tmpExample);
-            unlink($tmpExample);
-
-            $zip->finish();
-            fclose($stream);
-
-            $tmpDir = $this->validateAndExtractZip($tmp);
-
-            $files = $this->getRecursiveFileList($tmpDir);
-            $this->assertEquals(array('sample.txt'), $files);
-
-            $this->assertEquals(sha1_file($tmpDir . '/sample.txt'), $shaExample, "SHA-1 Mismatch Method: {$method}");
         }
+    }
+
+    protected function addLargeFileFileFromPath($method, $header)
+    {
+        list($tmp, $stream) = $this->getTmpFileStream();
+
+        $zip = new ZipStream(null, array(
+            ZipStream::OPTION_OUTPUT_STREAM => $stream,
+            ZipStream::OPTION_LARGE_FILE_METHOD => $method,
+            ZipStream::OPTION_LARGE_FILE_SIZE => 5,
+            ZipStream::OPTION_ZERO_HEADER => $header,
+        ));
+
+        list($tmpExample, $streamExample) = $this->getTmpFileStream();
+        for ($i = 0; $i <= 10000; $i++) {
+            fwrite($streamExample, sha1($i));
+            if ($i % 100 === 0) {
+                fwrite($streamExample, "\n");
+            }
+        }
+        fclose($streamExample);
+        $shaExample = sha1_file($tmpExample);
+        $zip->addFileFromPath('sample.txt', $tmpExample);
+        unlink($tmpExample);
+
+        $zip->finish();
+        fclose($stream);
+
+        $tmpDir = $this->validateAndExtractZip($tmp);
+
+        $files = $this->getRecursiveFileList($tmpDir);
+        $this->assertEquals(array('sample.txt'), $files);
+
+        $this->assertEquals(sha1_file($tmpDir . '/sample.txt'), $shaExample, "SHA-1 Mismatch Method: {$method}");
     }
 
     public function testAddFileFromStream()

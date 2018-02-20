@@ -12,6 +12,9 @@ class File
 {
     const HASH_ALGO = 'crc32b';
 
+    const COMPUTE = 1;
+    const SEND = 2;
+
     public $name;
     public $opt;
     public $meth;
@@ -25,6 +28,8 @@ class File
 
     private $stream;
     private $filter;
+    private $deflate;
+    private $hash;
 
     public function __construct(ZipStream $zip, $name, $opt=[], $method='deflate') {
         $this->zip = $zip;
@@ -74,11 +79,14 @@ class File
         $this->crc = 0;
         $this->stream = $stream;
 
-        if ($this->meth == ZipStream::METHOD_DEFLATE && (
-            $this->zip->opt[ZipStream::OPTION_ZERO_HEADER] ||
-            !$this->stream instanceof DeflateStream))
+        if (!function_exists('deflate_init') &&
+            $this->meth == ZipStream::METHOD_DEFLATE && !(
+                $this->stream instanceof DeflateStream &&
+                !$this->zip->opt[ZipStream::OPTION_ZERO_HEADER]
+            ))
             throw new IncompatibleOptionsException(
-                'Deflate method is only available for PHP streams with ' .
+                'When using PHP version less than 7 deflate method ' .
+                'is only available for PHP streams with ' .
                 ZipStream::OPTION_ZERO_HEADER .
                 ' setting turned off.'
             );
@@ -92,48 +100,74 @@ class File
 
     protected function processStreamWithZeroHeader() {
         $this->addFileHeader();
-        $hash_ctx = hash_init(self::HASH_ALGO);
-        while (!$this->stream->eof()) {
-            $data = $this->stream->read(ZipStream::CHUNKED_READ_BLOCK_SIZE);
-            hash_update($hash_ctx, $data);
-            $this->zlen = $this->zlen->add(strlen($data));
-            $this->zip->send($data);
-        }
-        $this->crc = hexdec(hash_final($hash_ctx));
-        $this->len = $this->zlen;
+        $this->readStream(self::COMPUTE | self::SEND);
         $this->addFileFooter();
     }
 
     protected function processStreamWithComputedHeader() {
-        $hash_ctx = hash_init(self::HASH_ALGO);
-        while (!$this->stream->eof()) {
-            $data = $this->stream->read(ZipStream::CHUNKED_READ_BLOCK_SIZE);
-            hash_update($hash_ctx, $data);
-            $this->len = $this->len->add(strlen($data));
-        }
-        $this->crc = hexdec(hash_final($hash_ctx));
+        $this->readStream(self::COMPUTE);
         $this->stream->rewind();
 
-        if ($this->meth == ZipStream::METHOD_DEFLATE) {
-            // implementing incremental compression with deflate_add
-            // would make this second read unnecessary
-            // but it is only available from PHP 7.0
+        // incremental compression with deflate_add
+        // makes this second read unnecessary
+        // but it is only available from PHP 7.0
+        if (!$this->deflate && $this->meth == ZipStream::METHOD_DEFLATE) {
             $this->stream->addDeflateFilter(@$this->opt['deflate'] ?: ZipStream::DEFAULT_DEFLATE_LEVEL);
+            $this->zlen = new Bigint;
             while (!$this->stream->eof()) {
                 $data = $this->stream->read(ZipStream::CHUNKED_READ_BLOCK_SIZE);
                 $this->zlen = $this->zlen->add(strlen($data));
             }
             $this->stream->rewind();
-        } else {
-            $this->zlen = $this->len;
         }
 
         $this->addFileHeader();
+        $this->readStream(self::SEND);
+        $this->addFileFooter();
+    }
+
+    protected function readStream($options = null) {
+        $this->deflateInit($options);
         while (!$this->stream->eof()) {
             $data = $this->stream->read(ZipStream::CHUNKED_READ_BLOCK_SIZE);
-            $this->zip->send($data);
+            $this->deflateData($data, $options);
+            if ($options & self::SEND)
+                $this->zip->send($data);
         }
-        $this->addFileFooter();
+        $this->deflateFinish($options);
+    }
+
+    protected function deflateInit($options = null) {
+        $this->hash = hash_init(self::HASH_ALGO);
+        if ($this->meth == ZipStream::METHOD_DEFLATE &&
+            function_exists('deflate_init'))
+            $this->deflate = deflate_init(
+                ZLIB_ENCODING_RAW,
+                @$this->opt['deflate'] ?:
+                ['level' => ZipStream::DEFAULT_DEFLATE_LEVEL]
+            );
+    }
+
+    protected function deflateData(&$data, $options = null) {
+        if ($options & self::COMPUTE) {
+            $this->len = $this->len->add(strlen($data));
+            hash_update($this->hash, $data);
+        }
+        if ($this->deflate)
+            $data = deflate_add(
+                $this->deflate,
+                $data,
+                $this->stream->eof()
+                    ? ZLIB_FINISH
+                    : ZLIB_NO_FLUSH
+            );
+        if ($options & self::COMPUTE)
+            $this->zlen = $this->zlen->add(strlen($data));
+    }
+
+    protected function deflateFinish($options = null) {
+        if ($options & self::COMPUTE)
+            $this->crc = hexdec(hash_final($this->hash));
     }
 
     /**
