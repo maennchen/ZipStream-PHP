@@ -12,6 +12,8 @@ class File
 {
     const HASH_ALGO = 'crc32b';
 
+    const BIT_ZERO_HEADER = 0x0008;
+
     const COMPUTE = 1;
     const SEND = 2;
 
@@ -23,6 +25,7 @@ class File
     public $crc;
     public $hlen;
     public $ofs;
+    public $bits;
 
     public $zip;
 
@@ -76,7 +79,6 @@ class File
     public function processStream(StreamInterface $stream) {
         $this->zlen = new Bigint;
         $this->len = new Bigint;
-        $this->crc = 0;
         $this->stream = $stream;
 
         if (!function_exists('deflate_init') &&
@@ -99,6 +101,7 @@ class File
     }
 
     protected function processStreamWithZeroHeader() {
+        $this->bits |= self::BIT_ZERO_HEADER;
         $this->addFileHeader();
         $this->readStream(self::COMPUTE | self::SEND);
         $this->addFileFooter();
@@ -192,15 +195,13 @@ class File
         $this->time = isset($opt['time']) && !empty($opt['time']) ? $opt['time'] : time();
         $time = $this->dostime($this->time);
 
-        $bits = $this->zip->opt[ZipStream::OPTION_ZERO_HEADER] ? 0b00001000 : 0;
-
         // build file header
         if ($this->zip->opt[ZipStream::OPTION_ZIP64]) {
             $fields = [
                 // Header
                 ['V', ZipStream::FILE_HEADER_SIGNATURE],
                 ['v', ZipStream::ZIP_VERSION_64],       // Version needed to Extract
-                ['v', $bits],                           // General purpose bit flags - data descriptor flag set
+                ['v', $this->bits],                     // General purpose bit flags - data descriptor flag set
                 ['v', $this->meth],                     // Compression method
                 ['V', $time],                           // Timestamp (DOS Format)
                 ['V', $this->crc],                      // CRC32 of data (0 -> moved to data descriptor footer)
@@ -220,7 +221,7 @@ class File
                 // Header
                 ['V', ZipStream::FILE_HEADER_SIGNATURE],
                 ['v', ZipStream::ZIP_VERSION],          // Version needed to Extract
-                ['v', $bits],                           // General purpose bit flags - data descriptor flag set
+                ['v', $this->bits],                     // General purpose bit flags - data descriptor flag set
                 ['v', $this->meth],                     // Compression method
                 ['V', $time],                           // Timestamp (DOS Format)
                 ['V', $this->crc],                      // CRC32 of data (0 -> moved to data descriptor footer)
@@ -295,15 +296,13 @@ class File
         // get dos timestamp
         $time = $this->dostime($this->time);
 
-        $bits = $this->zip->opt[ZipStream::OPTION_ZERO_HEADER] ? 0b00001000 : 0;
-
         if ($this->zip->opt[ZipStream::OPTION_ZIP64])
         {
             $fields = [
                 ['V', ZipStream::CDR_FILE_SIGNATURE],   // Central file header signature
                 ['v', ZipStream::ZIP_VERSION_64],       // Made by version
                 ['v', ZipStream::ZIP_VERSION_64],       // Extract by version
-                ['v', $bits],                           // General purpose bit flags - data descriptor flag set
+                ['v', $this->bits],                     // General purpose bit flags - data descriptor flag set
                 ['v', $this->meth],                     // Compression method
                 ['V', $time],                           // Timestamp (DOS Format)
                 ['V', $this->crc],                      // CRC32
@@ -332,7 +331,7 @@ class File
                 ['V', ZipStream::CDR_FILE_SIGNATURE],   // Central file header signature
                 ['v', ZipStream::ZIP_VERSION],          // Made by version
                 ['v', ZipStream::ZIP_VERSION],          // Extract by version
-                ['v', $bits],                           // General purpose bit flags - data descriptor flag set
+                ['v', $this->bits],                     // General purpose bit flags - data descriptor flag set
                 ['v', $this->meth],                     // Compression method
                 ['V', $time],                           // Timestamp (DOS Format)
                 ['V', $this->crc],                      // CRC32
