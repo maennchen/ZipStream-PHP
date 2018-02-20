@@ -2,8 +2,16 @@
 
 namespace ZipStream;
 
+use ZipStream\Exception\FileNotFoundException;
+use ZipStream\Exception\FileNotReadableException;
+use ZipStream\Exception\IncompatibleOptionsException;
+
+use Psr\Http\Message\StreamInterface;
+
 class File
 {
+    const HASH_ALGO = 'crc32b';
+
     public $name;
     public $opt;
     public $meth;
@@ -15,8 +23,117 @@ class File
 
     public $zip;
 
-    public function __construct(ZipStream $zip) {
+    private $stream;
+    private $filter;
+
+    public function __construct(ZipStream $zip, $name, $opt=[], $method='deflate') {
         $this->zip = $zip;
+
+        $this->name = $name;
+        $this->opt = $opt;
+        $this->meth = ZipStream::parseMethod(@$opt['method'], $method);
+    }
+
+    public function processPath($path) {
+        if (!is_readable($path)) {
+            if(!file_exists($path)) {
+                throw new FileNotFoundException($path);
+            }
+            throw new FileNotReadableException($path);
+        }
+        if (!$this->zip->isLargeFile($path)) {
+            $data = file_get_contents($path);
+            $this->processData($data);
+        } else {
+            $this->meth = ZipStream::parseMethod(
+                @$this->zip->opt[ZipStream::OPTION_LARGE_FILE_METHOD],
+                ZipStream::METHOD_STORE
+            );
+            $stream = new DeflateStream(fopen($path, 'rb'));
+            $this->processStream($stream);
+        }
+    }
+
+    public function processData($data) {
+        $this->len = strlen($data);
+        $this->crc = crc32($data);
+
+        // compress data if needed
+        if ($this->meth == ZipStream::METHOD_DEFLATE)
+            $data = gzdeflate($data);
+
+        $this->zlen = strlen($data);
+        $this->addFileHeader();
+        $this->zip->send($data);
+        $this->addFileFooter();
+    }
+
+    public function processStream(StreamInterface $stream) {
+        $this->zlen = new Bigint;
+        $this->len = new Bigint;
+        $this->crc = 0;
+        $this->stream = $stream;
+
+        if ($this->meth == ZipStream::METHOD_DEFLATE && (
+            $this->zip->opt[ZipStream::OPTION_ZERO_HEADER] ||
+            !$this->stream instanceof DeflateStream))
+            throw new IncompatibleOptionsException(
+                'Deflate method is only available for PHP streams with ' .
+                ZipStream::OPTION_ZERO_HEADER .
+                ' setting turned off.'
+            );
+
+        if ($this->zip->opt[ZipStream::OPTION_ZERO_HEADER]) {
+            $this->processStreamWithZeroHeader();
+        } else {
+            $this->processStreamWithComputedHeader();
+        }
+    }
+
+    protected function processStreamWithZeroHeader() {
+        $this->addFileHeader();
+        $hash_ctx = hash_init(self::HASH_ALGO);
+        while (!$this->stream->eof()) {
+            $data = $this->stream->read(ZipStream::CHUNKED_READ_BLOCK_SIZE);
+            hash_update($hash_ctx, $data);
+            $this->zlen = $this->zlen->add(strlen($data));
+            $this->zip->send($data);
+        }
+        $this->crc = hexdec(hash_final($hash_ctx));
+        $this->len = $this->zlen;
+        $this->addFileFooter();
+    }
+
+    protected function processStreamWithComputedHeader() {
+        $hash_ctx = hash_init(self::HASH_ALGO);
+        while (!$this->stream->eof()) {
+            $data = $this->stream->read(ZipStream::CHUNKED_READ_BLOCK_SIZE);
+            hash_update($hash_ctx, $data);
+            $this->len = $this->len->add(strlen($data));
+        }
+        $this->crc = hexdec(hash_final($hash_ctx));
+        $this->stream->rewind();
+
+        if ($this->meth == ZipStream::METHOD_DEFLATE) {
+            // implementing incremental compression with deflate_add
+            // would make this second read unnecessary
+            // but it is only available from PHP 7.0
+            $this->stream->addDeflateFilter(@$this->opt['deflate'] ?: ZipStream::DEFAULT_DEFLATE_LEVEL);
+            while (!$this->stream->eof()) {
+                $data = $this->stream->read(ZipStream::CHUNKED_READ_BLOCK_SIZE);
+                $this->zlen = $this->zlen->add(strlen($data));
+            }
+            $this->stream->rewind();
+        } else {
+            $this->zlen = $this->len;
+        }
+
+        $this->addFileHeader();
+        while (!$this->stream->eof()) {
+            $data = $this->stream->read(ZipStream::CHUNKED_READ_BLOCK_SIZE);
+            $this->zip->send($data);
+        }
+        $this->addFileFooter();
     }
 
     /**
@@ -41,46 +158,43 @@ class File
         $this->time = isset($opt['time']) && !empty($opt['time']) ? $opt['time'] : time();
         $time = $this->dostime($this->time);
 
+        $bits = $this->zip->opt[ZipStream::OPTION_ZERO_HEADER] ? 0b00001000 : 0;
+
         // build file header
-        if ($this->zip->opt[ZipStream::OPTION_USE_ZIP64])
-        {
+        if ($this->zip->opt[ZipStream::OPTION_ZIP64]) {
             $fields = [
                 // Header
                 ['V', ZipStream::FILE_HEADER_SIGNATURE],
                 ['v', ZipStream::ZIP_VERSION_64],       // Version needed to Extract
-                ['v', 0b00001000],                      // General purpose bit flags - data descriptor flag set
+                ['v', $bits],                           // General purpose bit flags - data descriptor flag set
                 ['v', $this->meth],                     // Compression method
                 ['V', $time],                           // Timestamp (DOS Format)
-                ['V', 0x00000000],                      // CRC32 of data (0 -> moved to data descriptor footer)
+                ['V', $this->crc],                      // CRC32 of data (0 -> moved to data descriptor footer)
                 ['V', 0xFFFFFFFF],                      // Length of compressed data (Forced to 0xFFFFFFFF for 64bit extension)
                 ['V', 0xFFFFFFFF],                      // Length of original data (Forced to 0xFFFFFFFF for 64bit extension)
                 ['v', $nlen],                           // Length of filename
                 ['v', 20],                              // Extra data (see below)
             ];
-
             $fields64 = [
                 ['v', 0x0001],                          // 64bit Extension
                 ['v', 16],                              // Length of data block
-                ['P', 0x0000000000000000],              // Length of original data (0 -> moved to data descriptor footer)
-                ['P', 0x0000000000000000],              // Length of compressed data (0 -> moved to data descriptor footer)
+                ['P', $this->len],                      // Length of original data (0 -> moved to data descriptor footer)
+                ['P', $this->zlen],                     // Length of compressed data (0 -> moved to data descriptor footer)
             ];
-        }
-        else
-        {
+        } else {
             $fields = [
                 // Header
                 ['V', ZipStream::FILE_HEADER_SIGNATURE],
                 ['v', ZipStream::ZIP_VERSION],          // Version needed to Extract
-                ['v', 0b00001000],                      // General purpose bit flags - data descriptor flag set
+                ['v', $bits],                           // General purpose bit flags - data descriptor flag set
                 ['v', $this->meth],                     // Compression method
                 ['V', $time],                           // Timestamp (DOS Format)
-                ['V', 0x00000000],                      // CRC32 of data (0 -> moved to data descriptor footer)
-                ['V', 0x00000000],                      // Length of compressed data (0 -> moved to data descriptor footer)
-                ['V', 0x00000000],                      // Length of original data (0 -> moved to data descriptor footer)
+                ['V', $this->crc],                      // CRC32 of data (0 -> moved to data descriptor footer)
+                ['V', $this->zlen],                     // Length of compressed data (0 -> moved to data descriptor footer)
+                ['V', $this->len],                      // Length of original data (0 -> moved to data descriptor footer)
                 ['v', $nlen],                           // Length of filename
                 ['v', 0],                               // Extra data (0 bytes)
             ];
-
             $fields64 = [];
         }
 
@@ -106,32 +220,28 @@ class File
 
     public function addFileFooter()
     {
-        if ($this->zip->opt[ZipStream::OPTION_USE_ZIP64])
-        {
-            $fields = [
-                ['V', ZipStream::DATA_DESCRIPTOR_SIGNATURE],
-                ['V', $this->crc],                      // CRC32
-                ['P', $this->zlen],                     // Length of compressed data
-                ['P', $this->len],                      // Length of original data
-            ];
-            $flen = 24;
+        if ($this->zip->opt[ZipStream::OPTION_ZERO_HEADER]) {
+            if ($this->zip->opt[ZipStream::OPTION_ZIP64]) {
+                $fields = [
+                    ['V', ZipStream::DATA_DESCRIPTOR_SIGNATURE],
+                    ['V', $this->crc],                      // CRC32
+                    ['P', $this->zlen],                     // Length of compressed data
+                    ['P', $this->len],                      // Length of original data
+                ];
+            } else {
+                $fields = [
+                    ['V', ZipStream::DATA_DESCRIPTOR_SIGNATURE],
+                    ['V', $this->crc],                      // CRC32
+                    ['V', $this->zlen],                     // Length of compressed data
+                    ['V', $this->len],                      // Length of original data
+                ];
+            }
+            $footer = ZipStream::packFields($fields);
+            $this->zip->send($footer);
+        } else {
+            $footer = '';
         }
-        else
-        {
-            $fields = [
-                ['V', ZipStream::DATA_DESCRIPTOR_SIGNATURE],
-                ['V', $this->crc],                      // CRC32
-                ['V', $this->zlen],                     // Length of compressed data
-                ['V', $this->len],                      // Length of original data
-            ];
-            $flen = 16;
-        }
-
-        $footer = ZipStream::packFields($fields);
-        $this->zip->send($footer);
-        $this->total_length = Bigint::init($this->hlen)->add($this->zlen)->add($flen);
-
-        // add to central directory record and increment offset
+        $this->total_length = Bigint::init($this->hlen)->add($this->zlen)->add(strlen($footer));
         $this->zip->addToCdr($this);
     }
 
@@ -151,13 +261,15 @@ class File
         // get dos timestamp
         $time = $this->dostime($this->time);
 
-        if ($this->zip->opt[ZipStream::OPTION_USE_ZIP64])
+        $bits = $this->zip->opt[ZipStream::OPTION_ZERO_HEADER] ? 0b00001000 : 0;
+
+        if ($this->zip->opt[ZipStream::OPTION_ZIP64])
         {
             $fields = [
                 ['V', ZipStream::CDR_FILE_SIGNATURE],   // Central file header signature
                 ['v', ZipStream::ZIP_VERSION_64],       // Made by version
                 ['v', ZipStream::ZIP_VERSION_64],       // Extract by version
-                ['v', 0b00001000],                      // General purpose bit flags - data descriptor flag set
+                ['v', $bits],                           // General purpose bit flags - data descriptor flag set
                 ['v', $this->meth],                     // Compression method
                 ['V', $time],                           // Timestamp (DOS Format)
                 ['V', $this->crc],                      // CRC32
@@ -186,7 +298,7 @@ class File
                 ['V', ZipStream::CDR_FILE_SIGNATURE],   // Central file header signature
                 ['v', ZipStream::ZIP_VERSION],          // Made by version
                 ['v', ZipStream::ZIP_VERSION],          // Extract by version
-                ['v', 0b00001000],                      // General purpose bit flags - data descriptor flag set
+                ['v', $bits],                           // General purpose bit flags - data descriptor flag set
                 ['v', $this->meth],                     // Compression method
                 ['V', $time],                           // Timestamp (DOS Format)
                 ['V', $this->crc],                      // CRC32
@@ -215,6 +327,7 @@ class File
         // increment cdr offset
         $this->zip->cdr_ofs = $this->zip->cdr_ofs->add(strlen($ret));
     }
+
 
     /**
      * Convert a UNIX timestamp to a DOS timestamp.

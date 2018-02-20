@@ -3,6 +3,8 @@
 namespace ZipStreamTest;
 
 use PHPUnit\Framework\TestCase;
+use GuzzleHttp\Psr7\Response;
+
 use ZipStream\ZipStream;
 use ZipStream\File;
 
@@ -282,9 +284,9 @@ class ZipStreamTest extends TestCase
         $zipArch->close();
     }
 
-    public function testAddFileFromPath_largeFileMethods()
+    public function testAddLargeFileFromPath()
     {
-        $methods = array(ZipStream::METHOD_STORE, ZipStream::METHOD_DEFLATE);
+        $methods = array(ZipStream::METHOD_DEFLATE, ZipStream::METHOD_STORE);
         foreach ($methods as $method) {
             list($tmp, $stream) = $this->getTmpFileStream();
 
@@ -305,7 +307,6 @@ class ZipStreamTest extends TestCase
             $shaExample = sha1_file($tmpExample);
             $zip->addFileFromPath('sample.txt', $tmpExample);
             unlink($tmpExample);
-
 
             $zip->finish();
             fclose($stream);
@@ -351,7 +352,7 @@ class ZipStreamTest extends TestCase
         $this->assertEquals(file_get_contents($tmpDir . '/test/sample.txt'), 'More Simple Sample Data');
     }
 
-    public function addFileFromStreamWithStorageMethod()
+    public function testAddFileFromStreamWithStorageMethod()
     {
         list($tmp, $stream) = $this->getTmpFileStream();
 
@@ -378,11 +379,32 @@ class ZipStreamTest extends TestCase
         $zipArch->open($tmp);
 
         $sample1 = $zipArch->statName('sample.txt');
-        $this->assertEquals(ZipStream::NOCOMPRESS, $sample1['comp_method']);
+        $this->assertEquals(ZipStream::METHOD_STORE, $sample1['comp_method']);
 
         $sample2 = $zipArch->statName('test/sample.txt');
-        $this->assertEquals(ZipStream::COMPRESS, $sample2['comp_method']);
+        $this->assertEquals(ZipStream::METHOD_DEFLATE, $sample2['comp_method']);
 
         $zipArch->close();
+    }
+
+    public function testAddFileFromPsr7Stream()
+    {
+        list($tmp, $stream) = $this->getTmpFileStream();
+
+        $zip = new ZipStream(null, array(
+            ZipStream::OPTION_OUTPUT_STREAM => $stream
+        ));
+
+        $body = "Sample String Data";
+        $response = new Response(200, [], $body);
+        $zip->addFileFromPsr7Stream('sample.json', $response->getBody(), ['method' => ZipStream::METHOD_STORE]);
+        $zip->finish();
+        fclose($stream);
+
+        $tmpDir = $this->validateAndExtractZip($tmp);
+
+        $files = $this->getRecursiveFileList($tmpDir);
+        $this->assertEquals(array('sample.json'), $files);
+        $this->assertEquals(file_get_contents($tmpDir . '/sample.json'), $body);
     }
 }

@@ -2,10 +2,8 @@
 
 namespace ZipStream;
 
-use ZipStream\Exception\FileNotFoundException;
-use ZipStream\Exception\FileNotReadableException;
 use ZipStream\Exception\InvalidOptionException;
-use ZipStream\Exception\StreamNotReadableException;
+use Psr\Http\Message\StreamInterface;
 
 /**
  * ZipStream
@@ -92,6 +90,9 @@ class ZipStream
     const ZIP64_CDR_EOF_SIGNATURE = 0x06064b50;
     const ZIP64_CDR_LOCATOR_SIGNATURE = 0x07064b50;
 
+    const DEFAULT_DEFLATE_LEVEL = 6;
+    const CHUNKED_READ_BLOCK_SIZE = 1048576;
+
     const OPTION_LARGE_FILE_SIZE      = 'large_file_size';
     const OPTION_LARGE_FILE_METHOD    = 'large_file_method';
     const OPTION_SEND_HTTP_HEADERS    = 'send_http_headers';
@@ -99,7 +100,9 @@ class ZipStream
     const OPTION_OUTPUT_STREAM        = 'output_stream';
     const OPTION_CONTENT_TYPE         = 'content_type';
     const OPTION_CONTENT_DISPOSITION  = 'content_disposition';
-    const OPTION_USE_ZIP64            = 'use_zip64';
+    const OPTION_ZIP64                = 'zip64';
+    const OPTION_ZERO_HEADER          = 'zero_header';
+    const OPTION_STAT_FILES           = 'stat_files';
 
     /**
      * Global Options
@@ -161,8 +164,23 @@ class ZipStream
      *                         and is much, much slower.  Note that deflate
      *                         must compress the file twice and extremely
      *                         slow.
-     *   sendHttpHeaders     - Boolean indicating whether or not to send
+     *   send_http_headers   - Boolean indicating whether or not to send
      *                         the HTTP headers for this file.
+     *   zip64               - Enable Zip64 extension, supporting very large
+     *                         archives (any size > 4 GB or file count > 64k)
+     *   zero_header         - Enable straming files with single read where
+     *                         general purpose bit 3 indicates local file header
+     *                         contain zero values in crc and size fields,
+     *                         these appear only after file contents
+     *                         in data descriptor block.
+     *   stat_files          - Enable reading file stat for determining file size.
+     *                         When a 32-bit system reads file size that is
+     *                         over 2 GB, invalid value appears in file size
+     *                         due to integer overflow. Should be disabled on
+     *                         32-bit systems with method addFileFromPath
+     *                         if any file may exceed 2 GB. In this case file
+     *                         will be read in blocks and correct size will be
+     *                         determined from content.
      *
      * Note that content_type and content_disposition do nothing if you are
      * not sending HTTP headers.
@@ -210,7 +228,9 @@ class ZipStream
             self::OPTION_LARGE_FILE_METHOD    => static::METHOD_STORE,
             self::OPTION_SEND_HTTP_HEADERS    => false,
             self::OPTION_HTTP_HEADER_CALLBACK => 'header',
-            self::OPTION_USE_ZIP64            => true
+            self::OPTION_ZIP64                => true,
+            self::OPTION_ZERO_HEADER          => false,
+            self::OPTION_STAT_FILES           => true,
         );
 
         // merge and save options
@@ -261,21 +281,8 @@ class ZipStream
      */
     public function addFile($name, $data, $opt = array(), $method = 'deflate')
     {
-        $file = new File($this);
-        $file->name = $name;
-        $file->opt = $opt;
-        $file->meth = $this->parseMethod(@$opt['method'], $method);
-        $file->len = strlen($data);
-        $file->crc = crc32($data);
-
-        // compress data if needed
-        if ($file->meth == static::METHOD_DEFLATE)
-            $data = gzdeflate($data);
-
-        $file->zlen = strlen($data);
-        $file->addFileHeader();
-        $this->send($data);
-        $file->addFileFooter();
+        $file = new File($this, $name, $opt, $method);
+        $file->processData($data);
     }
 
     /**
@@ -321,22 +328,8 @@ class ZipStream
      */
     public function addFileFromPath($name, $path, $opt = array(), $method = 'deflate')
     {
-
-        if (!is_readable($path)) {
-            if(!file_exists($path)) {
-                throw new FileNotFoundException($path);
-            }
-            throw new FileNotReadableException($path);
-        }
-        if ($this->isLargeFile($path)) {
-            // file is too large to be read into memory; add progressively
-            $this->addLargeFile($name, $path, $opt);
-        } else {
-            // file is small enough to read into memory; read file contents and
-            // handle with addFile()
-            $data = file_get_contents($path);
-            $this->addFile($name, $data, $opt, $method);
-        }
+        $file = new File($this, $name, $opt, $method);
+        $file->processPath($path);
     }
 
     /**
@@ -364,36 +357,10 @@ class ZipStream
      *
      * @return void
      */
-    public function addFileFromStream($name, $stream, $opt = array())
+    public function addFileFromStream($name, $stream, $opt = array(), $method = 'deflate')
     {
-        $file = new File($this);
-        $file->name = $name;
-        $file->opt = $opt;
-
-        $block_size = 1048576; // process in 1 megabyte chunks
-        $algo       = 'crc32b';
-        $file->meth = static::METHOD_STORE;
-
-        // calculate header attributes
-        fseek($stream, 0, SEEK_END);
-        $file->zlen = $file->len = ftell($stream);
-
-        // send file header
-        $file->addFileHeader();
-
-        // Stream data + calculate CRC32
-        rewind($stream);
-        $hash_ctx = hash_init($algo);
-        while (!feof($stream)) {
-            $data = fread($stream, $block_size);
-            hash_update($hash_ctx, $data);
-            // send data
-            $this->send($data);
-        }
-        $file->crc = hexdec(hash_final($hash_ctx));
-
-        // send file footer
-        $file->addFileFooter();
+        $file = new File($this, $name, $opt, $method);
+        $file->processStream(new DeflateStream($stream));
     }
 
     /**
@@ -421,36 +388,10 @@ class ZipStream
      *
      * @return void
      */
-    public function addFileFromPsr7Stream($name, \Psr\Http\Message\StreamInterface $stream, $opt = array())
+    public function addFileFromPsr7Stream($name, StreamInterface $stream, $opt = array(), $method = 'deflate')
     {
-        $file = new File($this);
-        $file->name = $name;
-        $file->opt = $opt;
-
-        $block_size = 1048576; // process in 1 megabyte chunks
-        $algo       = 'crc32b';
-        $file->meth = static::METHOD_STORE;
-
-        // calculate header attributes
-        $stream->seek(0, SEEK_END);
-        $file->zlen = $file->len = $stream->tell();
-
-        // send file header
-        $file->addFileHeader($name, $opt, $meth);
-
-        // Stream data and calculate CRC32
-        $stream->rewind();
-        $hash_ctx = hash_init($algo);
-        while (!$stream->eof()) {
-            $data = $stream->read($block_size);
-            hash_update($hash_ctx, $data);
-            // send data
-            $this->send($data);
-        }
-        $file->crc = hexdec(hash_final($hash_ctx));
-
-        // send file footer + CDR record
-        $file->addFileFooter();
+        $file = new File($this, $name, $opt, $method);
+        $file->processStream($stream);
     }
 
     /**
@@ -476,7 +417,7 @@ class ZipStream
         foreach ($this->files as $file) $file->addCdrFile();
 
         // Add 64bit headers (if applicable)
-        if ($this->opt[static::OPTION_USE_ZIP64])
+        if ($this->opt[static::OPTION_ZIP64])
         {
             $this->addCdr64Eof($this->opt);
             $this->addCdr64Locator($this->opt);
@@ -490,99 +431,17 @@ class ZipStream
     }
 
     /**
-     * Add a large file from the given path.
-     *
-     * @param String $name
-     * @param String $path
-     * @param array $opt
-     * @return void
-     * @throws \ZipStream\Exception\InvalidOptionException
-     */
-    protected function addLargeFile($name, $path, $opt = array())
-    {
-        $st         = stat($path);
-        $block_size = 1048576; // process in 1 megabyte chunks
-        $algo       = 'crc32b';
-
-        $file = new File($this);
-        $file->name = $name;
-        $file->opt = $opt;
-
-        // calculate header attributes
-        $file->zlen = $file->len = $st['size'];
-
-        $file->meth = $this->parseMethod(@$this->opt[self::OPTION_LARGE_FILE_METHOD]);
-        if ($file->meth == static::METHOD_STORE) {
-            // store method
-            $file->crc = hexdec(hash_file($algo, $path));
-        } elseif ($file->meth == static::METHOD_DEFLATE) {
-            // deflate method
-            // open file, calculate crc and compressed file length
-            $fh = fopen($path, 'rb');
-            $hash_ctx = hash_init($algo);
-            $file->zlen = 0;
-
-            // read each block, update crc and zlen
-            while (!feof($fh)) {
-                $data = fread($fh, $block_size);
-                hash_update($hash_ctx, $data);
-            }
-
-            rewind($fh);
-            $filter = stream_filter_append($fh, 'zlib.deflate', STREAM_FILTER_READ, 6);
-
-            while (!feof($fh)) {
-                $data = fread($fh, $block_size);
-                $file->zlen += strlen($data);
-            }
-
-            stream_filter_remove($filter);
-
-            // close file and finalize crc
-            fclose($fh);
-
-            $file->crc = hexdec(hash_final($hash_ctx));
-        }
-
-        // send file header
-        $file->addFileHeader();
-
-        // open input file
-        $fh = fopen($path, 'rb');
-
-        if ($file->meth == static::METHOD_DEFLATE) {
-            $filter = stream_filter_append($fh, 'zlib.deflate', STREAM_FILTER_READ, 6);
-        }
-
-        // send file blocks
-        while (!feof($fh)) {
-            $data = fread($fh, $block_size);
-
-            // send data
-            $this->send($data);
-        }
-
-        if (isset($filter) && is_resource($filter)) {
-            stream_filter_remove($filter);
-        }
-
-        // close input file
-        fclose($fh);
-
-        // send file footer
-        $file->addFileFooter();
-    }
-
-    /**
      * Is this file larger than large_file_size?
      *
      * @param string $path
      * @return Boolean
      */
-    protected function isLargeFile($path)
+    public function isLargeFile($path)
     {
-        $st = stat($path);
-        return ($this->opt[self::OPTION_LARGE_FILE_SIZE] > 0) && ($st['size'] > $this->opt[self::OPTION_LARGE_FILE_SIZE]);
+        if (!$this->opt[self::OPTION_STAT_FILES]) return;
+        $stat = stat($path);
+        return $this->opt[self::OPTION_LARGE_FILE_SIZE] > 0 &&
+            $stat['size'] > $this->opt[self::OPTION_LARGE_FILE_SIZE];
     }
 
     /**
@@ -667,7 +526,7 @@ class ZipStream
             $comment = $opt['comment'];
         }
 
-        if ($this->opt[static::OPTION_USE_ZIP64])
+        if ($this->opt[static::OPTION_ZIP64])
         {
             $fields = [
                 ['V', static::CDR_EOF_SIGNATURE],   // end of central file header signature
@@ -824,13 +683,14 @@ class ZipStream
         return call_user_func_array('pack', $args);
     }
 
-    protected function parseMethod($method, $default=null)
+    public static function parseMethod($method, $default=null)
     {
         if ($method === null) $method = $default;
         if ($method === 'deflate') $method = static::METHOD_DEFLATE;
         if ($method === 'store') $method = static::METHOD_STORE;
-        if (!in_array($method, array(static::METHOD_STORE, static::METHOD_DEFLATE), true))
-            throw new InvalidOptionException('large_file_method', array(), $method);
+        $valid = array(static::METHOD_STORE, static::METHOD_DEFLATE);
+        if (!in_array($method, $valid, true))
+            throw new InvalidOptionException('large_file_method', $valid, $method);
         return $method;
     }
 }
