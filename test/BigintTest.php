@@ -26,6 +26,10 @@ class ZipStreamTest extends TestCase
         $bigint = new Bigint(1);
         $bigint = $bigint->add(2);
         $this->assertSame(3, $bigint->getLow32());
+        $this->assertFalse($bigint->isOver32());
+        $this->assertTrue($bigint->isOver32(true));
+        $this->assertSame($bigint->getLowFF(), $bigint->getLow32());
+        $this->assertSame($bigint->getLowFF(true), 0xFFFFFFFF);
     }
 
     public function testAddWithOverflowAtLowestByte() {
@@ -36,8 +40,11 @@ class ZipStreamTest extends TestCase
 
     public function testAddWithOverflowAtInteger32() {
         $bigint = new Bigint(0xFFFFFFFF);
+        $this->assertTrue($bigint->isOver32());
         $bigint = $bigint->add(0x01);
         $this->assertSame('0x0000000100000000', $bigint->getHex64());
+        $this->assertTrue($bigint->isOver32());
+        $this->assertSame(0xFFFFFFFF, $bigint->getLowFF());
     }
 
     public function testAddWithOverflowAtInteger64() {

@@ -24,6 +24,19 @@ class Bigint
         return $this->get32(4);
     }
 
+    public function isOver32($force = false) {
+        // value 0xFFFFFFFF already needs a Zip64 header
+        return $force || $this->getHigh32() > 0 || $this->getLow32() == 0xFFFFFFFF;
+    }
+
+    public function getLowFF($force = false) {
+        if ($force || $this->isOver32()) {
+            return 0xFFFFFFFF;
+        } else {
+            return $this->getLow32();
+        }
+    }
+
     public function getHex64() {
         $result = '0x';
         for ($i = 7; $i >= 0; $i--) {

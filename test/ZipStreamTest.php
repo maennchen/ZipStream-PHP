@@ -354,14 +354,17 @@ class ZipStreamTest extends TestCase
     {
         $methods = array(ZipStream::METHOD_DEFLATE, ZipStream::METHOD_STORE);
         $headers = array(false, true);
+        $zip64s = array(false, true);
         foreach ($methods as $method) {
             foreach ($headers as $header) {
-                $this->addLargeFileFileFromPath($method, $header);
+                foreach ($zip64s as $zip64) {
+                    $this->addLargeFileFileFromPath($method, $header, $zip64);
+                }
             }
         }
     }
 
-    protected function addLargeFileFileFromPath($method, $header)
+    protected function addLargeFileFileFromPath($method, $header, $zip64)
     {
         list($tmp, $stream) = $this->getTmpFileStream();
 
@@ -370,6 +373,7 @@ class ZipStreamTest extends TestCase
             ZipStream::OPTION_LARGE_FILE_METHOD => $method,
             ZipStream::OPTION_LARGE_FILE_SIZE => 5,
             ZipStream::OPTION_ZERO_HEADER => $header,
+            ZipStream::OPTION_ZIP64 => $zip64,
         ));
 
         list($tmpExample, $streamExample) = $this->getTmpFileStream();
