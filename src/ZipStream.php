@@ -334,7 +334,7 @@ class ZipStream
     }
 
     /**
-     * addFile_from_stream
+     * addFileFromStream
      *
      * Add an open stream to the archive.
      *
@@ -365,7 +365,7 @@ class ZipStream
     }
 
     /**
-     * addFile_from_Psr7Stream
+     * addFileFromPsr7Stream
      *
      * Add an open stream to the archive.
      *
@@ -565,7 +565,7 @@ class ZipStream
     }
 
     /**
-     *  Send HTTP headers for this stream.
+     * Send HTTP headers for this stream.
      *
      * @return void
      */
