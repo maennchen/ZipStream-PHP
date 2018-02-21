@@ -28,12 +28,6 @@ use Psr\Http\Message\StreamInterface;
  *
  * @license https://raw.githubusercontent.com/maennchen/ZipStream-PHP/master/LICENCE
  *
- *
- * Requirements:
- *
- * PHP version 5.6 or newer
- * PHP extension mbstring
- *
  * Usage:
  *
  * Streaming zip archives is a simple, three-step process:
