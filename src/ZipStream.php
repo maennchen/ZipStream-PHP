@@ -425,7 +425,7 @@ class ZipStream
             $this->cdr_ofs->isOver32() ||
             $this->ofs->isOver32())
         {
-            if (true || !$this->zip->opt[ZipStream::OPTION_ZIP64])
+            if (!$this->opt[ZipStream::OPTION_ZIP64])
                 throw new OverflowException();
 
             $this->addCdr64Eof();
