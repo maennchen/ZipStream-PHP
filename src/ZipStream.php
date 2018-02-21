@@ -443,7 +443,7 @@ class ZipStream
      * Is this file larger than large_file_size?
      *
      * @param string $path
-     * @return Boolean
+     * @return Boolean|null
      */
     public function isLargeFile($path)
     {

@@ -54,7 +54,7 @@ class File
             }
             throw new FileNotReadableException($path);
         }
-        if (!$this->zip->isLargeFile($path)) {
+        if ($this->zip->isLargeFile($path) === false) {
             $data = file_get_contents($path);
             $this->processData($data);
         } else {
