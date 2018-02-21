@@ -23,8 +23,8 @@
     "psr/http-message": "^1.0"
   },
   "require-dev": {
-    "phpunit/phpunit": "*",
-    "guzzlehttp/guzzle": "*",
+    "phpunit/phpunit": ">= 5.7",
+    "guzzlehttp/guzzle": ">= 6.3",
     "ext-zip": "*"
   },
   "autoload": {
