@@ -16,12 +16,21 @@ class Bigint
         }
     }
 
+    public function getValue($end=0, $length=8) {
+        $result = 0;
+        for ($i = $end+$length-1; $i >= $end; $i--) {
+            $result <<= 8;
+            $result |= $this->bytes[$i];
+        }
+        return $result;
+    }
+
     public function getLow32() {
-        return $this->get32(0);
+        return $this->getValue(0, 4);
     }
 
     public function getHigh32() {
-        return $this->get32(4);
+        return $this->getValue(4, 4);
     }
 
     public function isOver32($force = false) {
@@ -82,14 +91,5 @@ class Bigint
             $this->bytes[$start+$i] = $i >= PHP_INT_SIZE ? 0 : $value & 0xFF;
             $value >>= 8;
         }
-    }
-
-    protected function get32($end=0) {
-        $result = 0;
-        for ($i = $end+3; $i >= $end; $i--) {
-            $result <<= 8;
-            $result |= $this->bytes[$i];
-        }
-        return $result;
     }
 }
