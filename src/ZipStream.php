@@ -23,7 +23,10 @@ use Psr\Http\Message\StreamInterface;
  * @author Nik Barham <github@brokencube.co.uk>
  * @copyright Copyright (C) 2016 Nik Barham <github@brokencube.co.uk>
  *
- * @license https://raw.githubusercontent.com/brokencube/ZipStream64/master/LICENCE
+ * @author András Kolesár <kolesar@kolesar.hu>
+ * @copyright Copyright (C) 2018 András Kolesár <kolesar@kolesar.hu>
+ *
+ * @license https://raw.githubusercontent.com/maennchen/ZipStream-PHP/master/LICENCE
  *
  *
  * Requirements:
