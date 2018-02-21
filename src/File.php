@@ -43,6 +43,7 @@ class File
         $this->name = $name;
         $this->opt = $opt;
         $this->meth = ZipStream::parseMethod(@$opt['method'], $method);
+        $this->version = ZipStream::ZIP_VERSION_STORE;
         $this->ofs = new Bigint;
     }
 
@@ -211,6 +212,9 @@ class File
             $this->bits |= self::BIT_EFS_UTF8;
         }
 
+        if ($this->meth == ZipStream::METHOD_DEFLATE)
+            $this->version = ZipStream::ZIP_VERSION_DEFLATE;
+
         $force = (boolean) ($this->bits & self::BIT_ZERO_HEADER) &&
             $this->zip->opt[ZipStream::OPTION_ZIP64];
 
@@ -260,9 +264,7 @@ class File
                 ['v', 0x0001],                      // 64 bit extension
                 ['v', count($fields)*8]             // Length of data block
             );
-            $this->version = ZipStream::ZIP_VERSION_64;
-        } else {
-            $this->version = ZipStream::ZIP_VERSION;
+            $this->version = ZipStream::ZIP_VERSION_ZIP64;
         }
 
         return ZipStream::packFields($fields);
@@ -325,7 +327,7 @@ class File
 
         $fields = [
             ['V', ZipStream::CDR_FILE_SIGNATURE],   // Central file header signature
-            ['v', $this->version],                  // Made by version
+            ['v', ZipStream::ZIP_VERSION_MADE_BY],  // Made by version
             ['v', $this->version],                  // Extract by version
             ['v', $this->bits],                     // General purpose bit flags - data descriptor flag set
             ['v', $this->meth],                     // Compression method

@@ -79,20 +79,22 @@ class ZipStream
      */
     const VERSION = '0.3.0';
 
-    const ZIP_VERSION = 0x000A;
-    const ZIP_VERSION_64 = 0x002D;
+    const ZIP_VERSION_STORE   = 0x000A; // 1.00
+    const ZIP_VERSION_DEFLATE = 0x0014; // 2.00
+    const ZIP_VERSION_ZIP64   = 0x002D; // 4.50
+    const ZIP_VERSION_MADE_BY = 0x031E; // 3.00 on Unix
 
-    const METHOD_STORE = 0x00;
+    const METHOD_STORE   = 0x00;
     const METHOD_DEFLATE = 0x08;
 
-    const FILE_HEADER_SIGNATURE = 0x04034b50;
-    const CDR_FILE_SIGNATURE = 0x02014b50;
-    const CDR_EOF_SIGNATURE = 0x06054b50;
-    const DATA_DESCRIPTOR_SIGNATURE = 0x08074b50;
-    const ZIP64_CDR_EOF_SIGNATURE = 0x06064b50;
+    const FILE_HEADER_SIGNATURE       = 0x04034b50;
+    const CDR_FILE_SIGNATURE          = 0x02014b50;
+    const CDR_EOF_SIGNATURE           = 0x06054b50;
+    const DATA_DESCRIPTOR_SIGNATURE   = 0x08074b50;
+    const ZIP64_CDR_EOF_SIGNATURE     = 0x06064b50;
     const ZIP64_CDR_LOCATOR_SIGNATURE = 0x07064b50;
 
-    const DEFAULT_DEFLATE_LEVEL = 6;
+    const DEFAULT_DEFLATE_LEVEL   = 6;
     const CHUNKED_READ_BLOCK_SIZE = 1048576;
 
     const OPTION_LARGE_FILE_SIZE      = 'large_file_size';
@@ -477,8 +479,8 @@ class ZipStream
         $fields = [
             ['V', static::ZIP64_CDR_EOF_SIGNATURE],     // ZIP64 end of central file header signature
             ['P', 44],                                  // Length of data below this header (length of block - 12) = 44
-            ['v', static::ZIP_VERSION_64],              // Made by version
-            ['v', static::ZIP_VERSION_64],              // Extract by version
+            ['v', static::ZIP_VERSION_MADE_BY],         // Made by version
+            ['v', static::ZIP_VERSION_ZIP64],           // Extract by version
             ['V', 0x00],                                // disk number
             ['V', 0x00],                                // no of disks
             ['P', $num_files],                          // no of entries on disk
