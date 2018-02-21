@@ -353,18 +353,20 @@ class ZipStreamTest extends TestCase
     public function testAddLargeFileFromPath()
     {
         $methods = array(ZipStream::METHOD_DEFLATE, ZipStream::METHOD_STORE);
-        $headers = array(false, true);
-        $zip64s = array(false, true);
+        $falsetrue = array(false, true);
         foreach ($methods as $method) {
-            foreach ($headers as $header) {
-                foreach ($zip64s as $zip64) {
-                    $this->addLargeFileFileFromPath($method, $header, $zip64);
+            foreach ($falsetrue as $zeroheader) {
+                foreach ($falsetrue as $zip64) {
+                    if ($zeroheader &&
+                        $method == ZipStream::METHOD_DEFLATE &&
+                        !function_exists('deflate_init')) continue;
+                    $this->addLargeFileFileFromPath($method, $zeroheader, $zip64);
                 }
             }
         }
     }
 
-    protected function addLargeFileFileFromPath($method, $header, $zip64)
+    protected function addLargeFileFileFromPath($method, $zeroheader, $zip64)
     {
         list($tmp, $stream) = $this->getTmpFileStream();
 
@@ -372,7 +374,7 @@ class ZipStreamTest extends TestCase
             ZipStream::OPTION_OUTPUT_STREAM => $stream,
             ZipStream::OPTION_LARGE_FILE_METHOD => $method,
             ZipStream::OPTION_LARGE_FILE_SIZE => 5,
-            ZipStream::OPTION_ZERO_HEADER => $header,
+            ZipStream::OPTION_ZERO_HEADER => $zeroheader,
             ZipStream::OPTION_ZIP64 => $zip64,
         ));
 
@@ -407,16 +409,17 @@ class ZipStreamTest extends TestCase
             ZipStream::OPTION_OUTPUT_STREAM => $stream
         ));
 
-        $streamExample = fopen('php://temp', 'w+');
-        fwrite($streamExample, "Sample String Data");
-        rewind($streamExample); // move the pointer back to the beginning of file.
+        // In this test we can't use temporary stream to feed data
+        // because zlib.deflate filter gives empty string before PHP 7
+        // it works fine with file stream
+        $streamExample = fopen(__FILE__, 'r');
         $zip->addFileFromStream('sample.txt', $streamExample);
         fclose($streamExample);
 
         $streamExample2 = fopen('php://temp', 'w+');
         fwrite($streamExample2, "More Simple Sample Data");
         rewind($streamExample2); // move the pointer back to the beginning of file.
-        $zip->addFileFromStream('test/sample.txt', $streamExample2);
+        $zip->addFileFromStream('test/sample.txt', $streamExample2, [], 'store');
         fclose($streamExample2);
 
         $zip->finish();
@@ -427,7 +430,7 @@ class ZipStreamTest extends TestCase
         $files = $this->getRecursiveFileList($tmpDir);
         $this->assertEquals(array('sample.txt', 'test/sample.txt'), $files);
 
-        $this->assertEquals(file_get_contents($tmpDir . '/sample.txt'), 'Sample String Data');
+        $this->assertEquals(file_get_contents($tmpDir . '/sample.txt'), file_get_contents(__FILE__));
         $this->assertEquals(file_get_contents($tmpDir . '/test/sample.txt'), 'More Simple Sample Data');
     }
 
