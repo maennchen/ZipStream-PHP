@@ -251,7 +251,7 @@ class ZipStream
     /**
      * addFile
      *
-     * add a file to the archive
+     * Add a file to the archive.
      *
      *  @param String $name   - path of file in archive (including directory).
      *  @param String $data   - contents of file
@@ -289,7 +289,7 @@ class ZipStream
     /**
      * addFileFromPath
      *
-     * add a file at path to the archive.
+     * Add a file at path to the archive.
      *
      * Note that large files may be compresed differently than smaller
      * files; see the "Large File Support" section above for more
@@ -336,7 +336,7 @@ class ZipStream
     /**
      * addFile_from_stream
      *
-     * dds an open stream to the archive uncompressed
+     * Add an open stream to the archive.
      *
      * @param String $name - path of file in archive (including directory).
      * @param Resource $stream - contents of file as a stream resource
@@ -367,7 +367,7 @@ class ZipStream
     /**
      * addFile_from_Psr7Stream
      *
-     * dds an open stream to the archive uncompressed
+     * Add an open stream to the archive.
      *
      * @param String $name - path of file in archive (including directory).
      * @param Resource $stream - contents of file as a stream resource
@@ -551,7 +551,7 @@ class ZipStream
     }
 
     /**
-     * Clear all internal variables.  Note that the stream object is not
+     * Clear all internal variables. Note that the stream object is not
      * usable after this.
      *
      * @return void
