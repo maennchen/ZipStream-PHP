@@ -3,7 +3,10 @@
 namespace ZipStreamTest;
 
 use PHPUnit\Framework\TestCase;
+use GuzzleHttp\Psr7\Response;
+
 use ZipStream\ZipStream;
+use ZipStream\File;
 
 /**
  * Test Class for the Main ZipStream CLass
@@ -13,7 +16,8 @@ use ZipStream\ZipStream;
  */
 class ZipStreamTest extends TestCase
 {
-    const OSX_ARCHIVE_UTILITY = '/System/Library/CoreServices/Applications/Archive Utility.app/Contents/MacOS/Archive Utility';
+    const OSX_ARCHIVE_UTILITY =
+        '/System/Library/CoreServices/Applications/Archive Utility.app/Contents/MacOS/Archive Utility';
 
     /**
      * @expectedException \ZipStream\Exception\InvalidOptionException
@@ -28,6 +32,9 @@ class ZipStreamTest extends TestCase
 
         // Set large_file_method to a wrong value
         $zip->opt['large_file_method'] = 'xy';
+
+        // Avoid fill console with binary data if exception is not thrown
+        $zip->opt['output_stream'] = fopen('/dev/null', 'w');
 
         // Trigger error by adding a file
         $zip->addFileFromPath('foobar.php', __FILE__);
@@ -56,20 +63,18 @@ class ZipStreamTest extends TestCase
 
     public function testDostime()
     {
-        $zip = new ZipStream;
-
-        //Allows testing of private method
-        $class = new \ReflectionClass ($zip);
+        // Allows testing of protected method
+        $class = new \ReflectionClass(File::class);
         $method = $class->getMethod('dostime');
         $method->setAccessible(true);
 
-        $this->assertSame($method->invoke($zip, 1416246368), 1165069764);
+        $this->assertSame($method->invoke(null, 1416246368), 1165069764);
 
-        //January 1 1980 - DOS Epoch.
-        $this->assertSame($method->invoke($zip, 315532800), 2162688);
+        // January 1 1980 - DOS Epoch.
+        $this->assertSame($method->invoke(null, 315532800), 2162688);
 
         // January 1 1970 -> January 1 1980 due to minimum DOS Epoch.  @todo Throw Exception?
-        $this->assertSame($method->invoke($zip, 0), 2162688);
+        $this->assertSame($method->invoke(null, 0), 2162688);
     }
 
     public function testAddFile()
@@ -166,6 +171,72 @@ class ZipStreamTest extends TestCase
         return $data;
     }
 
+    public function testAddFileUtf8NameComment()
+    {
+        list($tmp, $stream) = $this->getTmpFileStream();
+
+        $zip = new ZipStream(null, array(
+            ZipStream::OPTION_OUTPUT_STREAM => $stream
+        ));
+
+        $name = 'árvíztűrő tükörfúrógép.txt';
+        $content = 'Sample String Data';
+        $comment =
+            'Filename has every special characters ' .
+            'from Hungarian language in lowercase. ' .
+            'In uppercase: ÁÍŰŐÜÖÚÓÉ';
+
+        $zip->addFile($name, $content, ['comment' => $comment]);
+        $zip->finish();
+        fclose($stream);
+
+        $tmpDir = $this->validateAndExtractZip($tmp);
+
+        $files = $this->getRecursiveFileList($tmpDir);
+        $this->assertEquals(array($name), $files);
+        $this->assertEquals(file_get_contents($tmpDir . '/' . $name), $content);
+
+        $zipArch = new \ZipArchive();
+        $zipArch->open($tmp);
+        $this->assertEquals($comment, $zipArch->getCommentName($name));
+    }
+
+    /**
+     * @expectedException \ZipStream\Exception\EncodingException
+     */
+    public function testAddFileUtf8NameNonUtfComment()
+    {
+        list($tmp, $stream) = $this->getTmpFileStream();
+
+        $zip = new ZipStream(null, array(
+            ZipStream::OPTION_OUTPUT_STREAM => $stream
+        ));
+
+        $name = 'á.txt';
+        $content = 'any';
+        $comment = 'á';
+
+        $zip->addFile($name, $content, ['comment' => mb_convert_encoding($comment, 'ISO-8859-2', 'UTF-8')]);
+    }
+
+    /**
+     * @expectedException \ZipStream\Exception\EncodingException
+     */
+    public function testAddFileNonUtf8NameUtfComment()
+    {
+        list($tmp, $stream) = $this->getTmpFileStream();
+
+        $zip = new ZipStream(null, array(
+            ZipStream::OPTION_OUTPUT_STREAM => $stream
+        ));
+
+        $name = 'á.txt';
+        $content = 'any';
+        $comment = 'á';
+
+        $zip->addFile(mb_convert_encoding($name, 'ISO-8859-2', 'UTF-8'), $content, ['comment' => $comment]);
+    }
+
     public function testAddFileWithStorageMethod()
     {
         list($tmp, $stream) = $this->getTmpFileStream();
@@ -184,8 +255,8 @@ class ZipStreamTest extends TestCase
 
         $sample1 = $zipArch->statName('sample.txt');
         $sample12 = $zipArch->statName('test/sample.txt');
-        $this->assertEquals($sample1['comp_method'], ZipStream::NOCOMPRESS);
-        $this->assertEquals($sample12['comp_method'], ZipStream::COMPRESS);
+        $this->assertEquals($sample1['comp_method'], ZipStream::METHOD_STORE);
+        $this->assertEquals($sample12['comp_method'], ZipStream::METHOD_DEFLATE);
 
         $zipArch->close();
     }
@@ -272,49 +343,65 @@ class ZipStreamTest extends TestCase
         $zipArch->open($tmp);
 
         $sample1 = $zipArch->statName('sample.txt');
-        $this->assertEquals(ZipStream::NOCOMPRESS, $sample1['comp_method']);
+        $this->assertEquals(ZipStream::METHOD_STORE, $sample1['comp_method']);
 
         $sample2 = $zipArch->statName('test/sample.txt');
-        $this->assertEquals(ZipStream::COMPRESS, $sample2['comp_method']);
+        $this->assertEquals(ZipStream::METHOD_DEFLATE, $sample2['comp_method']);
 
         $zipArch->close();
     }
 
-    public function testAddFileFromPath_largeFileMethods()
+    public function testAddLargeFileFromPath()
     {
-        $methods = array(ZipStream::METHOD_STORE, ZipStream::METHOD_DEFLATE);
+        $methods = array(ZipStream::METHOD_DEFLATE, ZipStream::METHOD_STORE);
+        $falsetrue = array(false, true);
         foreach ($methods as $method) {
-            list($tmp, $stream) = $this->getTmpFileStream();
-
-            $zip = new ZipStream(null, array(
-                ZipStream::OPTION_OUTPUT_STREAM => $stream,
-                ZipStream::OPTION_LARGE_FILE_METHOD => $method,
-                ZipStream::OPTION_LARGE_FILE_SIZE => 5,
-            ));
-
-            list($tmpExample, $streamExample) = $this->getTmpFileStream();
-            for ($i = 0; $i <= 100000; $i++) {
-                fwrite($streamExample, sha1($i));
-                if ($i % 100 === 0) {
-                    fwrite($streamExample, "\n");
+            foreach ($falsetrue as $zeroheader) {
+                foreach ($falsetrue as $zip64) {
+                    if ($zeroheader &&
+                        $method == ZipStream::METHOD_DEFLATE &&
+                        !function_exists('deflate_init')) {
+                        continue;
+                    }
+                    $this->addLargeFileFileFromPath($method, $zeroheader, $zip64);
                 }
             }
-            fclose($streamExample);
-            $shaExample = sha1_file($tmpExample);
-            $zip->addFileFromPath('sample.txt', $tmpExample);
-            unlink($tmpExample);
-
-
-            $zip->finish();
-            fclose($stream);
-
-            $tmpDir = $this->validateAndExtractZip($tmp);
-
-            $files = $this->getRecursiveFileList($tmpDir);
-            $this->assertEquals(array('sample.txt'), $files);
-
-            $this->assertEquals(sha1_file($tmpDir . '/sample.txt'), $shaExample, "SHA-1 Mismatch Method: {$method}");
         }
+    }
+
+    protected function addLargeFileFileFromPath($method, $zeroheader, $zip64)
+    {
+        list($tmp, $stream) = $this->getTmpFileStream();
+
+        $zip = new ZipStream(null, array(
+            ZipStream::OPTION_OUTPUT_STREAM => $stream,
+            ZipStream::OPTION_LARGE_FILE_METHOD => $method,
+            ZipStream::OPTION_LARGE_FILE_SIZE => 5,
+            ZipStream::OPTION_ZERO_HEADER => $zeroheader,
+            ZipStream::OPTION_ZIP64 => $zip64,
+        ));
+
+        list($tmpExample, $streamExample) = $this->getTmpFileStream();
+        for ($i = 0; $i <= 10000; $i++) {
+            fwrite($streamExample, sha1($i));
+            if ($i % 100 === 0) {
+                fwrite($streamExample, "\n");
+            }
+        }
+        fclose($streamExample);
+        $shaExample = sha1_file($tmpExample);
+        $zip->addFileFromPath('sample.txt', $tmpExample);
+        unlink($tmpExample);
+
+        $zip->finish();
+        fclose($stream);
+
+        $tmpDir = $this->validateAndExtractZip($tmp);
+
+        $files = $this->getRecursiveFileList($tmpDir);
+        $this->assertEquals(array('sample.txt'), $files);
+
+        $this->assertEquals(sha1_file($tmpDir . '/sample.txt'), $shaExample, "SHA-1 Mismatch Method: {$method}");
     }
 
     public function testAddFileFromStream()
@@ -325,16 +412,17 @@ class ZipStreamTest extends TestCase
             ZipStream::OPTION_OUTPUT_STREAM => $stream
         ));
 
-        $streamExample = fopen('php://temp', 'w+');
-        fwrite($streamExample, "Sample String Data");
-        rewind($streamExample); // move the pointer back to the beginning of file.
+        // In this test we can't use temporary stream to feed data
+        // because zlib.deflate filter gives empty string before PHP 7
+        // it works fine with file stream
+        $streamExample = fopen(__FILE__, 'r');
         $zip->addFileFromStream('sample.txt', $streamExample);
         fclose($streamExample);
 
         $streamExample2 = fopen('php://temp', 'w+');
         fwrite($streamExample2, "More Simple Sample Data");
         rewind($streamExample2); // move the pointer back to the beginning of file.
-        $zip->addFileFromStream('test/sample.txt', $streamExample2);
+        $zip->addFileFromStream('test/sample.txt', $streamExample2, [], 'store');
         fclose($streamExample2);
 
         $zip->finish();
@@ -345,11 +433,11 @@ class ZipStreamTest extends TestCase
         $files = $this->getRecursiveFileList($tmpDir);
         $this->assertEquals(array('sample.txt', 'test/sample.txt'), $files);
 
-        $this->assertEquals(file_get_contents($tmpDir . '/sample.txt'), 'Sample String Data');
+        $this->assertEquals(file_get_contents($tmpDir . '/sample.txt'), file_get_contents(__FILE__));
         $this->assertEquals(file_get_contents($tmpDir . '/test/sample.txt'), 'More Simple Sample Data');
     }
 
-    public function addFileFromStreamWithStorageMethod()
+    public function testAddFileFromStreamWithStorageMethod()
     {
         list($tmp, $stream) = $this->getTmpFileStream();
 
@@ -376,11 +464,32 @@ class ZipStreamTest extends TestCase
         $zipArch->open($tmp);
 
         $sample1 = $zipArch->statName('sample.txt');
-        $this->assertEquals(ZipStream::NOCOMPRESS, $sample1['comp_method']);
+        $this->assertEquals(ZipStream::METHOD_STORE, $sample1['comp_method']);
 
         $sample2 = $zipArch->statName('test/sample.txt');
-        $this->assertEquals(ZipStream::COMPRESS, $sample2['comp_method']);
+        $this->assertEquals(ZipStream::METHOD_DEFLATE, $sample2['comp_method']);
 
         $zipArch->close();
+    }
+
+    public function testAddFileFromPsr7Stream()
+    {
+        list($tmp, $stream) = $this->getTmpFileStream();
+
+        $zip = new ZipStream(null, array(
+            ZipStream::OPTION_OUTPUT_STREAM => $stream
+        ));
+
+        $body = "Sample String Data";
+        $response = new Response(200, [], $body);
+        $zip->addFileFromPsr7Stream('sample.json', $response->getBody(), ['method' => ZipStream::METHOD_STORE]);
+        $zip->finish();
+        fclose($stream);
+
+        $tmpDir = $this->validateAndExtractZip($tmp);
+
+        $files = $this->getRecursiveFileList($tmpDir);
+        $this->assertEquals(array('sample.json'), $files);
+        $this->assertEquals(file_get_contents($tmpDir . '/sample.json'), $body);
     }
 }
