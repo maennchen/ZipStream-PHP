@@ -95,7 +95,9 @@ class Stream implements StreamInterface
     public function tell()
     {
         $position = ftell($this->stream);
-        if ($position === false) throw new RuntimeException;
+        if ($position === false) {
+            throw new RuntimeException;
+        }
         return $position;
     }
 
@@ -133,8 +135,12 @@ class Stream implements StreamInterface
      */
     public function seek($offset, $whence = SEEK_SET)
     {
-        if (!$this->isSeekable()) throw new RuntimeException;
-        if (fseek($this->stream, $offset, $whence) != 0) throw new RuntimeException;
+        if (!$this->isSeekable()) {
+            throw new RuntimeException;
+        }
+        if (fseek($this->stream, $offset, $whence) != 0) {
+            throw new RuntimeException;
+        }
     }
     /**
      * Seek to the beginning of the stream.
@@ -170,8 +176,12 @@ class Stream implements StreamInterface
      */
     public function write($string)
     {
-        if (!$this->isWritable()) throw new RuntimeException;
-        if (fwrite($this->stream, $string) === false) throw new RuntimeException;
+        if (!$this->isWritable()) {
+            throw new RuntimeException;
+        }
+        if (fwrite($this->stream, $string) === false) {
+            throw new RuntimeException;
+        }
     }
 
     /**
@@ -194,10 +204,15 @@ class Stream implements StreamInterface
      *     if no bytes are available.
      * @throws \RuntimeException if an error occurs.
      */
-    public function read($length) {
-        if (!$this->isReadable()) throw new RuntimeException;
+    public function read($length)
+    {
+        if (!$this->isReadable()) {
+            throw new RuntimeException;
+        }
         $result = fread($this->stream, $length);
-        if ($result === false) throw new RuntimeException;
+        if ($result === false) {
+            throw new RuntimeException;
+        }
         return $result;
     }
 
@@ -208,10 +223,15 @@ class Stream implements StreamInterface
      * @throws \RuntimeException if unable to read or an error occurs while
      *     reading.
      */
-    public function getContents() {
-        if (!$this->isReadable()) throw new RuntimeException;
+    public function getContents()
+    {
+        if (!$this->isReadable()) {
+            throw new RuntimeException;
+        }
         $result = stream_get_contents($this->stream);
-        if ($result === false) throw new RuntimeException;
+        if ($result === false) {
+            throw new RuntimeException;
+        }
         return $result;
     }
 

@@ -16,7 +16,8 @@ use ZipStream\File;
  */
 class ZipStreamTest extends TestCase
 {
-    const OSX_ARCHIVE_UTILITY = '/System/Library/CoreServices/Applications/Archive Utility.app/Contents/MacOS/Archive Utility';
+    const OSX_ARCHIVE_UTILITY =
+        '/System/Library/CoreServices/Applications/Archive Utility.app/Contents/MacOS/Archive Utility';
 
     /**
      * @expectedException \ZipStream\Exception\InvalidOptionException
@@ -63,7 +64,7 @@ class ZipStreamTest extends TestCase
     public function testDostime()
     {
         // Allows testing of protected method
-        $class = new \ReflectionClass (File::class);
+        $class = new \ReflectionClass(File::class);
         $method = $class->getMethod('dostime');
         $method->setAccessible(true);
 
@@ -359,7 +360,9 @@ class ZipStreamTest extends TestCase
                 foreach ($falsetrue as $zip64) {
                     if ($zeroheader &&
                         $method == ZipStream::METHOD_DEFLATE &&
-                        !function_exists('deflate_init')) continue;
+                        !function_exists('deflate_init')) {
+                        continue;
+                    }
                     $this->addLargeFileFileFromPath($method, $zeroheader, $zip64);
                 }
             }

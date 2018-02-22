@@ -7,7 +7,8 @@ class DeflateStream extends Stream
     protected $filter;
     protected $options;
 
-    public function addDeflateFilter($options=null) {
+    public function addDeflateFilter($options = null)
+    {
         $this->options = $options;
         $this->filter = stream_filter_append(
             $this->stream,
@@ -17,13 +18,17 @@ class DeflateStream extends Stream
         );
     }
 
-    public function removeDeflateFilter() {
-        if (!$this->filter) return;
+    public function removeDeflateFilter()
+    {
+        if (!$this->filter) {
+            return;
+        }
         stream_filter_remove($this->filter);
         $this->filter = null;
     }
 
-    public function rewind() {
+    public function rewind()
+    {
         // deflate filter needs to be removed before rewind
         if ($this->filter) {
             $this->removeDeflateFilter();

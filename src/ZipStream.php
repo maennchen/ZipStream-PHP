@@ -415,15 +415,17 @@ class ZipStream
     public function finish()
     {
         // add trailing cdr file records
-        foreach ($this->files as $file) $file->addCdrFile();
+        foreach ($this->files as $file) {
+            $file->addCdrFile();
+        }
 
         // Add 64bit headers (if applicable)
         if (count($this->files) >= 0xFFFF ||
             $this->cdr_ofs->isOver32() ||
-            $this->ofs->isOver32())
-        {
-            if (!$this->opt[ZipStream::OPTION_ZIP64])
+            $this->ofs->isOver32()) {
+            if (!$this->opt[ZipStream::OPTION_ZIP64]) {
                 throw new OverflowException();
+            }
 
             $this->addCdr64Eof();
             $this->addCdr64Locator();
@@ -444,7 +446,9 @@ class ZipStream
      */
     public function isLargeFile($path)
     {
-        if (!$this->opt[self::OPTION_STAT_FILES]) return;
+        if (!$this->opt[self::OPTION_STAT_FILES]) {
+            return;
+        }
         $stat = stat($path);
         return $this->opt[self::OPTION_LARGE_FILE_SIZE] > 0 &&
             $stat['size'] > $this->opt[self::OPTION_LARGE_FILE_SIZE];
@@ -456,7 +460,8 @@ class ZipStream
      * @param File    $file
      * @return void
      */
-    public function addToCdr(File $file) {
+    public function addToCdr(File $file)
+    {
         $file->ofs = $this->ofs;
         $this->ofs = $this->ofs->add($file->total_length);
         $this->files[] = $file;
@@ -546,7 +551,9 @@ class ZipStream
      */
     protected function addCdr()
     {
-        foreach ($this->files as $file) $this->addCdrFile($file);
+        foreach ($this->files as $file) {
+            $this->addCdrFile($file);
+        }
         $this->addCdrEof();
     }
 
@@ -604,8 +611,9 @@ class ZipStream
         );
 
         $call = $this->opt[self::OPTION_HTTP_HEADER_CALLBACK];
-        foreach ($headers as $key => $val)
+        foreach ($headers as $key => $val) {
             $call("$key: $val");
+        }
     }
 
     /**
@@ -650,8 +658,9 @@ class ZipStream
                     $args[] = 0;
                 }
             } else {
-                if ($value instanceof Bigint)
+                if ($value instanceof Bigint) {
                     $value = $value->getLow32();
+                }
                 $fmt .= $format;
                 $args[] = $value;
             }
@@ -664,14 +673,21 @@ class ZipStream
         return call_user_func_array('pack', $args);
     }
 
-    public static function parseMethod($method, $default=null)
+    public static function parseMethod($method, $default = null)
     {
-        if ($method === null) $method = $default;
-        if ($method === 'deflate') $method = static::METHOD_DEFLATE;
-        if ($method === 'store') $method = static::METHOD_STORE;
+        if ($method === null) {
+            $method = $default;
+        }
+        if ($method === 'deflate') {
+            $method = static::METHOD_DEFLATE;
+        }
+        if ($method === 'store') {
+            $method = static::METHOD_STORE;
+        }
         $valid = array(static::METHOD_STORE, static::METHOD_DEFLATE);
-        if (!in_array($method, $valid, true))
+        if (!in_array($method, $valid, true)) {
             throw new InvalidOptionException('large_file_method', $valid, $method);
+        }
         return $method;
     }
 }

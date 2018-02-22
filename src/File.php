@@ -37,7 +37,8 @@ class File
     private $deflate;
     private $hash;
 
-    public function __construct(ZipStream $zip, $name, $opt=[], $method='deflate') {
+    public function __construct(ZipStream $zip, $name, $opt = [], $method = 'deflate')
+    {
         $this->zip = $zip;
 
         $this->name = $name;
@@ -47,9 +48,10 @@ class File
         $this->ofs = new Bigint;
     }
 
-    public function processPath($path) {
+    public function processPath($path)
+    {
         if (!is_readable($path)) {
-            if(!file_exists($path)) {
+            if (!file_exists($path)) {
                 throw new FileNotFoundException($path);
             }
             throw new FileNotReadableException($path);
@@ -67,13 +69,15 @@ class File
         }
     }
 
-    public function processData($data) {
+    public function processData($data)
+    {
         $this->len = new Bigint(strlen($data));
         $this->crc = crc32($data);
 
         // compress data if needed
-        if ($this->meth == ZipStream::METHOD_DEFLATE)
+        if ($this->meth == ZipStream::METHOD_DEFLATE) {
             $data = gzdeflate($data);
+        }
 
         $this->zlen = new Bigint(strlen($data));
         $this->addFileHeader();
@@ -81,7 +85,8 @@ class File
         $this->addFileFooter();
     }
 
-    public function processStream(StreamInterface $stream) {
+    public function processStream(StreamInterface $stream)
+    {
         $this->zlen = new Bigint;
         $this->len = new Bigint;
         $this->stream = $stream;
@@ -90,13 +95,14 @@ class File
             $this->meth == ZipStream::METHOD_DEFLATE && !(
                 $this->stream instanceof DeflateStream &&
                 !$this->zip->opt[ZipStream::OPTION_ZERO_HEADER]
-            ))
+            )) {
             throw new IncompatibleOptionsException(
                 'When using PHP version less than 7 deflate method ' .
                 'is only available for PHP streams with ' .
                 ZipStream::OPTION_ZERO_HEADER .
                 ' setting turned off.'
             );
+        }
 
         if ($this->zip->opt[ZipStream::OPTION_ZERO_HEADER]) {
             $this->processStreamWithZeroHeader();
@@ -105,14 +111,16 @@ class File
         }
     }
 
-    protected function processStreamWithZeroHeader() {
+    protected function processStreamWithZeroHeader()
+    {
         $this->bits |= self::BIT_ZERO_HEADER;
         $this->addFileHeader();
         $this->readStream(self::COMPUTE | self::SEND);
         $this->addFileFooter();
     }
 
-    protected function processStreamWithComputedHeader() {
+    protected function processStreamWithComputedHeader()
+    {
         $this->readStream(self::COMPUTE);
         $this->stream->rewind();
 
@@ -120,7 +128,10 @@ class File
         // makes this second read unnecessary
         // but it is only available from PHP 7.0
         if (!$this->deflate && $this->meth == ZipStream::METHOD_DEFLATE) {
-            $this->stream->addDeflateFilter(@$this->opt['deflate'] ?: ZipStream::DEFAULT_DEFLATE_LEVEL);
+            $this->stream->addDeflateFilter(
+                @$this->opt['deflate'] ?:
+                ZipStream::DEFAULT_DEFLATE_LEVEL
+            );
             $this->zlen = new Bigint;
             while (!$this->stream->eof()) {
                 $data = $this->stream->read(ZipStream::CHUNKED_READ_BLOCK_SIZE);
@@ -134,34 +145,39 @@ class File
         $this->addFileFooter();
     }
 
-    protected function readStream($options = null) {
+    protected function readStream($options = null)
+    {
         $this->deflateInit($options);
         while (!$this->stream->eof()) {
             $data = $this->stream->read(ZipStream::CHUNKED_READ_BLOCK_SIZE);
             $this->deflateData($data, $options);
-            if ($options & self::SEND)
+            if ($options & self::SEND) {
                 $this->zip->send($data);
+            }
         }
         $this->deflateFinish($options);
     }
 
-    protected function deflateInit($options = null) {
+    protected function deflateInit($options = null)
+    {
         $this->hash = hash_init(self::HASH_ALGO);
         if ($this->meth == ZipStream::METHOD_DEFLATE &&
-            function_exists('deflate_init'))
+            function_exists('deflate_init')) {
             $this->deflate = deflate_init(
                 ZLIB_ENCODING_RAW,
                 @$this->opt['deflate'] ?:
                 ['level' => ZipStream::DEFAULT_DEFLATE_LEVEL]
             );
+        }
     }
 
-    protected function deflateData(&$data, $options = null) {
+    protected function deflateData(&$data, $options = null)
+    {
         if ($options & self::COMPUTE) {
             $this->len = $this->len->add(strlen($data));
             hash_update($this->hash, $data);
         }
-        if ($this->deflate)
+        if ($this->deflate) {
             $data = deflate_add(
                 $this->deflate,
                 $data,
@@ -169,13 +185,17 @@ class File
                     ? ZLIB_FINISH
                     : ZLIB_NO_FLUSH
             );
-        if ($options & self::COMPUTE)
+        }
+        if ($options & self::COMPUTE) {
             $this->zlen = $this->zlen->add(strlen($data));
+        }
     }
 
-    protected function deflateFinish($options = null) {
-        if ($options & self::COMPUTE)
+    protected function deflateFinish($options = null)
+    {
+        if ($options & self::COMPUTE) {
             $this->crc = hexdec(hash_final($this->hash));
+        }
     }
 
     /**
@@ -200,20 +220,24 @@ class File
         $this->time = isset($opt['time']) && !empty($opt['time']) ? $opt['time'] : time();
         $time = $this->dostime($this->time);
 
-        if (!mb_check_encoding($name, 'ASCII') || !mb_check_encoding(@$this->opt['comment'], 'ASCII')) {
+        if (!mb_check_encoding($name, 'ASCII') ||
+            !mb_check_encoding(@$this->opt['comment'], 'ASCII')) {
             // Sets Bit 11: Language encoding flag (EFS).  If this bit is set,
             // the filename and comment fields for this file
             // MUST be encoded using UTF-8. (see APPENDIX D)
-            if (!mb_check_encoding($name, 'UTF-8') || !mb_check_encoding(@$this->opt['comment'], 'UTF-8'))
+            if (!mb_check_encoding($name, 'UTF-8') ||
+                !mb_check_encoding(@$this->opt['comment'], 'UTF-8')) {
                 throw new EncodingException(
                     'File name and comment should use UTF-8 ' .
                     'if one of them does not fit into ASCII range.'
                 );
+            }
             $this->bits |= self::BIT_EFS_UTF8;
         }
 
-        if ($this->meth == ZipStream::METHOD_DEFLATE)
+        if ($this->meth == ZipStream::METHOD_DEFLATE) {
             $this->version = ZipStream::ZIP_VERSION_DEFLATE;
+        }
 
         $force = (boolean) ($this->bits & self::BIT_ZERO_HEADER) &&
             $this->zip->opt[ZipStream::OPTION_ZIP64];
@@ -223,8 +247,9 @@ class File
         // If this file will start over 4GB limit in ZIP file,
         // CDR record will have to use Zip64 extension to describe offset
         // to keep consistency we use the same value here
-        if ($this->zip->ofs->isOver32())
+        if ($this->zip->ofs->isOver32()) {
             $this->version = ZipStream::ZIP_VERSION_ZIP64;
+        }
 
         $fields = [
             ['V', ZipStream::FILE_HEADER_SIGNATURE],
@@ -250,23 +275,29 @@ class File
         $this->hlen = strlen($data);
     }
 
-    protected function buildZip64ExtraBlock($force = false) {
+    protected function buildZip64ExtraBlock($force = false)
+    {
 
         $fields = [];
-        if ($this->len->isOver32($force))
+        if ($this->len->isOver32($force)) {
             $fields[] = ['P', $this->len];          // Length of original data
+        }
 
-        if ($this->len->isOver32($force))
+        if ($this->len->isOver32($force)) {
             $fields[] = ['P', $this->zlen];         // Length of compressed data
+        }
 
-        if ($this->ofs->isOver32())
+        if ($this->ofs->isOver32()) {
             $fields[] = ['P', $this->ofs];          // Offset of local header record
+        }
 
         if (!empty($fields)) {
-            if (!$this->zip->opt[ZipStream::OPTION_ZIP64])
+            if (!$this->zip->opt[ZipStream::OPTION_ZIP64]) {
                 throw new OverflowException();
+            }
 
-            array_unshift($fields,
+            array_unshift(
+                $fields,
                 ['v', 0x0001],                      // 64 bit extension
                 ['v', count($fields)*8]             // Length of data block
             );
@@ -387,11 +418,18 @@ class File
         $d['year'] -= 1980;
 
         // return date string
-        return ($d['year'] << 25) | ($d['mon'] << 21) | ($d['mday'] << 16) | ($d['hours'] << 11) | ($d['minutes'] << 5) | ($d['seconds'] >> 1);
+        return
+            ($d['year']    << 25) |
+            ($d['mon']     << 21) |
+            ($d['mday']    << 16) |
+            ($d['hours']   << 11) |
+            ($d['minutes'] <<  5) |
+            ($d['seconds'] >>  1);
     }
 
     /**
-     * Strip characters that are not legal in Windows filenames to prevent compatibility issues
+     * Strip characters that are not legal in Windows filenames
+     * to prevent compatibility issues
      *
      * @param string $filename Unprocessed filename
      * @return string
@@ -404,5 +442,4 @@ class File
 
         return str_replace(['\\', ':', '*', '?', '"', '<', '>', '|'], '_', $filename);
     }
-
 }
