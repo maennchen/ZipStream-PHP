@@ -217,7 +217,7 @@ class File
         $nlen = strlen($name);
 
         // create dos timestamp
-        $this->time = isset($opt['time']) && !empty($opt['time']) ? $opt['time'] : time();
+        $this->time = @$this->opt['time'] ?: time();
         $time = $this->dostime($this->time);
 
         if (!mb_check_encoding($name, 'ASCII') ||
