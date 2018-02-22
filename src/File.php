@@ -220,6 +220,12 @@ class File
 
         $footer = $this->buildZip64ExtraBlock($force);
 
+        // If this file will start over 4GB limit in ZIP file,
+        // CDR record will have to use Zip64 extension to describe offset
+        // to keep consistency we use the same value here
+        if ($this->zip->ofs->isOver32())
+            $this->version = ZipStream::ZIP_VERSION_ZIP64;
+
         $fields = [
             ['V', ZipStream::FILE_HEADER_SIGNATURE],
             ['v', $this->version],                  // Version needed to Extract
