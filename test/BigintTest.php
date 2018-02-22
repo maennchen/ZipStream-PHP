@@ -39,7 +39,9 @@ class ZipStreamTest extends TestCase
     }
 
     public function testAddWithOverflowAtInteger32() {
-        $bigint = new Bigint(0xFFFFFFFF);
+        $bigint = new Bigint(0xFFFFFFFE);
+        $this->assertFalse($bigint->isOver32());
+        $bigint = $bigint->add(0x01);
         $this->assertTrue($bigint->isOver32());
         $bigint = $bigint->add(0x01);
         $this->assertSame('0x0000000100000000', $bigint->getHex64());

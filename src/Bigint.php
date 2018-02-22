@@ -35,7 +35,9 @@ class Bigint
 
     public function isOver32($force = false) {
         // value 0xFFFFFFFF already needs a Zip64 header
-        return $force || $this->getHigh32() > 0 || $this->getLow32() == 0xFFFFFFFF;
+        return $force ||
+            max(array_slice($this->bytes, 4, 4)) > 0 ||
+            min(array_slice($this->bytes, 0, 4)) == 0xFF;
     }
 
     public function getLowFF($force = false) {
