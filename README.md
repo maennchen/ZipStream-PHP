@@ -47,10 +47,6 @@ the current default storage method is 'deflate' i.e files are stored with Compre
 couple of additional examples in the initial release announcement at the
 following URL: http://pablotron.org/?cid=1535 -->
 
-## Requirements
-
-  * PHP version 5.6 or newer.
-
 ## Further Documentation
 
   * [Using ZipStream in Symfony](/doc/Symfony.md)
