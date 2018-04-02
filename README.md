@@ -7,6 +7,11 @@
 Please see the file LICENSE.md for licensing and warranty information.  The
 latest version of this software is available at the following URL: https://github.com/maennchen/ZipStream-PHP
 
+## Upgrade to V1
+
+* All options parameters to all function have been moved from an `array` to structured option objects. Please adjust them accordingly.
+* The whole library has been refactored. The minimal PHP requirement has been raised to PHP 7.1.
+
 ## Installation
 Simply add a dependency on maennchen/zipstream-php to your project's composer.json file if you use Composer to manage the dependencies of your project. Use following command to add the package to your project's dependencies:
 
