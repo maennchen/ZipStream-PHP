@@ -2,14 +2,8 @@ language: php
 dist: trusty
 sudo: false
 php:
-  - hhvm
-  - nightly
-  - 7.0
   - 7.1
-matrix:
-  allow_failures:
-    - php: hhvm
-    - php: nightly
+  - 7.2
 install: composer install
 script: ./vendor/bin/phpunit --coverage-clover=coverage.clover
 after_script:
