@@ -1,16 +1,11 @@
-# ZipStream README
+# ZipStream-PHP
 
 [![Build Status](https://travis-ci.org/maennchen/ZipStream-PHP.svg?branch=master)](https://travis-ci.org/maennchen/ZipStream-PHP)
-[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/maennchen/ZipStream-PHP/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/maennchen/ZipStream-PHP/?branch=develop)
-[![Code Coverage](https://scrutinizer-ci.com/g/maennchen/ZipStream-PHP/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/maennchen/ZipStream-PHP/?branch=develop)
+[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/maennchen/ZipStream-PHP/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/maennchen/ZipStream-PHP/)
+[![Code Coverage](https://scrutinizer-ci.com/g/maennchen/ZipStream-PHP/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/maennchen/ZipStream-PHP/)
 
-Please see the file LICENSE.md for licensing and warranty information.  The
+Please see the [LICENSE](LICENSE) file for licensing and warranty information.  The
 latest version of this software is available at the following URL: https://github.com/maennchen/ZipStream-PHP
-
-## Upgrade to V1
-
-* All options parameters to all function have been moved from an `array` to structured option objects. Please adjust them accordingly.
-* The whole library has been refactored. The minimal PHP requirement has been raised to PHP 7.1.
 
 ## Installation
 Simply add a dependency on maennchen/zipstream-php to your project's composer.json file if you use Composer to manage the dependencies of your project. Use following command to add the package to your project's dependencies:
@@ -19,9 +14,16 @@ Simply add a dependency on maennchen/zipstream-php to your project's composer.js
 composer require maennchen/zipstream-php
 ```
 
+## Upgrade to version 1.0.0
+
+* All options parameters to all function have been moved from an `array` to structured option objects. See [the wiki](https://github.com/maennchen/ZipStream-PHP/wiki/Available-options) for examples.
+* The whole library has been refactored. The minimal PHP requirement has been raised to PHP 7.1.
+
 ## Overview
-A fast and simple streaming zip file downloader for PHP.  Here's a
-simple example:
+A fast and simple streaming zip file downloader for PHP. Using this library will save you from having to write the Zip to disk. You can directly send it to the user, which is much faster.
+
+Here's a simple example:
+
 ```php
 # Autoload the dependencies
 require 'vendor/autoload.php';

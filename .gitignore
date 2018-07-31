@@ -1,5 +1,6 @@
-/vendor
-/clover.xml
-/coverage.clover
-/phpunit.xml
-/.idea
+clover.xml
+composer.lock
+coverage.clover
+.idea
+phpunit.xml
+vendor
