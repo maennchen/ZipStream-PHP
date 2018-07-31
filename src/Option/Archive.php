@@ -15,7 +15,7 @@ final class Archive
      * and load into memory (used by
      * addFileFromPath()).  Large files may also
      * be compressed differently; see the
-     * 'largeFileMethod' option.
+     * 'largeFileMethod' option. Default is ~20 Mb.
      *
      * @var int
      */

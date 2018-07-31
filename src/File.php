@@ -31,7 +31,7 @@ class File
     public $name;
 
     /**
-     * @var ArchiveOptions
+     * @var FileOptions
      */
     public $opt;
 
@@ -99,7 +99,7 @@ class File
         $this->opt = $opt ?: new FileOptions();
         $this->method = $this->opt->getMethod();
         $this->version = Version::STORE();
-        $this->ofs = new Bigint;
+        $this->ofs = new Bigint();
     }
 
     public function processPath(string $path): void
@@ -229,8 +229,8 @@ class File
     /**
      * Convert a UNIX timestamp to a DOS timestamp.
      *
-     * @param Integer $when
-     * @return Integer DOS Timestamp
+     * @param int $when
+     * @return int DOS Timestamp
      */
     final protected static function dosTime(int $when): int
     {
@@ -331,8 +331,8 @@ class File
 
     public function processStream(StreamInterface $stream): void
     {
-        $this->zlen = new Bigint;
-        $this->len = new Bigint;
+        $this->zlen = new Bigint();
+        $this->len = new Bigint();
 
         if ($this->zip->opt->isZeroHeader()) {
             $this->processStreamWithZeroHeader($stream);
@@ -376,7 +376,7 @@ class File
     protected function deflateData(StreamInterface $stream, string &$data, ?int $options = null): void
     {
         if ($options & self::COMPUTE) {
-            $this->len = $this->len->add(BigInt::init(strlen($data)));
+            $this->len = $this->len->add(Bigint::init(strlen($data)));
             hash_update($this->hash, $data);
         }
         if ($this->deflate) {
@@ -389,7 +389,7 @@ class File
             );
         }
         if ($options & self::COMPUTE) {
-            $this->zlen = $this->zlen->add(BigInt::init(strlen($data)));
+            $this->zlen = $this->zlen->add(Bigint::init(strlen($data)));
         }
     }
 
@@ -409,11 +409,11 @@ class File
         // makes this second read unnecessary
         // but it is only available from PHP 7.0
         if (!$this->deflate && $stream instanceof DeflateStream && $this->method->equals(Method::DEFLATE())) {
-            $stream->addDeflateFilter($this->opt->getDeflateLevel());
-            $this->zlen = new Bigint;
+            $stream->addDeflateFilter($this->opt);
+            $this->zlen = new Bigint();
             while (!$stream->eof()) {
                 $data = $stream->read(self::CHUNKED_READ_BLOCK_SIZE);
-                $this->zlen = $this->zlen->add(BigInt::init(strlen($data)));
+                $this->zlen = $this->zlen->add(Bigint::init(strlen($data)));
             }
             $stream->rewind();
         }
