@@ -26,9 +26,8 @@ final class Archive
      * ZipStream::METHOD_DEFLATE. Store sends the file
      * raw and is significantly
      * faster, while ZipStream::METHOD_DEFLATE compresses the file
-     * and is much, much slower.  Note that deflate
-     * must compress the file twice and extremely
-     * slow.
+     * and is much, much slower. Note that deflate
+     * must compress the file twice and extremely slow.
      *
      * @var Method
      */
