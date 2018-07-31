@@ -8,7 +8,7 @@ use OverflowException;
 class Bigint
 {
     /**
-     * @var array
+     * @var int[]
      */
     private $bytes = [0, 0, 0, 0, 0, 0, 0, 0];
 
