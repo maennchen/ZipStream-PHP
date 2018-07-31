@@ -79,12 +79,12 @@ class ZipStream
     public $files = [];
 
     /**
-     * @var integer
+     * @var Bigint
      */
     public $cdr_ofs;
 
     /**
-     * @var integer
+     * @var Bigint
      */
     public $ofs;
 
@@ -146,8 +146,8 @@ class ZipStream
         $this->output_name = $name;
         $this->need_headers = $name && $this->opt->isSendHttpHeaders();
 
-        $this->cdr_ofs = new Bigint;
-        $this->ofs = new Bigint;
+        $this->cdr_ofs = new Bigint();
+        $this->ofs = new Bigint();
     }
 
     /**
@@ -522,16 +522,16 @@ class ZipStream
     protected function clear(): void
     {
         $this->files = [];
-        $this->ofs = new Bigint;
-        $this->cdr_ofs = new Bigint;
-        $this->opt = [];
+        $this->ofs = new Bigint();
+        $this->cdr_ofs = new Bigint();
+        $this->opt = new ArchiveOptions();
     }
 
     /**
      * Is this file larger than large_file_size?
      *
      * @param string $path
-     * @return Boolean|null
+     * @return bool
      */
     public function isLargeFile(string $path): bool
     {

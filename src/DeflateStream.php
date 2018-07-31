@@ -6,8 +6,17 @@ namespace ZipStream;
 class DeflateStream extends Stream
 {
     protected $filter;
+
+    /**
+     * @var Option\File
+     */
     protected $options;
 
+    /**
+     * Rewind stream
+     *
+     * @return void
+     */
     public function rewind(): void
     {
         // deflate filter needs to be removed before rewind
@@ -20,6 +29,11 @@ class DeflateStream extends Stream
         }
     }
 
+    /**
+     * Remove the deflate filter
+     *
+     * @return void
+     */
     public function removeDeflateFilter(): void
     {
         if (!$this->filter) {
@@ -29,14 +43,28 @@ class DeflateStream extends Stream
         $this->filter = null;
     }
 
-    public function addDeflateFilter(array $options = null): void
+    /**
+     * Add a deflate filter
+     *
+     * @param Option\File $options
+     * @return void
+     */
+    public function addDeflateFilter(Option\File $options): void
     {
         $this->options = $options;
+        // parameter 4 for stream_filter_append expects array
+        // so we convert the option object in an array
+        $optionsArr = [
+            'comment' => $options->getComment(),
+            'method' => $options->getMethod(),
+            'deflateLevel' => $options->getDeflateLevel(),
+            'time' => $options->getTime()
+        ];
         $this->filter = stream_filter_append(
             $this->stream,
             'zlib.deflate',
             STREAM_FILTER_READ,
-            $this->options
+            $optionsArr
         );
     }
 }

@@ -22,4 +22,4 @@ Feel free to submit pull requests.
 ## Testing
 For every new feature please write a new PHPUnit test.
 
-Before every commit execute `phpunit` to check if your changes wrecked something.
+Before every commit execute `./vendor/bin/phpunit` to check if your changes wrecked something:

@@ -181,9 +181,10 @@ class Stream implements StreamInterface
      * Write data to the stream.
      *
      * @param string $string The string that is to be written.
+     * @return int Returns the number of bytes written to the stream.
      * @throws \RuntimeException on failure.
      */
-    public function write($string): void
+    public function write($string): int
     {
         if (!$this->isWritable()) {
             throw new RuntimeException;
@@ -191,6 +192,7 @@ class Stream implements StreamInterface
         if (fwrite($this->stream, $string) === false) {
             throw new RuntimeException;
         }
+        return \mb_strlen($string);
     }
 
     /**

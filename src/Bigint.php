@@ -7,17 +7,29 @@ use OverflowException;
 
 class Bigint
 {
+    /**
+     * @var int[]
+     */
     private $bytes = [0, 0, 0, 0, 0, 0, 0, 0];
 
+    /**
+     * Initialize the bytes array
+     *
+     * @param int $value
+     */
     public function __construct(int $value = 0)
     {
-        if ($value instanceof self) {
-            $this->bytes = $value->bytes;
-        } else {
-            $this->fillBytes($value, 0, 8);
-        }
+        $this->fillBytes($value, 0, 8);
     }
 
+    /**
+     * Fill the bytes field with int
+     *
+     * @param int $value
+     * @param int $start
+     * @param int $count
+     * @return void
+     */
     protected function fillBytes(int $value, int $start, int $count): void
     {
         for ($i = 0; $i < $count; $i++) {
@@ -26,24 +38,49 @@ class Bigint
         }
     }
 
+    /**
+     * Get an instance
+     *
+     * @param int $value
+     * @return Bigint
+     */
     public static function init(int $value = 0): self
     {
         return new self($value);
     }
 
+    /**
+     * Fill bytes from low to high
+     *
+     * @param int $low
+     * @param int $high
+     * @return Bigint
+     */
     public static function fromLowHigh(int $low, int $high): self
     {
-        $bigint = new Bigint;
+        $bigint = new Bigint();
         $bigint->fillBytes($low, 0, 4);
         $bigint->fillBytes($high, 4, 4);
         return $bigint;
     }
 
+    /**
+     * Get high 32
+     *
+     * @return int
+     */
     public function getHigh32(): int
     {
         return $this->getValue(4, 4);
     }
 
+    /**
+     * Get value from bytes array
+     *
+     * @param int $end
+     * @param int $length
+     * @return int
+     */
     public function getValue(int $end = 0, int $length = 8): int
     {
         $result = 0;
@@ -54,6 +91,12 @@ class Bigint
         return $result;
     }
 
+    /**
+     * Get low FF
+     *
+     * @param bool $force
+     * @return int
+     */
     public function getLowFF(bool $force = false): int
     {
         if ($force || $this->isOver32()) {
@@ -62,6 +105,12 @@ class Bigint
         return $this->getLow32();
     }
 
+    /**
+     * Check if is over 32
+     *
+     * @param bool $force
+     * @return bool
+     */
     public function isOver32(bool $force = false): bool
     {
         // value 0xFFFFFFFF already needs a Zip64 header
@@ -70,11 +119,21 @@ class Bigint
             min(array_slice($this->bytes, 0, 4)) === 0xFF;
     }
 
+    /**
+     * Get low 32
+     *
+     * @return int
+     */
     public function getLow32(): int
     {
         return $this->getValue(0, 4);
     }
 
+    /**
+     * Get hexadecimal
+     *
+     * @return string
+     */
     public function getHex64(): string
     {
         $result = '0x';
@@ -84,7 +143,13 @@ class Bigint
         return $result;
     }
 
-    public function add(self $other): self
+    /**
+     * Add
+     *
+     * @param Bigint $other
+     * @return Bigint
+     */
+    public function add(Bigint $other): Bigint
     {
         $result = clone $this;
         $overflow = false;
