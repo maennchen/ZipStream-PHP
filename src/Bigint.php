@@ -16,7 +16,6 @@ class Bigint
      * Initialize the bytes array
      *
      * @param int $value
-     * @return void
      */
     public function __construct(int $value = 0)
     {
@@ -150,7 +149,7 @@ class Bigint
      * @param Bigint $other
      * @return Bigint
      */
-    public function add(self $other): self
+    public function add(Bigint $other): Bigint
     {
         $result = clone $this;
         $overflow = false;

@@ -8,7 +8,6 @@ use ZipStream\Exception\EncodingException;
 use ZipStream\Exception\FileNotFoundException;
 use ZipStream\Exception\FileNotReadableException;
 use ZipStream\Exception\OverflowException;
-use ZipStream\Option\Archive as ArchiveOptions;
 use ZipStream\Option\File as FileOptions;
 use ZipStream\Option\Method;
 use ZipStream\Option\Version;
