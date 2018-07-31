@@ -111,10 +111,10 @@ class ZipStream
      * By default, the method addFileFromPath() will send send files
      * larger than 20 megabytes along raw rather than attempting to
      * compress them.  You can change both the maximum size and the
-     * compression behavior using the large_file_* options above, with the
+     * compression behavior using the largeFile* options above, with the
      * following caveats:
      *
-     * * For "small" files (e.g. files smaller than large_file_size), the
+     * * For "small" files (e.g. files smaller than largeFileSize), the
      *   memory use can be up to twice that of the actual file.  In other
      *   words, adding a 10 megabyte file to the archive could potentially
      *   occupy 20 megabytes of memory.
@@ -130,9 +130,8 @@ class ZipStream
      *   $zip = new ZipStream('foo.zip');
      *
      *   // create a new zip file named 'bar.zip' with a comment
-     *   $zip = new ZipStream('bar.zip', array(
-     *     'comment' => 'this is a comment for the zip file.',
-     *   ));
+     *   $opt->setComment = 'this is a comment for the zip file.';
+     *   $zip = new ZipStream('bar.zip', $opt);
      *
      * Notes:
      *
@@ -175,10 +174,9 @@ class ZipStream
      *   // add a file named 'bar.jpg' with a comment and a last-modified
      *   // time of two hours ago
      *   $data = file_get_contents('bar.jpg');
-     *   $zip->addFile('bar.jpg', $data, array(
-     *     'time'    => time() - 2 * 3600,
-     *     'comment' => 'this is a comment about bar.jpg',
-     *   ));
+     *   $opt->setTime = time() - 2 * 3600;
+     *   $opt->setComment = 'this is a comment about bar.jpg';
+     *   $zip->addFile('bar.jpg', $data, $opt);
      */
     public function addFile(string $name, string $data, ?FileOptions $options = null): void
     {
@@ -218,10 +216,9 @@ class ZipStream
      *   // '/usr/share/bigfile.rar' with a comment and a last-modified
      *   // time of two hours ago
      *   $path = '/usr/share/bigfile.rar';
-     *   $zip->addFileFromPath('bigfile.rar', $path, array(
-     *     'time'    => time() - 2 * 3600,
-     *     'comment' => 'this is a comment about bar.jpg',
-     *   ));
+     *   $opt->setTime = time() - 2 * 3600;
+     *   $opt->setComment = 'this is a comment about bar.jpg';
+     *   $zip->addFileFromPath('bigfile.rar', $path, $opt);
      *
      * @return void
      * @throws \ZipStream\Exception\FileNotFoundException
@@ -257,7 +254,7 @@ class ZipStream
      *   fwrite($fp, 'The quick brown fox jumped over the lazy dog.');
      *
      *   // add a file named 'streamfile.txt' from the content of the stream
-     *   $x->addFile_from_stream('streamfile.txt', $fp);
+     *   $x->addFileFromStream('streamfile.txt', $fp);
      *
      * @return void
      */
@@ -291,7 +288,7 @@ class ZipStream
      *   fwrite($fp, 'The quick brown fox jumped over the lazy dog.');
      *
      *   // add a file named 'streamfile.txt' from the content of the stream
-     *   $x->addFile_from_stream('streamfile.txt', $fp);
+     *   $x->addFileFromPsr7Stream('streamfile.txt', $fp);
      *
      * @return void
      */

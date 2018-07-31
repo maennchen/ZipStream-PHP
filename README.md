@@ -45,19 +45,20 @@ fclose($fp);
 $zip->finish();
 ```
 
+## Usage and options
+
 You can also add comments, modify file timestamps, and customize (or
 disable) the HTTP headers. It is also possible to specify the storage method when adding files,
 the current default storage method is 'deflate' i.e files are stored with Compression mode 0x08.
-  See the class file for details.<!--  There are a
-couple of additional examples in the initial release announcement at the
-following URL: http://pablotron.org/?cid=1535 -->
 
-## Further Documentation
+See the [Wiki](https://github.com/maennchen/ZipStream-PHP/wiki) for details.
 
-  * [Using ZipStream in Symfony](/doc/Symfony.md)
+## Usage with Symfony and S3
 
-## Contributors
-Please take a look at the [CONTRIBUTING.md](CONTRIBUTING.md) File.
+You can find example code on [the wiki](https://github.com/maennchen/ZipStream-PHP/wiki/Symfony-example).
+
+## Contributing
+ZipStream-PHP is a collaborative project. Please take a look at the [CONTRIBUTING.md](CONTRIBUTING.md) file.
 
 ## About the Authors
 * Paul Duncan <pabs@pablotron.org> - http://pablotron.org/
