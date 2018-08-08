@@ -1,14 +1,18 @@
 # CHANGELOG for ZipStream-PHP
 
-## Version 1.0.0
+All notable changes to this project will be documented in this file.
 
-* BREAKING CHANGES:
+The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
+and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-    * Mininum PHP version is now 7.1
-    * Options are now passed to the ZipStream object via the Option\Archive object. See the wiki for available options and code examples
+## [1.0.0] - unreleased
 
-* New feature:
+### Breaking changes
+- Mininum PHP version is now 7.1
+- Options are now passed to the ZipStream object via the Option\Archive object. See the wiki for available options and code examples
 
-    * Add large file support with Zip64 headers
+### Added
+- Add large file support with Zip64 headers
 
-Major refactoring and code cleanup.
+### Changed
+- Major refactoring and code cleanup
