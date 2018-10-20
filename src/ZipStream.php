@@ -57,7 +57,7 @@ use ZipStream\Option\Version;
  */
 class ZipStream
 {
-    const ZIP_VERSION_MADE_BY = 0x031E; // 3.00 on Unix
+    const ZIP_VERSION_MADE_BY = 0x603; // 3.00 on Unix
 
     const FILE_HEADER_SIGNATURE = 0x04034b50;
     const CDR_FILE_SIGNATURE = 0x02014b50;
