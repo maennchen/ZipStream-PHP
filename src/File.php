@@ -425,9 +425,9 @@ class File
     /**
      * Send CDR record for specified file.
      *
-     * @return void
+     * @return string
      */
-    public function addCdrFile(): void
+    public function getCdrFile(): string
     {
         $name = static::filterFilename($this->name);
 
@@ -461,11 +461,7 @@ class File
         // pack fields, then append name and comment
         $header = ZipStream::packFields($fields);
 
-        $data = $header . $name . $footer . $comment;
-        $this->zip->send($data);
-
-        // increment cdr offset
-        $this->zip->cdr_ofs = $this->zip->cdr_ofs->add(Bigint::init(strlen($data)));
+        return $header . $name . $footer . $comment;
     }
 
     /**
