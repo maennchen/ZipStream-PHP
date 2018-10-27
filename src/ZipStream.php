@@ -325,8 +325,9 @@ class ZipStream
     public function finish(): void
     {
         // add trailing cdr file records
-        foreach ($this->files as $file) {
-            $file->addCdrFile();
+        foreach ($this->files as $cdrFile) {
+            $this->send($cdrFile);
+            $this->cdr_ofs = $this->cdr_ofs->add(Bigint::init(strlen($cdrFile)));
         }
 
         // Add 64bit headers (if applicable)
@@ -552,6 +553,6 @@ class ZipStream
     {
         $file->ofs = $this->ofs;
         $this->ofs = $this->ofs->add($file->getTotalLength());
-        $this->files[] = $file;
+        $this->files[] = $file->getCdrFile();
     }
 }
