@@ -187,14 +187,14 @@ class File
 
         $fields = [
             ['V', ZipStream::FILE_HEADER_SIGNATURE],
-            ['v', $this->version->getValue()],                  // Version needed to Extract
+            ['v', $this->version->getValue()],      // Version needed to Extract
             ['v', $this->bits],                     // General purpose bit flags - data descriptor flag set
-            ['v', $this->method->getValue()],                     // Compression method
+            ['v', $this->method->getValue()],       // Compression method
             ['V', $time],                           // Timestamp (DOS Format)
             ['V', $this->crc],                      // CRC32 of data (0 -> moved to data descriptor footer)
             ['V', $this->zlen->getLowFF($force)],   // Length of compressed data (forced to 0xFFFFFFFF for zero header)
             ['V', $this->len->getLowFF($force)],    // Length of original data (forced to 0xFFFFFFFF for zero header)
-            ['v', $nameLength],                           // Length of filename
+            ['v', $nameLength],                     // Length of filename
             ['v', strlen($footer)],                 // Extra data (see above)
         ];
 
@@ -442,9 +442,9 @@ class File
         $fields = [
             ['V', ZipStream::CDR_FILE_SIGNATURE],   // Central file header signature
             ['v', ZipStream::ZIP_VERSION_MADE_BY],  // Made by version
-            ['v', $this->version->getValue()],                  // Extract by version
+            ['v', $this->version->getValue()],      // Extract by version
             ['v', $this->bits],                     // General purpose bit flags - data descriptor flag set
-            ['v', $this->method->getValue()],                     // Compression method
+            ['v', $this->method->getValue()],       // Compression method
             ['V', $time],                           // Timestamp (DOS Format)
             ['V', $this->crc],                      // CRC32
             ['V', $this->zlen->getLowFF()],         // Compressed Data Length
