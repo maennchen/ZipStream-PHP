@@ -57,8 +57,36 @@ use ZipStream\Option\Version;
  */
 class ZipStream
 {
-    const ZIP_VERSION_MADE_BY = 0x603; // 3.00 on Unix
+    /**
+     * This number corresponds to the ZIP version/OS used (2 bytes)
+     * From: https://www.iana.org/assignments/media-types/application/zip
+     * The upper byte (leftmost one) indicates the host system (OS) for the
+     * file.  Software can use this information to determine
+     * the line record format for text files etc.  The current
+     * mappings are:
+     *
+     * 0 - MS-DOS and OS/2 (F.A.T. file systems)
+     * 1 - Amiga                     2 - VAX/VMS
+     * 3 - *nix                      4 - VM/CMS
+     * 5 - Atari ST                  6 - OS/2 H.P.F.S.
+     * 7 - Macintosh                 8 - Z-System
+     * 9 - CP/M                      10 thru 255 - unused
+     *
+     * The lower byte (rightmost one) indicates the version number of the
+     * software used to encode the file.  The value/10
+     * indicates the major version number, and the value
+     * mod 10 is the minor version number.
+     * Here we are using 6 for the OS, indicating OS/2 H.P.F.S.
+     * to prevent file permissions issues upon extract (see #84)
+     * 0x603 is 00000110 00000011 in binary, so 6 and 3
+     */
+    const ZIP_VERSION_MADE_BY = 0x603;
 
+    /**
+     * The following signatures end with 0x4b50, which in ASCII is PK,
+     * the initials of the inventor Phil Katz.
+     * See https://en.wikipedia.org/wiki/Zip_(file_format)#File_headers
+     */
     const FILE_HEADER_SIGNATURE = 0x04034b50;
     const CDR_FILE_SIGNATURE = 0x02014b50;
     const CDR_EOF_SIGNATURE = 0x06054b50;
