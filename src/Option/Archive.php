@@ -40,9 +40,11 @@ final class Archive
      */
     private $sendHttpHeaders = false;
     /**
+     * The method called to send headers
+     *
      * @var Callable
      */
-    private $httpHeaderCallback = 'method';
+    private $httpHeaderCallback = 'header';
     /**
      * Enable Zip64 extension, supporting very large
      * archives (any size > 4 GB or file count > 64k)
