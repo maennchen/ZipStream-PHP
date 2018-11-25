@@ -22,12 +22,12 @@ final class Archive
     private $largeFileSize = 20 * 1024 * 1024;
     /**
      * How to handle large files.  Legal values are
-     * ZipStream::METHOD_STORE (the default), or
-     * ZipStream::METHOD_DEFLATE. Store sends the file
+     * Method::STORE() (the default), or
+     * Method::DEFLATE(). STORE sends the file
      * raw and is significantly
-     * faster, while ZipStream::METHOD_DEFLATE compresses the file
-     * and is much, much slower. Note that deflate
-     * must compress the file twice and extremely slow.
+     * faster, while DEFLATE compresses the file
+     * and is much, much slower. Note that DEFLATE
+     * must compress the file twice and is extremely slow.
      *
      * @var Method
      */
