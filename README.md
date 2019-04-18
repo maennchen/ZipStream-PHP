@@ -39,6 +39,7 @@ $zip->addFileFromPath('some_image.jpg', 'path/to/image.jpg');
 # add a file named 'goodbye.txt' from an open stream resource
 $fp = tmpfile();
 fwrite($fp, 'The quick brown fox jumped over the lazy dog.');
+rewind($fp);
 $zip->addFileFromStream('goodbye.txt', $fp);
 fclose($fp);
 
