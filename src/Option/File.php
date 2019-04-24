@@ -23,6 +23,10 @@ final class File
      * @var DateTime
      */
     private $time;
+    /**
+     * @var int
+     */
+    private $size = 0;
 
     public function defaultTo(Archive $archiveOptions): void
     {
@@ -92,5 +96,21 @@ final class File
     public function setTime(DateTime $time): void
     {
         $this->time = $time;
+    }
+
+    /**
+     * @return int
+     */
+    public function getSize(): int
+    {
+        return $this->size;
+    }
+
+    /**
+     * @param int $size
+     */
+    public function setSize(int $size): void
+    {
+        $this->size = $size;
     }
 }

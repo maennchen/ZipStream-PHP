@@ -351,8 +351,14 @@ class File
     protected function readStream(StreamInterface $stream, ?int $options = null): void
     {
         $this->deflateInit();
-        while (!$stream->eof()) {
+        $total = 0;
+        $size = $this->opt->getSize();
+        while (!$stream->eof() && ($size == 0 || $total < $size)) {
             $data = $stream->read(self::CHUNKED_READ_BLOCK_SIZE);
+            $total += strlen($data);
+            if ($size > 0 && $total > $size) {
+                $data = substr($data, 0 , strlen($data)-($total - $size));
+            }
             $this->deflateData($stream, $data, $options);
             if ($options & self::SEND) {
                 $this->zip->send($data);
