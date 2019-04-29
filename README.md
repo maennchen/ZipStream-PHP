@@ -29,8 +29,12 @@ Here's a simple example:
 # Autoload the dependencies
 require 'vendor/autoload.php';
 
+# enable output of HTTP headers
+$options = new ZipStream\Option\Archive();
+$options->setSendHttpHeaders(true);
+
 # create a new zipstream object
-$zip = new ZipStream\ZipStream('example.zip');
+$zip = new ZipStream\ZipStream('example.zip', $options);
 
 # create a file named 'hello.txt'
 $zip->addFile('hello.txt', 'This is the contents of hello.txt');

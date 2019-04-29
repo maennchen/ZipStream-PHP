@@ -163,9 +163,10 @@ class ZipStream
      *
      * Notes:
      *
-     * If you do not set a filename, then this library _DOES NOT_ send HTTP
-     * headers by default.  This behavior is to allow software to send its
-     * own headers (including the filename), and still use this library.
+     * In order to let this library send HTTP headers, a filename must be given
+     * _and_ the option `sendHttpHeaders` must be `true`. This behavior is to
+     * allow software to send its own headers (including the filename), and
+     * still use this library.
      */
     public function __construct(?string $name = null, ?ArchiveOptions $opt = null)
     {

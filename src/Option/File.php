@@ -31,7 +31,7 @@ final class File
     public function defaultTo(Archive $archiveOptions): void
     {
         $this->deflateLevel = $this->deflateLevel ?: $archiveOptions->getDeflateLevel();
-        $this->time = new DateTime();
+        $this->time = $this->time ?: new DateTime();
     }
 
     /**

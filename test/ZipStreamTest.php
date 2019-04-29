@@ -19,11 +19,9 @@ class ZipStreamTest extends TestCase
     const OSX_ARCHIVE_UTILITY =
         '/System/Library/CoreServices/Applications/Archive Utility.app/Contents/MacOS/Archive Utility';
 
-    /**
-     * @expectedException \ZipStream\Exception\FileNotFoundException
-     */
     public function testFileNotFoundException(): void
     {
+        $this->expectException(\ZipStream\Exception\FileNotFoundException::class);
         // Get ZipStream Object
         $zip = new ZipStream();
 
@@ -31,11 +29,10 @@ class ZipStreamTest extends TestCase
         $zip->addFileFromPath('foobar.php', '/foo/bar/foobar.php');
     }
 
-    /**
-     * @todo: expectedException ZipStream\Exception\FileNotReadableException
-     */
     public function testFileNotReadableException(): void
     {
+        // TODO: $this->expectException(\ZipStream\Exception\FileNotReadableException::class);
+
         // TODO: How to test this?
         $this->markTestIncomplete('How to test this?');
     }
@@ -183,11 +180,10 @@ class ZipStreamTest extends TestCase
         $this->assertEquals($comment, $zipArch->getCommentName($name));
     }
 
-    /**
-     * @expectedException \ZipStream\Exception\EncodingException
-     */
     public function testAddFileUtf8NameNonUtfComment(): void
     {
+        $this->expectException(\ZipStream\Exception\EncodingException::class);
+
         $stream = $this->getTmpFileStream()[1];
 
         $options = new ArchiveOptions();
@@ -205,11 +201,10 @@ class ZipStreamTest extends TestCase
         $zip->addFile($name, $content, $fileOptions);
     }
 
-    /**
-     * @expectedException \ZipStream\Exception\EncodingException
-     */
     public function testAddFileNonUtf8NameUtfComment(): void
     {
+        $this->expectException(\ZipStream\Exception\EncodingException::class);
+
         $stream = $this->getTmpFileStream()[1];
 
         $options = new ArchiveOptions();
