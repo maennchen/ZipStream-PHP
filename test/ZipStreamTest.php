@@ -499,4 +499,33 @@ class ZipStreamTest extends TestCase
         $this->assertEquals(array('sample.json'), $files);
         $this->assertStringEqualsFile($tmpDir . '/sample.json', $body);
     }
+
+    public function testAddFileFromPsr7StreamWithFileSizeSet(): void
+    {
+        [$tmp, $stream] = $this->getTmpFileStream();
+
+        $options = new ArchiveOptions();
+        $options->setOutputStream($stream);
+
+        $zip = new ZipStream(null, $options);
+
+        $body = 'Sample String Data';
+        $fileSize = strlen($body);
+        // Add fake padding
+        $fakePadding = "\0\0\0\0\0\0";
+        $response = new Response(200, [], $body . $fakePadding);
+
+        $fileOptions = new FileOptions();
+        $fileOptions->setMethod(Method::STORE());
+        $fileOptions->setSize($fileSize);
+        $zip->addFileFromPsr7Stream('sample.json', $response->getBody(), $fileOptions);
+        $zip->finish();
+        fclose($stream);
+
+        $tmpDir = $this->validateAndExtractZip($tmp);
+
+        $files = $this->getRecursiveFileList($tmpDir);
+        $this->assertEquals(array('sample.json'), $files);
+        $this->assertStringEqualsFile($tmpDir . '/sample.json', $body);
+    }
 }
