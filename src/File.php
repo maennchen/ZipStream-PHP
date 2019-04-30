@@ -353,7 +353,7 @@ class File
         $this->deflateInit();
         $total = 0;
         $size = $this->opt->getSize();
-        while (!$stream->eof() && ($size == 0 || $total < $size)) {
+        while (!$stream->eof() && ($size === 0 || $total < $size)) {
             $data = $stream->read(self::CHUNKED_READ_BLOCK_SIZE);
             $total += strlen($data);
             if ($size > 0 && $total > $size) {
