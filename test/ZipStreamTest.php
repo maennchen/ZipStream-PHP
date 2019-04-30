@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace ZipStreamTest;
 
+use org\bovigo\vfs\vfsStream;
 use GuzzleHttp\Psr7\Response;
 use PHPUnit\Framework\TestCase;
 use ZipStream\File;
@@ -31,10 +32,13 @@ class ZipStreamTest extends TestCase
 
     public function testFileNotReadableException(): void
     {
-        // TODO: $this->expectException(\ZipStream\Exception\FileNotReadableException::class);
-
-        // TODO: How to test this?
-        $this->markTestIncomplete('How to test this?');
+        // create new virtual filesystem
+        $root = vfsStream::setup('vfs');
+        // create a virtual file with no permissions
+        $file = vfsStream::newFile('foo.txt', 0000)->at($root)->setContent('bar');
+        $zip = new ZipStream();
+        $this->expectException(\ZipStream\Exception\FileNotReadableException::class);
+        $zip->addFileFromPath('foo.txt', $file->url());
     }
 
     public function testDostime(): void

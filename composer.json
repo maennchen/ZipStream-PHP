@@ -30,7 +30,8 @@
   "require-dev": {
     "phpunit/phpunit": ">= 7.5",
     "guzzlehttp/guzzle": ">= 6.3",
-    "ext-zip": "*"
+    "ext-zip": "*",
+    "mikey179/vfsStream": "^1.6"
   },
   "autoload": {
     "psr-4": {
