@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace ZipStreamTest;
 
+use org\bovigo\vfs\vfsStream;
 use GuzzleHttp\Psr7\Response;
 use PHPUnit\Framework\TestCase;
 use ZipStream\File;
@@ -31,10 +32,13 @@ class ZipStreamTest extends TestCase
 
     public function testFileNotReadableException(): void
     {
-        // TODO: $this->expectException(\ZipStream\Exception\FileNotReadableException::class);
-
-        // TODO: How to test this?
-        $this->markTestIncomplete('How to test this?');
+        // create new virtual filesystem
+        $root = vfsStream::setup('vfs');
+        // create a virtual file with no permissions
+        $file = vfsStream::newFile('foo.txt', 0000)->at($root)->setContent('bar');
+        $zip = new ZipStream();
+        $this->expectException(\ZipStream\Exception\FileNotReadableException::class);
+        $zip->addFileFromPath('foo.txt', $file->url());
     }
 
     public function testDostime(): void
@@ -489,6 +493,35 @@ class ZipStreamTest extends TestCase
         $fileOptions = new FileOptions();
         $fileOptions->setMethod(Method::STORE());
 
+        $zip->addFileFromPsr7Stream('sample.json', $response->getBody(), $fileOptions);
+        $zip->finish();
+        fclose($stream);
+
+        $tmpDir = $this->validateAndExtractZip($tmp);
+
+        $files = $this->getRecursiveFileList($tmpDir);
+        $this->assertEquals(array('sample.json'), $files);
+        $this->assertStringEqualsFile($tmpDir . '/sample.json', $body);
+    }
+
+    public function testAddFileFromPsr7StreamWithFileSizeSet(): void
+    {
+        [$tmp, $stream] = $this->getTmpFileStream();
+
+        $options = new ArchiveOptions();
+        $options->setOutputStream($stream);
+
+        $zip = new ZipStream(null, $options);
+
+        $body = 'Sample String Data';
+        $fileSize = strlen($body);
+        // Add fake padding
+        $fakePadding = "\0\0\0\0\0\0";
+        $response = new Response(200, [], $body . $fakePadding);
+
+        $fileOptions = new FileOptions();
+        $fileOptions->setMethod(Method::STORE());
+        $fileOptions->setSize($fileSize);
         $zip->addFileFromPsr7Stream('sample.json', $response->getBody(), $fileOptions);
         $zip->finish();
         fclose($stream);

@@ -5,10 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.1.0] - 2019-04-30
 
 ### Fixed
-- Honor last-modified timestamps set via `ZipStream\Option\File::setTime()`
+- Honor last-modified timestamps set via `ZipStream\Option\File::setTime()` (#106)
+- Documentation regarding output of HTTP headers
+- Test warnings with PHPUnit (#109)
+
+### Added
+- Test for FileNotReadableException (#114)
+- Size attribute to File options (#113)
+- Tests on PHP 7.3 (#108)
 
 ## [1.0.0] - 2019-04-17
 
