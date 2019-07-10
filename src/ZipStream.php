@@ -459,6 +459,8 @@ class ZipStream
         $this->need_headers = false;
 
         fwrite($this->opt->getOutputStream(), $str);
+        flush();
+        ob_flush();
     }
 
     /**
