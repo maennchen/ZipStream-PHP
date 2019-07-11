@@ -447,6 +447,7 @@ class ZipStream
 
     /**
      * Send string, sending HTTP headers if necessary.
+     * Flush output after write if configure option is set.
      *
      * @param String $str
      * @return void
@@ -459,6 +460,11 @@ class ZipStream
         $this->need_headers = false;
 
         fwrite($this->opt->getOutputStream(), $str);
+
+        if ($this->opt->isFlushOutput()) {
+            flush();
+            ob_flush();
+        }
     }
 
     /**

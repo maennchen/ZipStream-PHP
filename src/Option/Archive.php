@@ -76,6 +76,11 @@ final class Archive
      */
     private $statFiles = true;
     /**
+     * Enable flush after every write to output stream.
+     * @var bool
+     */
+    private $flushOutput = false;
+    /**
      * HTTP Content-Disposition.  Defaults to
      * 'attachment', where
      * FILENAME is the specified filename.
@@ -180,6 +185,16 @@ final class Archive
     public function setZeroHeader(bool $zeroHeader): void
     {
         $this->zeroHeader = $zeroHeader;
+    }
+
+    public function isFlushOutput(): bool
+    {
+        return $this->flushOutput;
+    }
+
+    public function setFlushOutput(bool $flushOutput): void
+    {
+        $this->flushOutput = $flushOutput;
     }
 
     public function isStatFiles(): bool

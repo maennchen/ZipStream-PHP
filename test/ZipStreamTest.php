@@ -532,4 +532,29 @@ class ZipStreamTest extends TestCase
         $this->assertEquals(array('sample.json'), $files);
         $this->assertStringEqualsFile($tmpDir . '/sample.json', $body);
     }
+
+    public function testCreateArchiveWithFlushOptionSet(): void
+    {
+        [$tmp, $stream] = $this->getTmpFileStream();
+
+        $options = new ArchiveOptions();
+        $options->setOutputStream($stream);
+        $options->setFlushOutput(true);
+
+        $zip = new ZipStream(null, $options);
+
+        $zip->addFile('sample.txt', 'Sample String Data');
+        $zip->addFile('test/sample.txt', 'More Simple Sample Data');
+
+        $zip->finish();
+        fclose($stream);
+
+        $tmpDir = $this->validateAndExtractZip($tmp);
+
+        $files = $this->getRecursiveFileList($tmpDir);
+        $this->assertEquals(['sample.txt', 'test/sample.txt'], $files);
+
+        $this->assertStringEqualsFile($tmpDir . '/sample.txt', 'Sample String Data');
+        $this->assertStringEqualsFile($tmpDir . '/test/sample.txt', 'More Simple Sample Data');
+    }
 }
