@@ -303,14 +303,14 @@ class File
     {
 
         if ($this->bits & self::BIT_ZERO_HEADER) {
-            $fields = [
-                ['V', ZipStream::DATA_DESCRIPTOR_SIGNATURE],
-                ['V', $this->crc],              // CRC32
-                ['V', $this->zlen],             // Length of compressed data
-                ['V', $this->len],              // Length of original data
-            ];
-
-            if ($this->zip->opt->isEnableZip64()) {
+            if (!$this->zip->opt->isEnableZip64()) {
+                $fields = [
+                    ['V', ZipStream::DATA_DESCRIPTOR_SIGNATURE],
+                    ['V', $this->crc],              // CRC32
+                    ['V', $this->zlen],             // Length of compressed data
+                    ['V', $this->len],              // Length of original data
+                ];
+            } else {
                 $fields = [
                     ['V', ZipStream::DATA_DESCRIPTOR_SIGNATURE],
                     ['V', $this->crc],              // CRC32
