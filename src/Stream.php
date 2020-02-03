@@ -22,11 +22,6 @@ class Stream implements StreamInterface
         $this->stream = $stream;
     }
 
-    public function __destruct()
-    {
-        $this->close();
-    }
-
     /**
      * Closes the stream and any underlying resources.
      *

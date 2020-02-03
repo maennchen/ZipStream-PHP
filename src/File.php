@@ -115,8 +115,10 @@ class File
         } else {
             $this->method = $this->zip->opt->getLargeFileMethod();
 
-            $stream = new DeflateStream(fopen($path, 'rb'));
+            $res = fopen($path, 'rb');
+            $stream = new DeflateStream($res);
             $this->processStream($stream);
+            fclose($res);
         }
     }
 
