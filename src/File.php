@@ -117,6 +117,7 @@ class File
 
             $stream = new DeflateStream(fopen($path, 'rb'));
             $this->processStream($stream);
+            $stream->close();
         }
     }
 
