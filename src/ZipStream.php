@@ -268,7 +268,7 @@ class ZipStream
      * Add an open stream to the archive.
      *
      * @param String $name - path of file in archive (including directory).
-     * @param Resource $stream - contents of file as a stream resource
+     * @param resource $stream - contents of file as a stream resource
      * @param FileOptions $options
      *
      * File Options:
