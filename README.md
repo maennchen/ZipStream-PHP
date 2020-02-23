@@ -63,6 +63,12 @@ See the [Wiki](https://github.com/maennchen/ZipStream-PHP/wiki) for details.
 
 The native Mac OS archive extraction tool might not open archives in some conditions. A workaround is to disable the Zip64 feature with the option `$opt->setEnableZip64(false)`. This limits the archive to 4 Gb and 64k files but will allow Mac OS users to open them without issue. See #116.
 
+## Upgrade to version 2.0.0
+
+* Only the self opened streams will be closed (#139)
+If you were relying on ZipStream to close streams that the library didn't open,
+you'll need to close them yourself now.
+
 ## Upgrade to version 1.0.0
 
 * All options parameters to all function have been moved from an `array` to structured option objects. See [the wiki](https://github.com/maennchen/ZipStream-PHP/wiki/Available-options) for examples.
