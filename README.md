@@ -84,8 +84,8 @@ ZipStream-PHP is a collaborative project. Please take a look at the [CONTRIBUTIN
 
 ## About the Authors
 
-* Paul Duncan <pabs@pablotron.org> - http://pablotron.org/
-* Jonatan Männchen <jonatan@maennchen.ch> - http://commanders.ch
+* Paul Duncan <pabs@pablotron.org> - https://pablotron.org/
+* Jonatan Männchen <jonatan@maennchen.ch> - https://maennchen.dev
 * Jesse G. Donat <donatj@gmail.com> - https://donatstudios.com
 * Nicolas CARPi <nicolas.carpi@curie.fr> - https://www.elabftw.net
 * Nik Barham <nik@brokencube.co.uk> - https://www.brokencube.co.uk
