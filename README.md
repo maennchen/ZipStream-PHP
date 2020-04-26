@@ -26,30 +26,30 @@ composer require maennchen/zipstream-php
 Here's a simple example:
 
 ```php
-# Autoload the dependencies
+// Autoload the dependencies
 require 'vendor/autoload.php';
 
-# enable output of HTTP headers
+// enable output of HTTP headers
 $options = new ZipStream\Option\Archive();
 $options->setSendHttpHeaders(true);
 
-# create a new zipstream object
+// create a new zipstream object
 $zip = new ZipStream\ZipStream('example.zip', $options);
 
-# create a file named 'hello.txt'
+// create a file named 'hello.txt'
 $zip->addFile('hello.txt', 'This is the contents of hello.txt');
 
-# add a file named 'some_image.jpg' from a local file 'path/to/image.jpg'
+// add a file named 'some_image.jpg' from a local file 'path/to/image.jpg'
 $zip->addFileFromPath('some_image.jpg', 'path/to/image.jpg');
 
-# add a file named 'goodbye.txt' from an open stream resource
+// add a file named 'goodbye.txt' from an open stream resource
 $fp = tmpfile();
 fwrite($fp, 'The quick brown fox jumped over the lazy dog.');
 rewind($fp);
 $zip->addFileFromStream('goodbye.txt', $fp);
 fclose($fp);
 
-# finish the zip stream
+// finish the zip stream
 $zip->finish();
 ```
 
@@ -62,6 +62,8 @@ See the [Wiki](https://github.com/maennchen/ZipStream-PHP/wiki) for details.
 ## Known issue
 
 The native Mac OS archive extraction tool might not open archives in some conditions. A workaround is to disable the Zip64 feature with the option `$opt->setEnableZip64(false)`. This limits the archive to 4 Gb and 64k files but will allow Mac OS users to open them without issue. See #116.
+
+The linux `unzip` utility might not handle properly unicode characters. It is recommended to extract with another tool like [7-zip](https://www.7-zip.org/). See #146.
 
 ## Upgrade to version 2.0.0
 
@@ -87,7 +89,7 @@ ZipStream-PHP is a collaborative project. Please take a look at the [CONTRIBUTIN
 * Paul Duncan <pabs@pablotron.org> - https://pablotron.org/
 * Jonatan Männchen <jonatan@maennchen.ch> - https://maennchen.dev
 * Jesse G. Donat <donatj@gmail.com> - https://donatstudios.com
-* Nicolas CARPi <nicolas.carpi@curie.fr> - https://www.elabftw.net
+* Nicolas CARPi <nico-git@deltablot.email> - https://www.deltablot.com
 * Nik Barham <nik@brokencube.co.uk> - https://www.brokencube.co.uk
 
 ## Contributors
