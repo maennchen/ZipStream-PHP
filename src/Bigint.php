@@ -95,14 +95,14 @@ class Bigint
      * Get low FF
      *
      * @param bool $force
-     * @return int
+     * @return float
      */
-    public function getLowFF(bool $force = false): int
+    public function getLowFF(bool $force = false): float
     {
         if ($force || $this->isOver32()) {
-            return 0xFFFFFFFF;
+            return (float)0xFFFFFFFF;
         }
-        return $this->getLow32();
+        return (float)$this->getLow32();
     }
 
     /**
