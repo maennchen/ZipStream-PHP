@@ -32,8 +32,8 @@ class BigintTest extends TestCase
         $this->assertSame(3, $bigint->getLow32());
         $this->assertFalse($bigint->isOver32());
         $this->assertTrue($bigint->isOver32(true));
-        $this->assertSame($bigint->getLowFF(), $bigint->getLow32());
-        $this->assertSame($bigint->getLowFF(true), 0xFFFFFFFF);
+        $this->assertSame($bigint->getLowFF(), (float)$bigint->getLow32());
+        $this->assertSame($bigint->getLowFF(true), (float)0xFFFFFFFF);
     }
 
     public function testAddWithOverflowAtLowestByte(): void
@@ -52,7 +52,7 @@ class BigintTest extends TestCase
         $bigint = $bigint->add(Bigint::init(0x01));
         $this->assertSame('0x0000000100000000', $bigint->getHex64());
         $this->assertTrue($bigint->isOver32());
-        $this->assertSame(0xFFFFFFFF, $bigint->getLowFF());
+        $this->assertSame((float)0xFFFFFFFF, $bigint->getLowFF());
     }
 
     public function testAddWithOverflowAtInteger64(): void
