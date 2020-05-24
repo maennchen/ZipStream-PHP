@@ -462,8 +462,14 @@ class ZipStream
         fwrite($this->opt->getOutputStream(), $str);
 
         if ($this->opt->isFlushOutput()) {
+            // flush output buffer if it is on and flushable
+            $status = ob_get_status();
+            if (isset($status['flags']) && ($status['flags'] & PHP_OUTPUT_HANDLER_FLUSHABLE)) {
+                ob_flush();
+            }
+
+            // Flush system buffers after flushing userspace output buffer
             flush();
-            ob_flush();
         }
     }
 
