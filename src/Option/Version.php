@@ -12,6 +12,7 @@ use MyCLabs\Enum\Enum;
  * @method static STORE(): Version
  * @method static DEFLATE(): Version
  * @method static ZIP64(): Version
+ * @psalm-immutable
  */
 class Version extends Enum
 {
