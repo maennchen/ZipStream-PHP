@@ -557,4 +557,30 @@ class ZipStreamTest extends TestCase
         $this->assertStringEqualsFile($tmpDir . '/sample.txt', 'Sample String Data');
         $this->assertStringEqualsFile($tmpDir . '/test/sample.txt', 'More Simple Sample Data');
     }
+
+    public function testCreateArchiveWithOutputBufferingOffAndFlushOptionSet(): void
+    {
+        // WORKAROUND (1/2): remove phpunit's output buffer in order to run test without any buffering
+        ob_end_flush();
+        $this->assertEquals(0, ob_get_level());
+
+        [$tmp, $stream] = $this->getTmpFileStream();
+
+        $options = new ArchiveOptions();
+        $options->setOutputStream($stream);
+        $options->setFlushOutput(true);
+
+        $zip = new ZipStream(null, $options);
+
+        $zip->addFile('sample.txt', 'Sample String Data');
+
+        $zip->finish();
+        fclose($stream);
+
+        $tmpDir = $this->validateAndExtractZip($tmp);
+        $this->assertStringEqualsFile($tmpDir . '/sample.txt', 'Sample String Data');
+
+        // WORKAROUND (2/2): add back output buffering so that PHPUnit doesn't complain that it is missing
+        ob_start();
+    }
 }
