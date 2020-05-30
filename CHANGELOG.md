@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2020-06-01
+### Changed
+- Don't execute ob_flush() when output buffering is not enabled (#152)
+- Fix inconsistent return type on 32-bit systems (#149) Fix #144
+- Use mbstring polyfill (#151)
+- Promote 7zip usage over unzip to avoid UTF-8 issues (#147)
+
 ## [2.0.0] - 2020-02-22
 ### Breaking change
 - Only the self opened streams will be closed (#139)

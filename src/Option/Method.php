@@ -10,6 +10,7 @@ use MyCLabs\Enum\Enum;
  *
  * @method static STORE(): Method
  * @method static DEFLATE(): Method
+ * @psalm-immutable
  */
 class Method extends Enum
 {
