@@ -59,11 +59,13 @@ the current default storage method is 'deflate' i.e files are stored with Compre
 
 See the [Wiki](https://github.com/maennchen/ZipStream-PHP/wiki) for details.
 
-## Known issue
+## Known issues
 
 The native Mac OS archive extraction tool might not open archives in some conditions. A workaround is to disable the Zip64 feature with the option `$opt->setEnableZip64(false)`. This limits the archive to 4 Gb and 64k files but will allow Mac OS users to open them without issue. See #116.
 
-The linux `unzip` utility might not handle properly unicode characters. It is recommended to extract with another tool like [7-zip](https://www.7-zip.org/). See #146.
+The linux `unzip` utility might not handle properly unicode characters. It is recommended to extract with another tool like [7-zip](https://www.7-zip.org/). See [#146](https://github.com/maennchen/ZipStream-PHP/issues/146).
+
+It is the responsability of the client code to make sure that files are not saved with the same path, as it is not possible for the library to figure it out while streaming a zip. See [#154](https://github.com/maennchen/ZipStream-PHP/issues/154).
 
 ## Upgrade to version 2.0.0
 
