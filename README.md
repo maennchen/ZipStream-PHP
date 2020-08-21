@@ -61,7 +61,7 @@ See the [Wiki](https://github.com/maennchen/ZipStream-PHP/wiki) for details.
 
 ## Known issues
 
-The native Mac OS archive extraction tool might not open archives in some conditions. A workaround is to disable the Zip64 feature with the option `$opt->setEnableZip64(false)`. This limits the archive to 4 Gb and 64k files but will allow Mac OS users to open them without issue. See #116.
+The native Mac OS archive extraction tool prior to macOS 10.15 might not open archives in some conditions. A workaround is to disable the Zip64 feature with the option `$opt->setEnableZip64(false)`. This limits the archive to 4 Gb and 64k files but will allow users on macOS 10.14 and below to open them without issue. See #116.
 
 The linux `unzip` utility might not handle properly unicode characters. It is recommended to extract with another tool like [7-zip](https://www.7-zip.org/). See [#146](https://github.com/maennchen/ZipStream-PHP/issues/146).
 
