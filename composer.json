@@ -22,7 +22,7 @@
     }
   ],
   "require": {
-    "php": ">= 7.1",
+    "php": "^7.2",
     "symfony/polyfill-mbstring": "^1.0",
     "psr/http-message": "^1.0",
     "myclabs/php-enum": "^1.5"
