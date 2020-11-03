@@ -1,0 +1,101 @@
+on:
+  - push
+  - pull_request
+
+jobs:
+  test:
+    name: Run Tests (${{ matrix.os }} / PHP ${{ matrix.php }})
+
+    runs-on: ${{ matrix.os }}
+
+    continue-on-error: ${{ matrix.experimental }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        php: [7.2, 7.3, 7.4]
+        os: [ubuntu-latest]
+        experimental: [false]
+        include:
+          - php: 8.0
+            os: ubuntu-latest
+            experimental: true
+          - php: 8.1
+            os: ubuntu-latest
+            experimental: true
+          - php: 7.4
+            os: windows-latest
+            experimental: false
+          - php: 7.4
+            os: macos-latest
+            experimental: false
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+      - name: Get composer cache directory
+        id: composercache
+        run: echo "::set-output name=dir::$(composer config cache-files-dir)"
+      - name: Cache Deps
+        uses: actions/cache@v2
+        id: cache
+        with:
+          path: ${{ steps.composercache.outputs.dir }}
+          key: deps-${{ runner.os }}-${{ matrix.php }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            deps-${{ runner.os }}-${{ matrix.php }}-composer-
+            deps-${{ runner.os }}-${{ matrix.php }}-
+            deps-${{ matrix.php }}-
+            deps-
+      - name: Install Deps
+        run: composer install --prefer-dist
+      - name: SetUp PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '${{ matrix.php }}'
+      - name: Run PHPUnit
+        run: php ./vendor/bin/phpunit --coverage-clover=coverage.clover.xml
+      - name: Upload coverage results to Coveralls
+        env:
+          COVERALLS_REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COVERALLS_PARALLEL: true
+          COVERALLS_FLAG_NAME: ${{ runner.os }}-${{ matrix.php }}
+        run: php ./vendor/bin/php-coveralls --coverage_clover=coverage.clover.xml --json_path=coveralls-upload.json -v
+        continue-on-error: ${{ matrix.experimental }}
+
+  psalm:
+    name: Run Psalm (${{ matrix.os }} / PHP ${{ matrix.php }})
+
+    strategy:
+      fail-fast: false
+      matrix:
+        php: [7.4]
+        os: ['ubuntu-latest']
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+      - name: Get composer cache directory
+        id: composercache
+        run: echo "::set-output name=dir::$(composer config cache-files-dir)"
+      - name: Cache Deps
+        uses: actions/cache@v2
+        id: cache
+        with:
+          path: ${{ steps.composercache.outputs.dir }}
+          key: deps-${{ runner.os }}-${{ matrix.php }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            deps-${{ runner.os }}-${{ matrix.php }}-composer-
+            deps-${{ runner.os }}-${{ matrix.php }}-
+            deps-${{ matrix.php }}-
+            deps-
+      - name: Install Deps
+        run: composer install --prefer-dist
+      - name: SetUp PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '${{ matrix.php }}'
+      - name: Run Psalm
+        run: php ./vendor/bin/psalm
