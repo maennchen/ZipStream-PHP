@@ -459,7 +459,13 @@ class ZipStream
         }
         $this->need_headers = false;
 
-        fwrite($this->opt->getOutputStream(), $str);
+        $outputStream = $this->opt->getOutputStream();
+
+        if ($outputStream instanceof StreamInterface) {
+            $outputStream->write($str);
+        } else {
+            fwrite($outputStream, $str);
+        }
 
         if ($this->opt->isFlushOutput()) {
             // flush output buffer if it is on and flushable
