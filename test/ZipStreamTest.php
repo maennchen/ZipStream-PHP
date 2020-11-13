@@ -10,6 +10,7 @@ use ZipStream\File;
 use ZipStream\Option\Archive as ArchiveOptions;
 use ZipStream\Option\File as FileOptions;
 use ZipStream\Option\Method;
+use ZipStream\Stream;
 use ZipStream\ZipStream;
 
 /**
@@ -500,6 +501,33 @@ class ZipStreamTest extends TestCase
         $tmpDir = $this->validateAndExtractZip($tmp);
 
         $files = $this->getRecursiveFileList($tmpDir);
+        $this->assertEquals(array('sample.json'), $files);
+        $this->assertStringEqualsFile($tmpDir . '/sample.json', $body);
+    }
+
+    public function testAddFileFromPsr7StreamWithOutputToPsr7Stream(): void
+    {
+        [$tmp, $resource] = $this->getTmpFileStream();
+        $psr7OutputStream = new Stream($resource);
+
+        $options = new ArchiveOptions();
+        $options->setOutputStream($psr7OutputStream);
+
+        $zip = new ZipStream(null, $options);
+
+        $body = 'Sample String Data';
+        $response = new Response(200, [], $body);
+
+        $fileOptions = new FileOptions();
+        $fileOptions->setMethod(Method::STORE());
+
+        $zip->addFileFromPsr7Stream('sample.json', $response->getBody(), $fileOptions);
+        $zip->finish();
+        $psr7OutputStream->close();
+
+        $tmpDir = $this->validateAndExtractZip($tmp);
+        $files = $this->getRecursiveFileList($tmpDir);
+
         $this->assertEquals(array('sample.json'), $files);
         $this->assertStringEqualsFile($tmpDir . '/sample.json', $body);
     }
