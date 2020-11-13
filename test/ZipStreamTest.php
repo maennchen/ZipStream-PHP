@@ -526,8 +526,8 @@ class ZipStreamTest extends TestCase
         $psr7OutputStream->close();
 
         $tmpDir = $this->validateAndExtractZip($tmp);
-
         $files = $this->getRecursiveFileList($tmpDir);
+
         $this->assertEquals(array('sample.json'), $files);
         $this->assertStringEqualsFile($tmpDir . '/sample.json', $body);
     }
