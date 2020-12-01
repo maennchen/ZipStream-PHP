@@ -4,3 +4,4 @@ coverage.clover
 .idea
 phpunit.xml
 vendor
+.phpunit.result.cache
