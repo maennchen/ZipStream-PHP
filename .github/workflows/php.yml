@@ -14,21 +14,18 @@ jobs:
       fail-fast: false
       matrix:
         # Not running PHP 7.2 since the CI is not working and it is EOL in 2 months
-        php: [7.3, 7.4]
+        php: [7.3, 7.4, 8.0]
         os: [ubuntu-latest]
         experimental: [false]
         include:
-          - php: 8.0
-            os: ubuntu-latest
-            experimental: true
           - php: 8.1
             os: ubuntu-latest
             experimental: true
-          - php: 7.4
+          - php: 8.0
             os: windows-latest
             experimental: false
           # Not running on MacOS since it currently doesn't stop
-          # - php: 7.4
+          # - php: 8.0
           #   os: macos-latest
           #   experimental: false
 
@@ -83,7 +80,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php: [7.4]
+        php: [8.0]
         os: ['ubuntu-latest']
 
     runs-on: ${{ matrix.os }}
