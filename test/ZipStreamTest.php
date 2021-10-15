@@ -142,6 +142,9 @@ class ZipStreamTest extends TestCase
         foreach ($files as $file) {
             $filePath = $file->getRealPath();
             if (!is_dir($filePath)) {
+                if (strtolower(php_uname('s'))=='windows nt') {
+                    $filePath = str_replace('\\', '/', $filePath);
+                }
                 $data[] = substr($filePath, $pathLen + 1);
             }
         }
