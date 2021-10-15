@@ -296,10 +296,8 @@ class File
         if ($this->bits & self::BIT_EFS_UTF8) {
             // Put the tricky entry to
             // force Linux unzip to lookup EFS flag.
-            if (strtolower(php_uname('s'))=='linux') {
-                $fields[] = ['v', 0x000d];
-                $fields[] = ['v', 0x0000];  // zero length
-            }
+            $fields[] = ['v', 0x000d];
+            $fields[] = ['v', 0x0000];  // zero length
         }
 
         return ZipStream::packFields($fields);
