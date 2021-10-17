@@ -296,7 +296,7 @@ class File
         if ($this->bits & self::BIT_EFS_UTF8) {
             // Put the tricky entry to
             // force Linux unzip to lookup EFS flag.
-            $fields[] = ['v', 0x000d];
+            $fields[] = ['v', 0x5653];  // Choose 'ZS' for proprietary usage
             $fields[] = ['v', 0x0000];  // zero length
         }
 
