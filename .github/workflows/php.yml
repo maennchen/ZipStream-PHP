@@ -55,6 +55,9 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '${{ matrix.php }}'
+          tools: phpunit
+          coverage: xdebug
+          extensions: xdebug
       - name: Run PHPUnit
         run: php ./vendor/bin/phpunit --coverage-clover=coverage.clover.xml
       - name: Upload coverage results to Coveralls

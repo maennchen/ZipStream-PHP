@@ -76,7 +76,7 @@ class ZipStreamTest extends TestCase
         $tmpDir = $this->validateAndExtractZip($tmp);
 
         $files = $this->getRecursiveFileList($tmpDir);
-        $this->assertEquals(['sample.txt', 'test/sample.txt'], $files);
+        $this->assertEquals(['sample.txt', 'test' . DIRECTORY_SEPARATOR . 'sample.txt'], $files);
 
         $this->assertStringEqualsFile($tmpDir . '/sample.txt', 'Sample String Data');
         $this->assertStringEqualsFile($tmpDir . '/test/sample.txt', 'More Simple Sample Data');
@@ -308,7 +308,7 @@ class ZipStreamTest extends TestCase
         $tmpDir = $this->validateAndExtractZip($tmp);
 
         $files = $this->getRecursiveFileList($tmpDir);
-        $this->assertEquals(array('sample.txt', 'test/sample.txt'), $files);
+        $this->assertEquals(array('sample.txt', 'test' . DIRECTORY_SEPARATOR . 'sample.txt'), $files);
 
         $this->assertStringEqualsFile($tmpDir . '/sample.txt', 'Sample String Data');
         $this->assertStringEqualsFile($tmpDir . '/test/sample.txt', 'More Simple Sample Data');
@@ -434,7 +434,7 @@ class ZipStreamTest extends TestCase
         $tmpDir = $this->validateAndExtractZip($tmp);
 
         $files = $this->getRecursiveFileList($tmpDir);
-        $this->assertEquals(array('sample.txt', 'test/sample.txt'), $files);
+        $this->assertEquals(array('sample.txt', 'test' . DIRECTORY_SEPARATOR . 'sample.txt'), $files);
 
         $this->assertStringEqualsFile(__FILE__, file_get_contents($tmpDir . '/sample.txt'));
         $this->assertStringEqualsFile($tmpDir . '/test/sample.txt', 'More Simple Sample Data');
@@ -580,7 +580,7 @@ class ZipStreamTest extends TestCase
         $tmpDir = $this->validateAndExtractZip($tmp);
 
         $files = $this->getRecursiveFileList($tmpDir);
-        $this->assertEquals(['sample.txt', 'test/sample.txt'], $files);
+        $this->assertEquals(['sample.txt', 'test' . DIRECTORY_SEPARATOR . 'sample.txt'], $files);
 
         $this->assertStringEqualsFile($tmpDir . '/sample.txt', 'Sample String Data');
         $this->assertStringEqualsFile($tmpDir . '/test/sample.txt', 'More Simple Sample Data');
