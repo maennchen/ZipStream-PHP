@@ -312,12 +312,9 @@ class ZipStream
      *
      * Examples:
      *
-     *   // create a temporary file stream and write text to it
-     *   $fp = tmpfile();
-     *   fwrite($fp, 'The quick brown fox jumped over the lazy dog.');
-     *
+     *   $stream = $response->getBody();
      *   // add a file named 'streamfile.txt' from the content of the stream
-     *   $x->addFileFromPsr7Stream('streamfile.txt', $fp);
+     *   $x->addFileFromPsr7Stream('streamfile.txt', $stream);
      *
      * @return void
      */
