@@ -41,6 +41,6 @@
     }
   },
   "archive": {
-    "exclude": ["/tests", "/CHANGELOG.md", "/CONTRIBUTING.md", "/phpunit.xml.dist", "/psalm.xml"]
+    "exclude": ["/test", "/CHANGELOG.md", "/CONTRIBUTING.md", "/phpunit.xml.dist", "/psalm.xml"]
   }
 }
