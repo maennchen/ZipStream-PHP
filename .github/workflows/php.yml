@@ -60,7 +60,11 @@ jobs:
             deps-${{ matrix.php }}-
             deps-
       - name: Install Deps
+        if: matrix.php != 'nightly'
         run: composer install --prefer-dist
+      - name: Install Deps (ignore PHP requirement)
+        if: matrix.php == 'nightly'
+        run: composer install --prefer-dist --ignore-platform-req=php+
       - name: Run PHPUnit
         run: php ./vendor/bin/phpunit --coverage-clover=coverage.clover.xml
       - name: Upload coverage results to Coveralls
