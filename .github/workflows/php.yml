@@ -19,8 +19,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Not running PHP 7.2 since the CI is not working and it is EOL in 2 months
-        php: ['8.0', '8.1']
+        php: ['7.4', '8.0', '8.1']
         os: [ubuntu-latest]
         experimental: [false]
         include:
