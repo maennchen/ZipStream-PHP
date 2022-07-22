@@ -76,7 +76,7 @@ class ZipStreamTest extends TestCase
         $tmpDir = $this->validateAndExtractZip($tmp);
 
         $files = $this->getRecursiveFileList($tmpDir);
-        $this->assertEquals(['sample.txt', 'test' . DIRECTORY_SEPARATOR . 'sample.txt'], $files);
+        $this->assertSame(['sample.txt', 'test' . DIRECTORY_SEPARATOR . 'sample.txt'], $files);
 
         $this->assertStringEqualsFile($tmpDir . '/sample.txt', 'Sample String Data');
         $this->assertStringEqualsFile($tmpDir . '/test/sample.txt', 'More Simple Sample Data');
@@ -110,8 +110,8 @@ class ZipStreamTest extends TestCase
             return $tmpDir;
         }
 
-        $this->assertEquals(0, $zipArch->status);
-        $this->assertEquals(0, $zipArch->statusSys);
+        $this->assertSame(0, $zipArch->status);
+        $this->assertSame(0, $zipArch->statusSys);
 
         $zipArch->extractTo($tmpDir);
         $zipArch->close();
@@ -177,12 +177,12 @@ class ZipStreamTest extends TestCase
         $tmpDir = $this->validateAndExtractZip($tmp);
 
         $files = $this->getRecursiveFileList($tmpDir);
-        $this->assertEquals(array($name), $files);
+        $this->assertSame(array($name), $files);
         $this->assertStringEqualsFile($tmpDir . '/' . $name, $content);
 
         $zipArch = new \ZipArchive();
         $zipArch->open($tmp);
-        $this->assertEquals($comment, $zipArch->getCommentName($name));
+        $this->assertSame($comment, $zipArch->getCommentName($name));
     }
 
     public function testAddFileUtf8NameNonUtfComment(): void
@@ -249,8 +249,8 @@ class ZipStreamTest extends TestCase
 
         $sample1 = $zipArch->statName('sample.txt');
         $sample12 = $zipArch->statName('test/sample.txt');
-        $this->assertEquals($sample1['comp_method'], Method::STORE);
-        $this->assertEquals($sample12['comp_method'], Method::DEFLATE);
+        $this->assertSame($sample1['comp_method'], Method::STORE);
+        $this->assertSame($sample12['comp_method'], Method::DEFLATE);
 
         $zipArch->close();
     }
@@ -276,7 +276,7 @@ class ZipStreamTest extends TestCase
 
         exec(escapeshellarg(self::OSX_ARCHIVE_UTILITY) . ' ' . escapeshellarg($tmp), $output, $returnStatus);
 
-        $this->assertEquals(0, $returnStatus);
+        $this->assertSame(0, $returnStatus);
         $this->assertCount(0, $output);
 
         $this->assertFileExists(dirname($tmp) . '/' . $folder . '/sample.txt');
@@ -308,7 +308,7 @@ class ZipStreamTest extends TestCase
         $tmpDir = $this->validateAndExtractZip($tmp);
 
         $files = $this->getRecursiveFileList($tmpDir);
-        $this->assertEquals(array('sample.txt', 'test' . DIRECTORY_SEPARATOR . 'sample.txt'), $files);
+        $this->assertSame(array('sample.txt', 'test' . DIRECTORY_SEPARATOR . 'sample.txt'), $files);
 
         $this->assertStringEqualsFile($tmpDir . '/sample.txt', 'Sample String Data');
         $this->assertStringEqualsFile($tmpDir . '/test/sample.txt', 'More Simple Sample Data');
@@ -343,10 +343,10 @@ class ZipStreamTest extends TestCase
         $zipArch->open($tmp);
 
         $sample1 = $zipArch->statName('sample.txt');
-        $this->assertEquals(Method::STORE, $sample1['comp_method']);
+        $this->assertSame(Method::STORE, $sample1['comp_method']);
 
         $sample2 = $zipArch->statName('test/sample.txt');
-        $this->assertEquals(Method::DEFLATE, $sample2['comp_method']);
+        $this->assertSame(Method::DEFLATE, $sample2['comp_method']);
 
         $zipArch->close();
     }
@@ -398,9 +398,9 @@ class ZipStreamTest extends TestCase
         $tmpDir = $this->validateAndExtractZip($tmp);
 
         $files = $this->getRecursiveFileList($tmpDir);
-        $this->assertEquals(array('sample.txt'), $files);
+        $this->assertSame(array('sample.txt'), $files);
 
-        $this->assertEquals(sha1_file($tmpDir . '/sample.txt'), $shaExample, "SHA-1 Mismatch Method: {$method}");
+        $this->assertSame(sha1_file($tmpDir . '/sample.txt'), $shaExample, "SHA-1 Mismatch Method: {$method}");
     }
 
     public function testAddFileFromStream(): void
@@ -434,7 +434,7 @@ class ZipStreamTest extends TestCase
         $tmpDir = $this->validateAndExtractZip($tmp);
 
         $files = $this->getRecursiveFileList($tmpDir);
-        $this->assertEquals(array('sample.txt', 'test' . DIRECTORY_SEPARATOR . 'sample.txt'), $files);
+        $this->assertSame(array('sample.txt', 'test' . DIRECTORY_SEPARATOR . 'sample.txt'), $files);
 
         $this->assertStringEqualsFile(__FILE__, file_get_contents($tmpDir . '/sample.txt'));
         $this->assertStringEqualsFile($tmpDir . '/test/sample.txt', 'More Simple Sample Data');
@@ -471,10 +471,10 @@ class ZipStreamTest extends TestCase
         $zipArch->open($tmp);
 
         $sample1 = $zipArch->statName('sample.txt');
-        $this->assertEquals(Method::STORE, $sample1['comp_method']);
+        $this->assertSame(Method::STORE, $sample1['comp_method']);
 
         $sample2 = $zipArch->statName('test/sample.txt');
-        $this->assertEquals(Method::DEFLATE, $sample2['comp_method']);
+        $this->assertSame(Method::DEFLATE, $sample2['comp_method']);
 
         $zipArch->close();
     }
@@ -501,7 +501,7 @@ class ZipStreamTest extends TestCase
         $tmpDir = $this->validateAndExtractZip($tmp);
 
         $files = $this->getRecursiveFileList($tmpDir);
-        $this->assertEquals(array('sample.json'), $files);
+        $this->assertSame(array('sample.json'), $files);
         $this->assertStringEqualsFile($tmpDir . '/sample.json', $body);
     }
 
@@ -528,7 +528,7 @@ class ZipStreamTest extends TestCase
         $tmpDir = $this->validateAndExtractZip($tmp);
         $files = $this->getRecursiveFileList($tmpDir);
 
-        $this->assertEquals(array('sample.json'), $files);
+        $this->assertSame(array('sample.json'), $files);
         $this->assertStringEqualsFile($tmpDir . '/sample.json', $body);
     }
 
@@ -557,7 +557,7 @@ class ZipStreamTest extends TestCase
         $tmpDir = $this->validateAndExtractZip($tmp);
 
         $files = $this->getRecursiveFileList($tmpDir);
-        $this->assertEquals(array('sample.json'), $files);
+        $this->assertSame(array('sample.json'), $files);
         $this->assertStringEqualsFile($tmpDir . '/sample.json', $body);
     }
 
@@ -580,7 +580,7 @@ class ZipStreamTest extends TestCase
         $tmpDir = $this->validateAndExtractZip($tmp);
 
         $files = $this->getRecursiveFileList($tmpDir);
-        $this->assertEquals(['sample.txt', 'test' . DIRECTORY_SEPARATOR . 'sample.txt'], $files);
+        $this->assertSame(['sample.txt', 'test' . DIRECTORY_SEPARATOR . 'sample.txt'], $files);
 
         $this->assertStringEqualsFile($tmpDir . '/sample.txt', 'Sample String Data');
         $this->assertStringEqualsFile($tmpDir . '/test/sample.txt', 'More Simple Sample Data');
@@ -590,7 +590,7 @@ class ZipStreamTest extends TestCase
     {
         // WORKAROUND (1/2): remove phpunit's output buffer in order to run test without any buffering
         ob_end_flush();
-        $this->assertEquals(0, ob_get_level());
+        $this->assertSame(0, ob_get_level());
 
         [$tmp, $stream] = $this->getTmpFileStream();
 
