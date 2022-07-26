@@ -5,3 +5,4 @@ coverage.clover
 phpunit.xml
 vendor
 .phpunit.result.cache
+.php-cs-fixer.cache

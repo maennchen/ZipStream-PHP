@@ -14,6 +14,7 @@ use MyCLabs\Enum\Enum;
  */
 class Method extends Enum
 {
-    const STORE = 0x00;
-    const DEFLATE = 0x08;
+    public const STORE = 0x00;
+
+    public const DEFLATE = 0x08;
 }

@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace ZipStream;
 
+use function mb_strlen;
 use Psr\Http\Message\StreamInterface;
 use RuntimeException;
 
@@ -20,6 +21,29 @@ class Stream implements StreamInterface
     public function __construct($stream)
     {
         $this->stream = $stream;
+    }
+
+    /**
+     * Reads all data from the stream into a string, from the beginning to end.
+     *
+     * This method MUST attempt to seek to the beginning of the stream before
+     * reading data and read the stream until the end is reached.
+     *
+     * Warning: This could attempt to load a large amount of data into memory.
+     *
+     * This method MUST NOT raise an exception in order to conform with PHP's
+     * string casting operations.
+     *
+     * @see http://php.net/manual/en/language.oop5.magic.php#object.tostring
+     * @return string
+     */
+    public function __toString(): string
+    {
+        try {
+            $this->seek(0);
+        } catch (RuntimeException $e) {
+        }
+        return (string) stream_get_contents($this->stream);
     }
 
     /**
@@ -47,28 +71,6 @@ class Stream implements StreamInterface
         $result = $this->stream;
         $this->stream = null;
         return $result;
-    }
-
-    /**
-     * Reads all data from the stream into a string, from the beginning to end.
-     *
-     * This method MUST attempt to seek to the beginning of the stream before
-     * reading data and read the stream until the end is reached.
-     *
-     * Warning: This could attempt to load a large amount of data into memory.
-     *
-     * This method MUST NOT raise an exception in order to conform with PHP's
-     * string casting operations.
-     *
-     * @see http://php.net/manual/en/language.oop5.magic.php#object.tostring
-     * @return string
-     */
-    public function __toString(): string
-    {
-        try {
-            $this->seek(0);
-        } catch (RuntimeException $e) {}
-        return (string) stream_get_contents($this->stream);
     }
 
     /**
@@ -187,7 +189,7 @@ class Stream implements StreamInterface
         if (fwrite($this->stream, $string) === false) {
             throw new RuntimeException;
         }
-        return \mb_strlen($string);
+        return mb_strlen($string);
     }
 
     /**
@@ -212,7 +214,7 @@ class Stream implements StreamInterface
      *     call returns fewer bytes.
      * @return string Returns the data read from the stream, or an empty string
      *     if no bytes are available.
-     * @throws \RuntimeException if an error occurs.
+     * @throws RuntimeException if an error occurs.
      */
     public function read($length): string
     {
@@ -244,7 +246,7 @@ class Stream implements StreamInterface
      * Returns the remaining contents in a string
      *
      * @return string
-     * @throws \RuntimeException if unable to read or an error occurs while
+     * @throws RuntimeException if unable to read or an error occurs while
      *     reading.
      */
     public function getContents(): string
