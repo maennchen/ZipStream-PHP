@@ -87,7 +87,7 @@ jobs:
         parallel-finished: true
 
   psalm:
-    name: Run Psalm (${{ matrix.os }} / PHP ${{ matrix.php }})
+    name: Run Psalm and PHP-CS (${{ matrix.os }} / PHP ${{ matrix.php }})
 
     strategy:
       fail-fast: false
@@ -122,3 +122,5 @@ jobs:
           php-version: '${{ matrix.php }}'
       - name: Run Psalm
         run: php ./vendor/bin/psalm
+      - name: Run PHP-CS
+        run: composer dry-lint
