@@ -33,7 +33,13 @@
     "ext-zip": "*",
     "mikey179/vfsstream": "^1.6",
     "vimeo/psalm": "^4.1",
-    "php-coveralls/php-coveralls": "^2.4"
+    "php-coveralls/php-coveralls": "^2.4",
+    "friendsofphp/php-cs-fixer": "^3.9"
+  },
+  "scripts": {
+    "test": "phpunit",
+    "lint": "php-cs-fixer fix -v",
+    "dry-lint": "php-cs-fixer fix --dry-run --stop-on-violation -v"
   },
   "autoload": {
     "psr-4": {
