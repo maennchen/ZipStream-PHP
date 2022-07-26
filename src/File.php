@@ -241,14 +241,14 @@ class File
 
         // set lower-bound on dates
         if ($d['year'] < 1980) {
-            $d = array(
+            $d = [
                 'year' => 1980,
                 'mon' => 1,
                 'mday' => 1,
                 'hours' => 0,
                 'minutes' => 0,
                 'seconds' => 0
-            );
+            ];
         }
 
         // remove extra years from 1980

@@ -495,13 +495,13 @@ class ZipStream
             $disposition .= "; filename*=UTF-8''{$urlencoded}";
         }
 
-        $headers = array(
+        $headers = [
             'Content-Type' => $this->opt->getContentType(),
             'Content-Disposition' => $disposition,
             'Pragma' => 'public',
             'Cache-Control' => 'public, must-revalidate',
             'Content-Transfer-Encoding' => 'binary'
-        );
+        ];
 
         $call = $this->opt->getHttpHeaderCallback();
         foreach ($headers as $key => $val) {
