@@ -42,6 +42,7 @@ class Bigint
      */
     public static function fromLowHigh(int $low, int $high): self
     {
+        $a = array();
         $bigint = new self();
         $bigint->fillBytes($low, 0, 4);
         $bigint->fillBytes($high, 4, 4);
