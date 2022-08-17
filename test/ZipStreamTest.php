@@ -122,9 +122,7 @@ class ZipStreamTest extends TestCase
 
     public function testAddFileUtf8NameNonUtfComment(): void
     {
-        $this->expectException(\ZipStream\Exception\EncodingException::class);
-
-        $stream = $this->getTmpFileStream()[1];
+        [$tmp, $stream] = $this->getTmpFileStream();
 
         $options = new ArchiveOptions();
         $options->setOutputStream($stream);
@@ -133,33 +131,66 @@ class ZipStreamTest extends TestCase
 
         $name = 'á.txt';
         $content = 'any';
-        $comment = 'á';
+        $comment = mb_convert_encoding('á', 'ISO-8859-2', 'UTF-8');
 
-        $fileOptions = new FileOptions();
-        $fileOptions->setComment(mb_convert_encoding($comment, 'ISO-8859-2', 'UTF-8'));
-
-        $zip->addFile($name, $content, $fileOptions);
-    }
-
-    public function testAddFileNonUtf8NameUtfComment(): void
-    {
-        $this->expectException(\ZipStream\Exception\EncodingException::class);
-
-        $stream = $this->getTmpFileStream()[1];
-
-        $options = new ArchiveOptions();
-        $options->setOutputStream($stream);
-
-        $zip = new ZipStream(null, $options);
-
-        $name = 'á.txt';
-        $content = 'any';
-        $comment = 'á';
+        // @see https://libzip.org/documentation/zip_file_get_comment.html
+        //
+        // mb_convert_encoding hasn't CP437.
+        // nearly CP850 (DOS-Latin-1)
+        $guessComment = mb_convert_encoding($comment, 'UTF-8', 'CP850');
 
         $fileOptions = new FileOptions();
         $fileOptions->setComment($comment);
 
-        $zip->addFile(mb_convert_encoding($name, 'ISO-8859-2', 'UTF-8'), $content, $fileOptions);
+        $zip->addFile($name, $content, $fileOptions);
+        $zip->finish();
+        fclose($stream);
+
+        $zipArch = new ZipArchive();
+        $zipArch->open($tmp);
+        $this->assertSame($guessComment, $zipArch->getCommentName($name));
+        $this->assertSame($comment, $zipArch->getCommentName($name, ZipArchive::FL_ENC_RAW));
+    }
+
+    public function testAddFileNonUtf8NameUtfComment(): void
+    {
+        [$tmp, $stream] = $this->getTmpFileStream();
+
+        $options = new ArchiveOptions();
+        $options->setOutputStream($stream);
+
+        $zip = new ZipStream(null, $options);
+
+        $name = mb_convert_encoding('á.txt', 'ISO-8859-2', 'UTF-8');
+        $content = 'any';
+        $comment = 'á';
+
+        // @see https://libzip.org/documentation/zip_get_name.html
+        //
+        // mb_convert_encoding hasn't CP437.
+        // nearly CP850 (DOS-Latin-1)
+        $guessName = mb_convert_encoding($name, 'UTF-8', 'CP850');
+
+        $fileOptions = new FileOptions();
+        $fileOptions->setComment($comment);
+
+        $zip->addFile($name, $content, $fileOptions);
+        $zip->finish();
+        fclose($stream);
+
+        $tmpDir = $this->validateAndExtractZip($tmp);
+
+        $files = $this->getRecursiveFileList($tmpDir);
+
+        $this->assertNotSame([$name], $files);
+        $this->assertSame([$guessName], $files);
+        $this->assertStringEqualsFile($tmpDir . '/' . $guessName, $content);
+
+        $zipArch = new ZipArchive();
+        $zipArch->open($tmp);
+        $this->assertSame($guessName, $zipArch->getNameIndex(0));
+        $this->assertSame($name, $zipArch->getNameIndex(0, ZipArchive::FL_ENC_RAW));
+        $this->assertSame($comment, $zipArch->getCommentName($guessName));
     }
 
     public function testAddFileWithStorageMethod(): void
