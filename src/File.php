@@ -5,7 +5,6 @@ namespace ZipStream;
 
 use HashContext;
 use Psr\Http\Message\StreamInterface;
-use ZipStream\Exception\EncodingException;
 use ZipStream\Exception\FileNotFoundException;
 use ZipStream\Exception\FileNotReadableException;
 use ZipStream\Exception\OverflowException;
