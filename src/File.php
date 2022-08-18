@@ -5,7 +5,6 @@ namespace ZipStream;
 
 use HashContext;
 use Psr\Http\Message\StreamInterface;
-use ZipStream\Exception\EncodingException;
 use ZipStream\Exception\FileNotFoundException;
 use ZipStream\Exception\FileNotReadableException;
 use ZipStream\Exception\OverflowException;
@@ -165,14 +164,10 @@ class File
             // Sets Bit 11: Language encoding flag (EFS).  If this bit is set,
             // the filename and comment fields for this file
             // MUST be encoded using UTF-8. (see APPENDIX D)
-            if (!mb_check_encoding($name, 'UTF-8') ||
-                !mb_check_encoding($comment, 'UTF-8')) {
-                throw new EncodingException(
-                    'File name and comment should use UTF-8 ' .
-                    'if one of them does not fit into ASCII range.'
-                );
+            if (mb_check_encoding($name, 'UTF-8') &&
+                mb_check_encoding($comment, 'UTF-8')) {
+                $this->bits |= self::BIT_EFS_UTF8;
             }
-            $this->bits |= self::BIT_EFS_UTF8;
         }
 
         if ($this->method->equals(Method::DEFLATE())) {
