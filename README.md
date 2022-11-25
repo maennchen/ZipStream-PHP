@@ -77,14 +77,14 @@ It is the responsability of the client code to make sure that files are not save
 
 ## Upgrade to version 2.0.0
 
-* Only the self opened streams will be closed (#139)
-If you were relying on ZipStream to close streams that the library didn't open,
-you'll need to close them yourself now.
+- Only the self opened streams will be closed (#139)
+  If you were relying on ZipStream to close streams that the library didn't open,
+  you'll need to close them yourself now.
 
 ## Upgrade to version 1.0.0
 
-* All options parameters to all function have been moved from an `array` to structured option objects. See [the wiki](https://github.com/maennchen/ZipStream-PHP/wiki/Available-options) for examples.
-* The whole library has been refactored. The minimal PHP requirement has been raised to PHP 7.1.
+- All options parameters to all function have been moved from an `array` to structured option objects. See [the wiki](https://github.com/maennchen/ZipStream-PHP/wiki/Available-options) for examples.
+- The whole library has been refactored. The minimal PHP requirement has been raised to PHP 7.1.
 
 ## Usage with Symfony and S3
 
@@ -97,11 +97,11 @@ ZipStream-PHP is a collaborative project. Please take a look at the
 
 ## About the Authors
 
-* Paul Duncan <pabs@pablotron.org> - https://pablotron.org/
-* Jonatan Männchen <jonatan@maennchen.ch> - https://maennchen.dev
-* Jesse G. Donat <donatj@gmail.com> - https://donatstudios.com
-* Nicolas CARPi <nico-git@deltablot.email> - https://www.deltablot.com
-* Nik Barham <nik@brokencube.co.uk> - https://www.brokencube.co.uk
+- Paul Duncan <pabs@pablotron.org> - https://pablotron.org/
+- Jonatan Männchen <jonatan@maennchen.ch> - https://maennchen.dev
+- Jesse G. Donat <donatj@gmail.com> - https://donatstudios.com
+- Nicolas CARPi <nico-git@deltablot.email> - https://www.deltablot.com
+- Nik Barham <nik@brokencube.co.uk> - https://www.brokencube.co.uk
 
 ## Contributors
 
