@@ -52,25 +52,41 @@ Here's a simple example:
    // Autoload the dependencies
    require 'vendor/autoload.php';
 
-   // enable output of HTTP headers
-   $options = new ZipStream\Option\Archive();
-   $options->setSendHttpHeaders(true);
-
    // create a new zipstream object
-   $zip = new ZipStream\ZipStream('example.zip', $options);
+   $zip = new ZipStream\ZipStream(
+      fileName: 'example.zip',
+
+      // enable output of HTTP headers
+      sendHttpHeaders: true,
+   );
 
    // create a file named 'hello.txt'
-   $zip->addFile('hello.txt', 'This is the contents of hello.txt');
+   $zip->addFile(
+      fileName: 'hello.txt',
+      data: 'This is the contents of hello.txt',
+   );
 
    // add a file named 'some_image.jpg' from a local file 'path/to/image.jpg'
-   $zip->addFileFromPath('some_image.jpg', 'path/to/image.jpg');
+   $zip->addFileFromPath(
+      fileName: 'some_image.jpg',
+      path: 'path/to/image.jpg',
+   );
 
    // add a file named 'goodbye.txt' from an open stream resource
-   $fp = tmpfile();
-   fwrite($fp, 'The quick brown fox jumped over the lazy dog.');
-   rewind($fp);
-   $zip->addFileFromStream('goodbye.txt', $fp);
-   fclose($fp);
+   $filePointer = tmpfile();
+   fwrite($filePointer, 'The quick brown fox jumped over the lazy dog.');
+   rewind($filePointer);
+   $zip->addFileFromStream(
+      fileName: 'goodbye.txt',
+      stream: $filePointer,
+   );
+   fclose($filePointer);
+
+   // add a file named 'streamfile.txt' from the body of a `guzzle` response
+   $zip->addFileFromPsr7Stream(
+   fileName: 'streamfile.txt',
+   stream: $response->getBody(),
+   );
 
    // finish the zip stream
    $zip->finish();
