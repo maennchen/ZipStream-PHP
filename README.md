@@ -6,6 +6,12 @@
 [![Total Downloads](https://poser.pugx.org/maennchen/zipstream-php/downloads)](https://packagist.org/packages/maennchen/zipstream-php)
 [![Financial Contributors on Open Collective](https://opencollective.com/zipstream/all/badge.svg?label=financial+contributors)](https://opencollective.com/zipstream) [![License](https://img.shields.io/github/license/maennchen/zipstream-php.svg)](LICENSE)
 
+## Unstable Branch
+
+The `main` branch is not stable. Please see the
+[releases](https://github.com/maennchen/ZipStream-PHP/releases) for a stable
+version.
+
 ## Overview
 
 A fast and simple streaming zip file downloader for PHP. Using this library will save you from having to write the Zip to disk. You can directly send it to the user, which is much faster. It can work with S3 buckets or any PSR7 Stream.
@@ -21,6 +27,9 @@ composer require maennchen/zipstream-php
 ```
 
 ## Usage and options
+
+For detailed instructions, please check the
+[Documentation](https://maennchen.dev/ZipStream-PHP/).
 
 Here's a simple example:
 
