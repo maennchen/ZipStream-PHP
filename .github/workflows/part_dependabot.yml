@@ -1,0 +1,22 @@
+on:
+  workflow_call: {}
+
+name: "Dependabot"
+
+jobs:
+  automerge_dependabot:
+    name: "Automerge PRs"
+
+    runs-on: ubuntu-latest
+
+    permissions:
+      pull-requests: write
+      contents: write
+
+    steps:
+      - uses: fastify/github-action-merge-dependabot@v3.5
+        with:
+          github-token: ${{ github.token }}
+          use-github-auto-merge: true
+          # Major Updates need to be merged manually
+          target: minor
