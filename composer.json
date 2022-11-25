@@ -44,7 +44,7 @@
     "test:lint": "psalm --stats --show-info --find-unused-psalm-suppress",
     "coverage:report": "php-coveralls --coverage_clover=coverage.clover.xml --json_path=coveralls-upload.json -v",
     "install:tools": "phive install --trust-gpg-keys 0x67F861C3D889C656",
-    "docs:generate": "tools/phpdocumentor"
+    "docs:generate": "tools/phpdocumentor --sourcecode"
   },
   "autoload": {
     "psr-4": {

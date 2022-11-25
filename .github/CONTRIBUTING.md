@@ -6,7 +6,7 @@ We look forward to your contributions! Here are some examples how you can
 contribute:
 
 - [Report a bug](https://github.com/maennchen/ZipStream-PHP/issues/new?labels=bug&template=BUG.md)
-- [Propose a new feature](https://github.com/maennchen/ZipStream-PHP/issues/new?labels=enhancement&template=FEATURE_REQUEST.md)
+- [Propose a new feature](https://github.com/maennchen/ZipStream-PHP/issues/new?labels=enhancement&template=FEATURE.md)
 - [Send a pull request](https://github.com/maennchen/ZipStream-PHP/pulls)
 
 ## We have a Code of Conduct

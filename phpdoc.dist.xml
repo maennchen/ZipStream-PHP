@@ -9,9 +9,6 @@
     <paths>
         <output>docs</output>
     </paths>
-    <template>
-            <location>foo</location>
-    </template>
     <version number="3.0.0">
         <folder>latest</folder>
         <api>
@@ -28,7 +25,7 @@
             </extensions>
             <visibility>public</visibility>
             <default-package-name>ZipStream</default-package-name>
-            <include-source />
+            <include-source>true</include-source>
         </api>
         <guide>
             <source dsn=".">
