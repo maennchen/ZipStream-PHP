@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace ZipStream;
@@ -150,7 +151,7 @@ class Bigint
             }
         }
         if ($overflow) {
-            throw new OverflowException;
+            throw new OverflowException();
         }
         return $result;
     }

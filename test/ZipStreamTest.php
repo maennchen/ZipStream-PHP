@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace ZipStreamTest;
@@ -40,7 +41,7 @@ class ZipStreamTest extends TestCase
         // create new virtual filesystem
         $root = vfsStream::setup('vfs');
         // create a virtual file with no permissions
-        $file = vfsStream::newFile('foo.txt', 0000)->at($root)->setContent('bar');
+        $file = vfsStream::newFile('foo.txt', 0)->at($root)->setContent('bar');
         $zip = new ZipStream();
         $this->expectException(\ZipStream\Exception\FileNotReadableException::class);
         $zip->addFileFromPath('foo.txt', $file->url());
@@ -561,7 +562,7 @@ class ZipStreamTest extends TestCase
     {
         $tmpDir = $this->getTmpDir();
 
-        $zipArch = new ZipArchive;
+        $zipArch = new ZipArchive();
         $res = $zipArch->open($tmp);
 
         if ($res !== true) {

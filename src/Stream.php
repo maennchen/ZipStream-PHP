@@ -1,9 +1,11 @@
 <?php
+
 declare(strict_types=1);
 
 namespace ZipStream;
 
 use function mb_strlen;
+
 use Psr\Http\Message\StreamInterface;
 use RuntimeException;
 
@@ -88,10 +90,10 @@ class Stream implements StreamInterface
     public function seek($offset, $whence = SEEK_SET): void
     {
         if (!$this->isSeekable()) {
-            throw new RuntimeException;
+            throw new RuntimeException();
         }
         if (fseek($this->stream, $offset, $whence) !== 0) {
-            throw new RuntimeException;
+            throw new RuntimeException();
         }
     }
 
@@ -144,7 +146,7 @@ class Stream implements StreamInterface
     {
         $position = ftell($this->stream);
         if ($position === false) {
-            throw new RuntimeException;
+            throw new RuntimeException();
         }
         return $position;
     }
@@ -184,10 +186,10 @@ class Stream implements StreamInterface
     public function write($string): int
     {
         if (!$this->isWritable()) {
-            throw new RuntimeException;
+            throw new RuntimeException();
         }
         if (fwrite($this->stream, $string) === false) {
-            throw new RuntimeException;
+            throw new RuntimeException();
         }
         return mb_strlen($string);
     }
@@ -219,11 +221,11 @@ class Stream implements StreamInterface
     public function read($length): string
     {
         if (!$this->isReadable()) {
-            throw new RuntimeException;
+            throw new RuntimeException();
         }
         $result = fread($this->stream, $length);
         if ($result === false) {
-            throw new RuntimeException;
+            throw new RuntimeException();
         }
         return $result;
     }
@@ -252,11 +254,11 @@ class Stream implements StreamInterface
     public function getContents(): string
     {
         if (!$this->isReadable()) {
-            throw new RuntimeException;
+            throw new RuntimeException();
         }
         $result = stream_get_contents($this->stream);
         if ($result === false) {
-            throw new RuntimeException;
+            throw new RuntimeException();
         }
         return $result;
     }

@@ -1,10 +1,13 @@
 <?php
+
 declare(strict_types=1);
 
 namespace BugHonorFileTimeTest;
 
 use DateTime;
+
 use function fopen;
+
 use PHPUnit\Framework\TestCase;
 use ZipStream\Option\Archive;
 use ZipStream\Option\File;
