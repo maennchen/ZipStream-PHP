@@ -1,0 +1,99 @@
+on:
+  workflow_call:
+    inputs:
+      releaseName:
+        required: false
+        type: string
+      publishToPages:
+        required: false
+        type: boolean
+        default: false
+
+name: "Documentation"
+
+jobs:
+  generate:
+    name: "Generate"
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+      - name: SetUp PHP
+        id: setup-php
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          tools: phive
+      - name: Cache Tools
+        uses: actions/cache@v3
+        id: cache
+        with:
+          path: ~/.phive
+          key: tools-${{ runner.os }}-${{ steps.setup-php.outputs.php-version }}-${{ hashFiles('**/phars.xml') }}
+          restore-keys: |
+            tools-${{ runner.os }}-${{ steps.setup-php.outputs.php-version }}-
+            tools-${{ steps.setup-php.outputs.php-version }}-
+            tools-
+      - name: Install Tools
+        run: composer run install:tools
+      - name: Generate Docs
+        run: composer run docs:generate
+      - uses: actions/upload-artifact@v3
+        with:
+          name: docs
+          path: doc
+      - name: Package for GitHub Pages
+        uses: actions/upload-pages-artifact@v1
+        with:
+          path: docs
+  
+  deploy_pages:
+    name: "Deploy to GitHub Pages"
+
+    runs-on: ubuntu-latest
+
+    if:  ${{ inputs.publishToPages }}
+
+    needs: ['generate']
+
+    permissions:
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v1
+
+  upload_release:
+    name: "Upload"
+
+    runs-on: ubuntu-latest
+
+    if: ${{ inputs.releaseName }}
+
+    needs: ['generate']
+
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/download-artifact@v3
+        with:
+          name: docs
+          path: docs
+      - run: |
+          tar -czvf docs.tar.gz docs
+      - name: Upload
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload --clobber "${{ inputs.releaseName }}" \
+            docs.tar.gz

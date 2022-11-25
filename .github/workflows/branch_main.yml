@@ -1,0 +1,17 @@
+on:
+  push:
+    branches:
+      - "main"
+
+name: "Main Branch"
+
+jobs:
+  test:
+    name: "Test"
+
+    uses: ./.github/workflows/part_test.yml
+
+  docs:
+    name: "Docs"
+
+    uses: ./.github/workflows/part_docs.yml

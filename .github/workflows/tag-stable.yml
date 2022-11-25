@@ -1,0 +1,25 @@
+on:
+  push:
+    tags:
+      - "v[12].[0-9]+.[0-9]+"
+
+name: "Stable Tag"
+
+jobs:
+  release:
+    name: "Release"
+
+    uses: ./.github/workflows/part_release.yml
+    with:
+      releaseName: "${{ github.ref_name }}"
+      stable: true
+
+  docs:
+    name: "Docs"
+
+    needs: ['release']
+
+    uses: ./.github/workflows/part_docs.yml
+    with:
+      releaseName: "${{ github.ref_name }}"
+      publishToPages: true
