@@ -26,7 +26,7 @@ Simply add a dependency on maennchen/zipstream-php to your project's composer.js
 composer require maennchen/zipstream-php
 ```
 
-## Usage and options
+## Usage
 
 For detailed instructions, please check the
 [Documentation](https://maennchen.dev/ZipStream-PHP/).
@@ -50,30 +50,9 @@ $zip->addFile('hello.txt', 'This is the contents of hello.txt');
 // add a file named 'some_image.jpg' from a local file 'path/to/image.jpg'
 $zip->addFileFromPath('some_image.jpg', 'path/to/image.jpg');
 
-// add a file named 'goodbye.txt' from an open stream resource
-$fp = tmpfile();
-fwrite($fp, 'The quick brown fox jumped over the lazy dog.');
-rewind($fp);
-$zip->addFileFromStream('goodbye.txt', $fp);
-fclose($fp);
-
 // finish the zip stream
 $zip->finish();
 ```
-
-You can also add comments, modify file timestamps, and customize (or
-disable) the HTTP headers. It is also possible to specify the storage method when adding files,
-the current default storage method is 'deflate' i.e files are stored with Compression mode 0x08.
-
-See the [Wiki](https://github.com/maennchen/ZipStream-PHP/wiki) for details.
-
-## Known issues
-
-The native Mac OS archive extraction tool prior to macOS 10.15 might not open archives in some conditions. A workaround is to disable the Zip64 feature with the option `$opt->setEnableZip64(false)`. This limits the archive to 4 Gb and 64k files but will allow users on macOS 10.14 and below to open them without issue. See #116.
-
-The linux `unzip` utility might not handle properly unicode characters. It is recommended to extract with another tool like [7-zip](https://www.7-zip.org/). See [#146](https://github.com/maennchen/ZipStream-PHP/issues/146).
-
-It is the responsability of the client code to make sure that files are not saved with the same path, as it is not possible for the library to figure it out while streaming a zip. See [#154](https://github.com/maennchen/ZipStream-PHP/issues/154).
 
 ## Upgrade to version 2.0.0
 

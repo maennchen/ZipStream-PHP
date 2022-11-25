@@ -135,3 +135,5 @@ To generate the documentation for the library, run:
 ```bash
 $ composer run docs:generate
 ```
+
+The guide documentation pages can be found in the `/guides/` directory.
