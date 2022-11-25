@@ -27,6 +27,13 @@
             <default-package-name>ZipStream</default-package-name>
             <include-source />
         </api>
+        <guide>
+            <source dsn=".">
+                <path>guides</path>
+            </source>
+            <output>guide</output>
+        </guide>
     </version>
+    <setting name="guides.enabled" value="true"/>
     <template name="default" />
 </phpdocumentor>

@@ -58,6 +58,7 @@
       "/.gitattributes",
       "/.github",
       "/.gitignore",
+      "/guides",
       "/.phive",
       "/.php-cs-fixer.cache",
       "/.php-cs-fixer.dist.php",
