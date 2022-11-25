@@ -9,6 +9,9 @@
     <paths>
         <output>docs</output>
     </paths>
+    <template>
+            <location>foo</location>
+    </template>
     <version number="3.0.0">
         <folder>latest</folder>
         <api>

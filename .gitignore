@@ -4,7 +4,7 @@
 /docs
 .idea
 /.php-cs-fixer.cache
-/.phpdoc
+/.phpdoc/cache
 /.phpunit.result.cache
 /phpunit.xml
 /tools
