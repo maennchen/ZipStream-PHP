@@ -8,30 +8,32 @@ The following workaround adds an approximated header:
 
 .. code-block:: php
 
-    class Zip
-    {
-        /** @var string */
-        private $name;
+    use ZipStream\CompressionMethod;
+    use ZipStream\ZipStream;
 
+    class Zip
+        {
         private $files = [];
 
-        public function __construct($name)
-        {
-            $this->name = $name;
-        }
+        public function __construct(
+            private readonly string $name
+        ) { }
 
-        public function addFile($name, $data)
-        {
+        public function addFile(
+            string $name,
+            string $data,
+        ): void {
             $this->files[] = ['type' => 'addFile', 'name' => $name, 'data' => $data];
         }
 
-        public function addFileFromPath($name, $path)
-        {
+        public function addFileFromPath(
+            string $name,
+            string $path,
+        ): void {
             $this->files[] = ['type' => 'addFileFromPath', 'name' => $name, 'path' => $path];
         }
 
-        public function getEstimate()
-        {
+        public function getEstimate(): int {
             $estimate = 22;
             foreach ($this->files as $file) {
             $estimate += 76 + 2 * strlen($file['name']);
@@ -48,24 +50,28 @@ The following workaround adds an approximated header:
         public function finish()
         {
             header('Content-Length: ' . $this->getEstimate());
-            $options = new \ZipStream\Option\Archive();
-            $options->setSendHttpHeaders(true);
-            $options->setEnableZip64(false);
-            $options->setDeflateLevel(-1);
-            $zip = new \ZipStream\ZipStream($this->name, $options);
+            $zip = new ZipStream(
+                outputName: $this->name,
+                SendHttpHeaders: true,
+                enableZip64: false,
+                defaultCompressionMethod: CompressionMethod::STORE,
+            );
 
-            $fileOptions = new \ZipStream\Option\File();
-            $fileOptions->setMethod(\ZipStream\Option\Method::STORE());
             foreach ($this->files as $file) {
-            if ($file['type'] === 'addFile') {
-                $zip->addFile($file['name'], $file['data'], $fileOptions);
-            }
-            if ($file['type'] === 'addFileFromPath') {
-                $zip->addFileFromPath($file['name'], $file['path'], $fileOptions);
-            }
+                if ($file['type'] === 'addFile') {
+                    $zip->addFile(
+                        fileName: $file['name'],
+                        data: $file['data'],
+                    );
+                }
+                if ($file['type'] === 'addFileFromPath') {
+                    $zip->addFileFromPath(
+                        fileName: $file['name'],
+                        path: $file['path'],
+                    );
+                }
             }
             $zip->finish();
-            exit;
         }
     }
 
