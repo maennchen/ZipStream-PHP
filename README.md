@@ -92,7 +92,8 @@ You can find example code on [the wiki](https://github.com/maennchen/ZipStream-P
 
 ## Contributing
 
-ZipStream-PHP is a collaborative project. Please take a look at the [CONTRIBUTING.md](CONTRIBUTING.md) file.
+ZipStream-PHP is a collaborative project. Please take a look at the
+[.github/CONTRIBUTING.md](.github/CONTRIBUTING.md) file.
 
 ## About the Authors
 
@@ -106,7 +107,8 @@ ZipStream-PHP is a collaborative project. Please take a look at the [CONTRIBUTIN
 
 ### Code Contributors
 
-This project exists thanks to all the people who contribute. [[Contribute](CONTRIBUTING.md)].
+This project exists thanks to all the people who contribute.
+[[Contribute](.github/CONTRIBUTING.md)].
 <a href="https://github.com/maennchen/ZipStream-PHP/graphs/contributors"><img src="https://opencollective.com/zipstream/contributors.svg?width=890&button=false" /></a>
 
 ### Financial Contributors
