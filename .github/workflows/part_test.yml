@@ -24,10 +24,9 @@ jobs:
           - php: "8.1"
             os: windows-latest
             experimental: false
-          # Not running on MacOS since it currently doesn't stop
-          # - php: 8.1
-          #   os: macos-latest
-          #   experimental: false
+          - php: 8.1
+            os: macos-latest
+            experimental: false
 
     steps:
       - name: Checkout Code
