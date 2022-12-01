@@ -32,7 +32,7 @@
     "guzzlehttp/guzzle": "^6.5.3 || ^7.2.0",
     "ext-zip": "*",
     "mikey179/vfsstream": "^1.6",
-    "vimeo/psalm": "^4.1 || ^5.0",
+    "vimeo/psalm": "^5.0",
     "php-coveralls/php-coveralls": "^2.4",
     "friendsofphp/php-cs-fixer": "^3.9"
   },
