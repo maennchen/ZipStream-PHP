@@ -243,16 +243,16 @@ class File
 
             $this->uncompressedSize += strlen($data);
 
-			if($deflate) {
-				/** @psalm-suppress InvalidArgument */
-				$data =  deflate_add(
-					$deflate,
-					$data,
-					$this->stream->eof()
-						? ZLIB_FINISH
-						: ZLIB_NO_FLUSH
-				);
-			}
+            if ($deflate) {
+                /** @psalm-suppress InvalidArgument */
+                $data =  deflate_add(
+                    $deflate,
+                    $data,
+                    $this->stream->eof()
+                        ? ZLIB_FINISH
+                        : ZLIB_NO_FLUSH
+                );
+            }
 
             $this->compressedSize += strlen($data);
 
@@ -265,6 +265,7 @@ class File
         $this->crc = hexdec(hash_final($hash));
     }
 
+    /** @psalm-suppress InvalidReturnType */
     private function compressionInit(): ?DeflateContext
     {
         switch($this->compressionMethod) {
@@ -284,7 +285,7 @@ class File
                 }
 
                 // False positive, resource is no longer returned from this function
-                /** @psalm-suppress InvalidPropertyAssignmentValue */
+                /** @psalm-suppress InvalidReturnStatement */
                 return $deflateContext;
             default:
                 // @codeCoverageIgnoreStart
