@@ -24,7 +24,8 @@
   "require": {
     "php-64bit": "^8.2",
     "ext-mbstring": "*",
-    "psr/http-message": "^1.0"
+    "psr/http-message": "^1.0",
+    "ext-zlib": "*"
   },
   "require-dev": {
     "phpunit/phpunit": "^9.5",
