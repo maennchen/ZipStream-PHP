@@ -8,16 +8,17 @@ use RuntimeException;
 
 /**
  * @internal
+ * TODO: Make class readonly when requiring PHP 8.2 exclusively
  */
-readonly class PackField
+class PackField
 {
     public const MAX_V = 0xFFFFFFFF;
 
     public const MAX_v = 0xFFFF;
 
     public function __construct(
-        public string $format,
-        public int|string $value
+        public readonly string $format,
+        public readonly int|string $value
     ) {
     }
 

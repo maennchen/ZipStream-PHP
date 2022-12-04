@@ -67,7 +67,7 @@ $zip->finish();
 
 ### General
 
-- Minimum PHP Version: `8.2`
+- Minimum PHP Version: `8.1`
 - Only 64bit Architecture is supported.
 - The class `ZipStream\Option\Method` has been replaced with the enum `ZipStream\CompressionMethod`.
 - Most clases have been flagged as `@internal` and should not be used from the outside.

@@ -22,7 +22,7 @@
     }
   ],
   "require": {
-    "php-64bit": "^8.2",
+    "php-64bit": "^8.1",
     "ext-mbstring": "*",
     "psr/http-message": "^1.0",
     "ext-zlib": "*"

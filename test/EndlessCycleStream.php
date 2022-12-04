@@ -25,14 +25,20 @@ class EndlessCycleStream implements StreamInterface
         $this->detach();
     }
 
-    public function detach(): null
+    /**
+     * @return null
+     */
+    public function detach()
     {
-        return null;
+        return;
     }
 
-    public function getSize(): null
+    /**
+     * @return null
+     */
+    public function getSize()
     {
-        return null;
+        return;
     }
 
     public function tell(): int
