@@ -32,10 +32,6 @@ class File
 
     private readonly string $fileName;
 
-    // This is beeing defined & cleaned up while processing the data
-    /** @psalm-suppress PropertyNotSetInConstructor */
-    private DeflateContext $deflate;
-
     private int $totalSize = 0;
 
     public function __construct(
@@ -236,7 +232,7 @@ class File
         $this->uncompressedSize = 0;
         $hash = hash_init('crc32b');
 
-        $this->compressionInit();
+        $deflate = $this->compressionInit();
 
         while (!$this->stream->eof() && ($this->maxSize === null || $this->uncompressedSize < $this->maxSize)) {
             $readLength = min(($this->maxSize ?? PHP_INT_MAX) - $this->uncompressedSize, self::CHUNKED_READ_BLOCK_SIZE);
@@ -247,7 +243,16 @@ class File
 
             $this->uncompressedSize += strlen($data);
 
-            $data = $this->compressData(stream: $this->stream, data: $data);
+			if($deflate) {
+				/** @psalm-suppress InvalidArgument */
+				$data =  deflate_add(
+					$deflate,
+					$data,
+					$this->stream->eof()
+						? ZLIB_FINISH
+						: ZLIB_NO_FLUSH
+				);
+			}
 
             $this->compressedSize += strlen($data);
 
@@ -260,12 +265,12 @@ class File
         $this->crc = hexdec(hash_final($hash));
     }
 
-    private function compressionInit(): void
+    private function compressionInit(): ?DeflateContext
     {
         switch($this->compressionMethod) {
             case CompressionMethod::STORE:
                 // Noting to do
-                return;
+                return null;
             case CompressionMethod::DEFLATE:
                 $deflateContext = deflate_init(
                     ZLIB_ENCODING_RAW,
@@ -280,34 +285,10 @@ class File
 
                 // False positive, resource is no longer returned from this function
                 /** @psalm-suppress InvalidPropertyAssignmentValue */
-                $this->deflate = $deflateContext;
-                return;
+                return $deflateContext;
             default:
                 // @codeCoverageIgnoreStart
                 throw new RuntimeException('Unsupported Compression Method ' . print_r($this->compressionMethod, true));
-                // @codeCoverageIgnoreEnd
-        }
-    }
-
-    private function compressData(StreamInterface $stream, string $data): string
-    {
-        switch($this->compressionMethod) {
-            case CompressionMethod::STORE:
-                // Noting to do
-                return $data;
-            case CompressionMethod::DEFLATE:
-                // False positive, resource is no longer used in this function
-                /** @psalm-suppress InvalidArgument */
-                return deflate_add(
-                    $this->deflate,
-                    $data,
-                    $stream->eof()
-                        ? ZLIB_FINISH
-                        : ZLIB_NO_FLUSH
-                );
-            default:
-                // @codeCoverageIgnoreStart
-                throw new RuntimeException('Unsupported Compression Method '. print_r($this->compressionMethod, true));
                 // @codeCoverageIgnoreEnd
         }
     }
