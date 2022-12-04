@@ -116,7 +116,7 @@ class File
     ): string {
         // strip leading slashes from file name
         // (fixes bug in windows archive viewer)
-        $fileName = preg_replace('/^\\/+/', '', $fileName);
+        $fileName = ltrim($fileName, '/');
 
         return str_replace(['\\', ':', '*', '?', '"', '<', '>', '|'], '_', $fileName);
     }
