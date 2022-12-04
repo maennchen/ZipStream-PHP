@@ -168,8 +168,8 @@ final class ZipStream
      * @param ?Closure $httpHeaderCallback
      * The method called to send HTTP headers
      *
-     * @param string $outputName
-     * The name of the created archiv.
+     * @param string|null $outputName
+     * The name of the created archive.
      *
      * Only relevant if `$sendHttpHeaders = true`.
      *
