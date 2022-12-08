@@ -6,6 +6,7 @@ namespace ZipStream\Test;
 
 use DateTimeImmutable;
 use GuzzleHttp\Psr7\Response;
+use GuzzleHttp\Psr7\StreamWrapper;
 use org\bovigo\vfs\vfsStream;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
@@ -323,10 +324,6 @@ class ZipStreamTest extends TestCase
     {
         $this->expectException(StreamNotSeekableException::class);
 
-        if (!file_exists('/dev/null')) {
-            $this->markTestSkipped('Needs file /dev/null');
-        }
-
         [, $stream] = $this->getTmpFileStream();
 
         $zip = new ZipStream(
@@ -335,17 +332,19 @@ class ZipStreamTest extends TestCase
             defaultEnableZeroHeader: false,
         );
 
-        $streamUnseekable = fopen('/dev/null', 'w+');
+        if (file_exists('/dev/null')) {
+            $streamUnseekable = fopen('/dev/null', 'w+');
+        } elseif (file_exists('NUL')) {
+            $streamUnseekable = fopen('NUL', 'w+');
+        } else {
+            $this->markTestSkipped('Needs file /dev/null');
+        }
 
         $zip->addFileFromStream('sample.txt', $streamUnseekable, maxSize: 2);
     }
 
     public function testAddFileFromStreamUnseekableInputWithZeroHeader(): void
     {
-        if (!file_exists('/dev/random')) {
-            $this->markTestSkipped('Needs file /dev/random');
-        }
-
         [$tmp, $stream] = $this->getTmpFileStream();
 
         $zip = new ZipStream(
@@ -355,7 +354,17 @@ class ZipStreamTest extends TestCase
             defaultCompressionMethod: CompressionMethod::STORE,
         );
 
-        $streamUnseekable = fopen('/dev/random', 'w+');
+        $streamUnseekable = StreamWrapper::getResource(new class ('test') extends EndlessCycleStream {
+            public function isSeekable()
+            {
+                return false;
+            }
+
+            public function seek($offset, $whence = SEEK_SET)
+            {
+                throw new RuntimeException('Not seekable');
+            }
+        });
 
         $zip->addFileFromStream('sample.txt', $streamUnseekable, maxSize: 7);
 
