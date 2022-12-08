@@ -22,10 +22,19 @@ Installation
 
 Simply add a dependency on ``maennchen/zipstream-php`` to your project's
 ``composer.json`` file if you use Composer to manage the dependencies of your
-project. Use following command to add the package to your project's dependencies:
+project. Use following command to add the package to your project's
+dependencies:
 
 .. code-block:: sh
    composer require maennchen/zipstream-php
+
+If you want to use``addFileFromPsr7Stream```
+(``Psr\Http\Message\StreamInterface``) or use a stream instead of a
+``resource`` as ``outputStream``, the following dependencies must be installed
+as well:
+
+.. code-block:: sh
+   composer require psr/http-message guzzlehttp/psr7
 
 If ``composer install`` yields the following error, your installation is missing
 the `mbstring extension <https://www.php.net/manual/en/book.mbstring.php>`_,
@@ -54,7 +63,7 @@ Here's a simple example:
 
    // create a new zipstream object
    $zip = new ZipStream\ZipStream(
-      fileName: 'example.zip',
+      outputName: 'example.zip',
 
       // enable output of HTTP headers
       sendHttpHeaders: true,
@@ -83,9 +92,10 @@ Here's a simple example:
    fclose($filePointer);
 
    // add a file named 'streamfile.txt' from the body of a `guzzle` response
+   // Setup with `psr/http-message` & `guzzlehttp/psr7` dependencies required.
    $zip->addFileFromPsr7Stream(
-   fileName: 'streamfile.txt',
-   stream: $response->getBody(),
+      fileName: 'streamfile.txt',
+      stream: $response->getBody(),
    );
 
    // finish the zip stream

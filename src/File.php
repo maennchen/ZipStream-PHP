@@ -7,9 +7,9 @@ namespace ZipStream;
 use Closure;
 use DateTimeInterface;
 use DeflateContext;
-use Psr\Http\Message\StreamInterface;
 use RuntimeException;
 use ZipStream\Exception\OverflowException;
+use ZipStream\Exception\ResourceActionException;
 use ZipStream\Exception\StreamNotReadableException;
 use ZipStream\Exception\StreamNotSeekableException;
 
@@ -34,6 +34,14 @@ class File
 
     private int $totalSize = 0;
 
+    /**
+     * @var resource
+     */
+    private $stream;
+
+    /**
+     * @param resource $stream
+     */
     public function __construct(
         string $fileName,
         private int $startOffset,
@@ -45,7 +53,7 @@ class File
         private readonly bool $enableZip64,
         private readonly bool $enableZeroHeader,
         private readonly Closure $send,
-        private readonly StreamInterface $stream,
+        $stream,
     ) {
         $this->fileName = self::filterFilename($fileName);
         $this->checkEncoding();
@@ -56,12 +64,19 @@ class File
 
         $this->selectVersion();
 
-        if (!$this->enableZeroHeader && !$stream->isSeekable()) {
+        if (!$this->enableZeroHeader && !stream_get_meta_data($stream)['seekable']) {
             throw new StreamNotSeekableException();
         }
-        if (!$stream->isReadable()) {
+        if (!(
+            str_contains(stream_get_meta_data($stream)['mode'], 'r')
+            || str_contains(stream_get_meta_data($stream)['mode'], 'w+')
+            || str_contains(stream_get_meta_data($stream)['mode'], 'a+')
+            || str_contains(stream_get_meta_data($stream)['mode'], 'x+')
+            || str_contains(stream_get_meta_data($stream)['mode'], 'c+')
+        )) {
             throw new StreamNotReadableException();
         }
+        $this->stream = $stream;
     }
 
     /**
@@ -121,7 +136,9 @@ class File
     {
         if (!$this->enableZeroHeader) {
             $this->readStream(send: false);
-            $this->stream->rewind();
+            if (rewind($this->stream) === false) {
+                throw new ResourceActionException('rewind', $this->stream);
+            }
         }
 
         $this->addFileHeader();
@@ -234,10 +251,10 @@ class File
 
         $deflate = $this->compressionInit();
 
-        while (!$this->stream->eof() && ($this->maxSize === null || $this->uncompressedSize < $this->maxSize)) {
+        while (!feof($this->stream) && ($this->maxSize === null || $this->uncompressedSize < $this->maxSize)) {
             $readLength = min(($this->maxSize ?? PHP_INT_MAX) - $this->uncompressedSize, self::CHUNKED_READ_BLOCK_SIZE);
 
-            $data = $this->stream->read($readLength);
+            $data = fread($this->stream, $readLength);
 
             hash_update($hash, $data);
 
@@ -248,9 +265,7 @@ class File
                 $data =  deflate_add(
                     $deflate,
                     $data,
-                    $this->stream->eof()
-                        ? ZLIB_FINISH
-                        : ZLIB_NO_FLUSH
+                    feof($this->stream) ? ZLIB_FINISH : ZLIB_NO_FLUSH
                 );
             }
 

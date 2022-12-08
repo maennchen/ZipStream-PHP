@@ -41,7 +41,7 @@ require 'vendor/autoload.php';
 
 // create a new zipstream object
 $zip = new ZipStream\ZipStream(
-    fileName: 'example.zip',
+    outputName: 'example.zip',
 
     // enable output of HTTP headers
     sendHttpHeaders: true,

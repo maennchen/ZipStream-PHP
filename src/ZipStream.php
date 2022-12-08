@@ -7,11 +7,13 @@ namespace ZipStream;
 use Closure;
 use DateTimeImmutable;
 use DateTimeInterface;
+use GuzzleHttp\Psr7\StreamWrapper;
 use Psr\Http\Message\StreamInterface;
 use RuntimeException;
 use ZipStream\Exception\FileNotFoundException;
 use ZipStream\Exception\FileNotReadableException;
 use ZipStream\Exception\OverflowException;
+use ZipStream\Exception\ResourceActionException;
 
 /**
  * Streamed, dynamically generated zip archives.
@@ -101,7 +103,10 @@ final class ZipStream
      */
     private array $centralDirectoryRecords = [];
 
-    private StreamInterface $outputStream;
+    /**
+     * @var resource
+     */
+    private $outputStream;
 
     private readonly Closure $httpHeaderCallback;
 
@@ -243,9 +248,30 @@ final class ZipStream
         ?int $maxSize = null,
         ?bool $enableZeroHeader = null,
     ): void {
-        $this->addFileFromPsr7Stream(
+        $stream = fopen('php://memory', 'rw+');
+        if ($stream === false) {
+            // @codeCoverageIgnoreStart
+            throw new ResourceActionException('fopen');
+            // @codeCoverageIgnoreEnd
+        }
+        if ($maxSize !== null && fwrite($stream, $data, $maxSize) === false) {
+            // @codeCoverageIgnoreStart
+            throw new ResourceActionException('fwrite', $stream);
+        // @codeCoverageIgnoreEnd
+        } elseif (fwrite($stream, $data) === false) {
+            // @codeCoverageIgnoreStart
+            throw new ResourceActionException('fwrite', $stream);
+            // @codeCoverageIgnoreEnd
+        }
+        if (rewind($stream) === false) {
+            // @codeCoverageIgnoreStart
+            throw new ResourceActionException('rewind', $stream);
+            // @codeCoverageIgnoreEnd
+        }
+
+        $this->addFileFromStream(
             fileName: $fileName,
-            stream: new StaticStream(data: $data),
+            stream: $stream,
             comment: $comment,
             compressionMethod: $compressionMethod,
             deflateLevel: $deflateLevel,
@@ -314,9 +340,9 @@ final class ZipStream
             $lastModificationDateTime ??= (new DateTimeImmutable())->setTimestamp($fileTime);
         }
 
-        $this->addFileFromPsr7Stream(
+        $this->addFileFromStream(
             fileName: $fileName,
-            stream: new ResourceStream(fopen($path, 'rb')),
+            stream: fopen($path, 'rb'),
             comment: $comment,
             compressionMethod: $compressionMethod,
             deflateLevel: $deflateLevel,
@@ -359,16 +385,20 @@ final class ZipStream
         ?int $maxSize = null,
         ?bool $enableZeroHeader = null,
     ): void {
-        $this->addFileFromPsr7Stream(
+        $file = new File(
+            stream: $stream,
+            send: $this->send(...),
             fileName: $fileName,
-            stream: new ResourceStream($stream),
+            startOffset: $this->offset,
+            compressionMethod: $compressionMethod ?? $this->defaultCompressionMethod,
             comment: $comment,
-            compressionMethod: $compressionMethod,
-            deflateLevel: $deflateLevel,
-            lastModificationDateTime: $lastModificationDateTime,
+            deflateLevel: $deflateLevel ?? $this->defaultDeflateLevel,
+            lastModificationDateTime: $lastModificationDateTime ?? new DateTimeImmutable(),
             maxSize: $maxSize,
-            enableZeroHeader: $enableZeroHeader,
+            enableZip64: $this->enableZip64,
+            enableZeroHeader: $enableZeroHeader ?? $this->defaultEnableZeroHeader,
         );
+        $this->centralDirectoryRecords[] = $file->process();
     }
 
     /**
@@ -430,20 +460,16 @@ final class ZipStream
         ?int $maxSize = null,
         ?bool $enableZeroHeader = null,
     ): void {
-        $file = new File(
-            stream: $stream,
-            send: $this->send(...),
+        $this->addFileFromStream(
             fileName: $fileName,
-            startOffset: $this->offset,
-            compressionMethod: $compressionMethod ?? $this->defaultCompressionMethod,
+            stream: StreamWrapper::getResource($stream),
             comment: $comment,
-            deflateLevel: $deflateLevel ?? $this->defaultDeflateLevel,
-            lastModificationDateTime: $lastModificationDateTime ?? new DateTimeImmutable(),
+            compressionMethod: $compressionMethod,
+            deflateLevel: $deflateLevel,
+            lastModificationDateTime: $lastModificationDateTime,
             maxSize: $maxSize,
-            enableZip64: $this->enableZip64,
-            enableZeroHeader: $enableZeroHeader ?? $this->defaultEnableZeroHeader,
+            enableZeroHeader: $enableZeroHeader,
         );
-        $this->centralDirectoryRecords[] = $file->process();
     }
 
     /**
@@ -469,9 +495,9 @@ final class ZipStream
             $fileName .= '/';
         }
 
-        $this->addFileFromPsr7Stream(
+        $this->addFile(
             fileName: $fileName,
-            stream: new StaticStream(data: ''),
+            data: '',
             comment: $comment,
             compressionMethod: CompressionMethod::STORE,
             deflateLevel: null,
@@ -549,16 +575,17 @@ final class ZipStream
 
     /**
      * @param StreamInterface|resource|null $outputStream
+     * @return resource
      */
-    private static function normalizeStream($outputStream): StreamInterface
+    private static function normalizeStream($outputStream)
     {
         if ($outputStream instanceof StreamInterface) {
-            return $outputStream;
+            return StreamWrapper::getResource($outputStream);
         }
         if (is_resource($outputStream)) {
-            return new ResourceStream($outputStream);
+            return $outputStream;
         }
-        return new ResourceStream(fopen('php://output', 'wb'));
+        return fopen('php://output', 'wb');
     }
 
     /**
@@ -577,7 +604,9 @@ final class ZipStream
         }
 
         $this->offset += strlen($data);
-        $this->outputStream->write($data);
+        if (fwrite($this->outputStream, $data) === false) {
+            throw new ResourceActionException('fwrite', $this->outputStream);
+        }
 
         if ($this->flushOutput) {
             // flush output buffer if it is on and flushable

@@ -24,7 +24,6 @@
   "require": {
     "php-64bit": "^8.1",
     "ext-mbstring": "*",
-    "psr/http-message": "^1.0",
     "ext-zlib": "*"
   },
   "require-dev": {
@@ -35,6 +34,10 @@
     "php-coveralls/php-coveralls": "^2.5",
     "friendsofphp/php-cs-fixer": "^3.13",
     "vimeo/psalm": "^5.0"
+  },
+  "suggest": {
+    "psr/http-message": "^1.0",
+    "guzzlehttp/psr7": "^2.4"
   },
   "scripts": {
     "format": "PHP_CS_FIXER_IGNORE_ENV=true php-cs-fixer fix",

@@ -14,9 +14,9 @@ use ZipStream\CompressionMethod;
 use ZipStream\Exception\FileNotFoundException;
 use ZipStream\Exception\FileNotReadableException;
 use ZipStream\Exception\OverflowException;
+use ZipStream\Exception\ResourceActionException;
 use ZipStream\Exception\StreamNotReadableException;
 use ZipStream\Exception\StreamNotSeekableException;
-use ZipStream\ResourceStream;
 use ZipStream\ZipStream;
 
 class ZipStreamTest extends TestCase
@@ -286,6 +286,37 @@ class ZipStreamTest extends TestCase
         $streamUnreadable = fopen($tmpInput, 'w');
 
         $zip->addFileFromStream('sample.json', $streamUnreadable);
+    }
+
+    public function testAddFileFromStreamBrokenOutputWrite(): void
+    {
+        $this->expectException(ResourceActionException::class);
+
+        $outputStream = FaultInjectionResource::getResource(['stream_write']);
+
+        $zip = new ZipStream(
+            outputStream: $outputStream,
+            sendHttpHeaders: false,
+        );
+
+        $zip->addFile('sample.txt', 'foobar');
+    }
+
+    public function testAddFileFromStreamBrokenInputRewind(): void
+    {
+        $this->expectException(ResourceActionException::class);
+
+        [,$stream] = $this->getTmpFileStream();
+
+        $zip = new ZipStream(
+            outputStream: $stream,
+            sendHttpHeaders: false,
+            defaultEnableZeroHeader: false,
+        );
+
+        $fileStream = FaultInjectionResource::getResource(['stream_seek']);
+
+        $zip->addFileFromStream('sample.txt', $fileStream, maxSize: 0);
     }
 
     public function testAddFileFromStreamUnseekableInputWithoutZeroHeader(): void

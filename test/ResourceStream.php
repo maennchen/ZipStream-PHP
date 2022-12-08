@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace ZipStream;
+namespace ZipStream\Test;
 
 use Psr\Http\Message\StreamInterface;
 use RuntimeException;
