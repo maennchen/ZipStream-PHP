@@ -1,6 +1,6 @@
-/clover.xml
 /composer.lock
-/coverage.clover
+/cov
+/coverage.clover.xml
 /docs
 .idea
 /.php-cs-fixer.cache

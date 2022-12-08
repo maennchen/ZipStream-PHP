@@ -39,7 +39,7 @@
   "scripts": {
     "format": "php-cs-fixer fix",
     "test": "composer run test:unit && composer run test:formatted && composer run test:lint",
-    "test:unit": "phpunit --coverage-clover=coverage.clover.xml",
+    "test:unit": "phpunit --coverage-clover=coverage.clover.xml --coverage-html cov",
     "test:formatted": "composer run format -- --dry-run --stop-on-violation --using-cache=no",
     "test:lint": "psalm --stats --show-info --find-unused-psalm-suppress",
     "coverage:report": "php-coveralls --coverage_clover=coverage.clover.xml --json_path=coveralls-upload.json -v",
