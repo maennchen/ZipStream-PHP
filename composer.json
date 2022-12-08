@@ -23,7 +23,7 @@
   ],
   "require": {
     "php": "^8.0",
-    "symfony/polyfill-mbstring": "^1.0",
+    "ext-mbstring": "*",
     "psr/http-message": "^1.0",
     "myclabs/php-enum": "^1.5"
   },
