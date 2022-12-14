@@ -23,8 +23,10 @@ default one, and pass it to Flysystem ``putStream`` method.
     $zipStream->addFile('test.txt', 'text');
     $zipStream->finish();
 
-    // Store File (see Flysystem documentation, and all its framework integration)
-    $adapter = new Local(__DIR__.'/path/to/folder'); // Can be any adapter (AWS, Google, Ftp, etc.)
+    // Store File
+    // (see Flysystem documentation, and all its framework integration)
+    // Can be any adapter (AWS, Google, Ftp, etc.)
+    $adapter = new Local(__DIR__.'/path/to/folder');
     $filesystem = new Filesystem($adapter);
 
     $filesystem->putStream('test.zip', $tempStream)
