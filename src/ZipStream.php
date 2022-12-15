@@ -65,7 +65,7 @@ use ZipStream\Exception\ResourceActionException;
  * $zip->finish();
  * ```
  */
-final class ZipStream
+class ZipStream
 {
     /**
      * This number corresponds to the ZIP version/OS used (2 bytes)

@@ -79,10 +79,26 @@ class File
         $this->stream = $stream;
     }
 
+    public function process(): string
+    {
+        if (!$this->enableZeroHeader) {
+            $this->readStream(send: false);
+            if (rewind($this->stream) === false) {
+                throw new ResourceActionException('rewind', $this->stream);
+            }
+        }
+
+        $this->addFileHeader();
+        $this->readStream(send: true);
+        $this->addFileFooter();
+
+        return $this->getCdrFile();
+    }
+
     /**
      * Create and send zip header for this file.
      */
-    public function addFileHeader(): void
+    private function addFileHeader(): void
     {
         $footer = $this->buildZip64ExtraBlock($this->enableZeroHeader && $this->enableZip64);
 
@@ -119,7 +135,7 @@ class File
      * Strip characters that are not legal in Windows filenames
      * to prevent compatibility issues
      */
-    public static function filterFilename(
+    private static function filterFilename(
         /**
          * Unprocessed filename
          */
@@ -130,22 +146,6 @@ class File
         $fileName = ltrim($fileName, '/');
 
         return str_replace(['\\', ':', '*', '?', '"', '<', '>', '|'], '_', $fileName);
-    }
-
-    public function process(): string
-    {
-        if (!$this->enableZeroHeader) {
-            $this->readStream(send: false);
-            if (rewind($this->stream) === false) {
-                throw new ResourceActionException('rewind', $this->stream);
-            }
-        }
-
-        $this->addFileHeader();
-        $this->readStream(send: true);
-        $this->addFileFooter();
-
-        return $this->getCdrFile();
     }
 
     private function checkEncoding(): void
