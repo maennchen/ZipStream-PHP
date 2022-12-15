@@ -69,10 +69,12 @@ $zip->finish();
 
 - Minimum PHP Version: `8.1`
 - Only 64bit Architecture is supported.
-- The class `ZipStream\Option\Method` has been replaced with the enum `ZipStream\CompressionMethod`.
-- Most clases have been flagged as `@internal` and should not be used from the outside.
-  If you're using internal resources to extend this library, please open an issue so that a clean
-  interface can be added & published.
+- The class `ZipStream\Option\Method` has been replaced with the enum
+  `ZipStream\CompressionMethod`.
+- Most clases have been flagged as `@internal` and should not be used from the
+  outside.
+  If you're using internal resources to extend this library, please open an
+  issue so that a clean interface can be added & published.
   The externally available classes & enums are:
   - `ZipStream\CompressionMethod`
   - `ZipStream\Exception*`
@@ -80,23 +82,29 @@ $zip->finish();
 
 ### Archive Options
 
-- The class `ZipStream\Option\Archive` has been replaced in favor of named arguments in the
-  `ZipStream\ZipStream` constuctor.
-- The archive options `largeFileSize` & `largeFileMethod` has been removed. If you want different
-  `compressionMethods` based on the file size, you'll have to implement this yourself.
-- The archive option `httpHeaderCallback` changed the type from `callable` to `Closure`.
-- The archive option `zeroHeader` has been replaced with the option `defaultEnableZeroHeader`
-  and can be overridden for every file.
-- The archive option `statFiles` was removed since the library no longer checks filesizes this way.
-- The archive option `deflateLevel` has been replaced with the option `defaultDeflateLevel`
-  and can be overridden for every file.
-- The first argument (`name`) of the `ZipStream\ZipStream` constuctor has been replaced with
-  the named argument `outputName`.
+- The class `ZipStream\Option\Archive` has been replaced in favor of named
+  arguments in the `ZipStream\ZipStream` constuctor.
+- The archive options `largeFileSize` & `largeFileMethod` has been removed. If
+  you want different `compressionMethods` based on the file size, you'll have to
+  implement this yourself.
+- The archive option `httpHeaderCallback` changed the type from `callable` to
+  `Closure`.
+- The archive option `zeroHeader` has been replaced with the option
+  `defaultEnableZeroHeader` and can be overridden for every file. Its default
+  value changed from `false` to `true`.
+- The archive option `statFiles` was removed since the library no longer checks
+  filesizes this way.
+- The archive option `deflateLevel` has been replaced with the option
+  `defaultDeflateLevel` and can be overridden for every file.
+- The first argument (`name`) of the `ZipStream\ZipStream` constuctor has been
+  replaced with the named argument `outputName`.
+- Headers are now also sent if the `outputName` is empty. If you do not want to
+  automatically send http headers, set `sendHttpHeaders` to `false`.
 
 ### File Options
 
-- The class `ZipStream\Option\File` has been replaced in favor of named arguments in the
-  `ZipStream\ZipStream->addFile*` functions.
+- The class `ZipStream\Option\File` has been replaced in favor of named
+  arguments in the `ZipStream\ZipStream->addFile*` functions.
 - The file option `method` has been renamed to `compressionMethod`.
 - The file option `time` has been renamed to `lastModificationDateTime`.
 - The file option `size` has been renamed to `maxSize`.
