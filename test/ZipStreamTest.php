@@ -9,15 +9,19 @@ use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\StreamWrapper;
 use org\bovigo\vfs\vfsStream;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\StreamInterface;
 use RuntimeException;
 use ZipArchive;
 use ZipStream\CompressionMethod;
 use ZipStream\Exception\FileNotFoundException;
 use ZipStream\Exception\FileNotReadableException;
+use ZipStream\Exception\FileSizeIncorrectException;
 use ZipStream\Exception\OverflowException;
 use ZipStream\Exception\ResourceActionException;
+use ZipStream\Exception\SimulationFileUnknownException;
 use ZipStream\Exception\StreamNotReadableException;
 use ZipStream\Exception\StreamNotSeekableException;
+use ZipStream\OperationMode;
 use ZipStream\ZipStream;
 
 class ZipStreamTest extends TestCase
@@ -168,8 +172,14 @@ class ZipStreamTest extends TestCase
     public function testAddFileFromPathFileNotFoundException(): void
     {
         $this->expectException(FileNotFoundException::class);
+
+        [, $stream] = $this->getTmpFileStream();
+
         // Get ZipStream Object
-        $zip = new ZipStream();
+        $zip = new ZipStream(
+            outputStream: $stream,
+            sendHttpHeaders: false,
+        );
 
         // Trigger error by adding a file which doesn't exist
         $zip->addFileFromPath(fileName: 'foobar.php', path: '/foo/bar/foobar.php');
@@ -177,12 +187,23 @@ class ZipStreamTest extends TestCase
 
     public function testAddFileFromPathFileNotReadableException(): void
     {
+        $this->expectException(FileNotReadableException::class);
+
+
+        [, $stream] = $this->getTmpFileStream();
+
+
         // create new virtual filesystem
         $root = vfsStream::setup('vfs');
         // create a virtual file with no permissions
         $file = vfsStream::newFile('foo.txt', 0)->at($root)->setContent('bar');
-        $zip = new ZipStream();
-        $this->expectException(FileNotReadableException::class);
+
+        // Get ZipStream Object
+        $zip = new ZipStream(
+            outputStream: $stream,
+            sendHttpHeaders: false,
+        );
+
         $zip->addFileFromPath('foo.txt', $file->url());
     }
 
@@ -806,6 +827,357 @@ class ZipStreamTest extends TestCase
 
         $this->assertFileExists($tmpDir . DIRECTORY_SEPARATOR . 'foo');
         $this->assertDirectoryExists($tmpDir . DIRECTORY_SEPARATOR . 'foo');
+    }
+
+    public function testAddFileSimulate(): void
+    {
+        [, $stream] = $this->getTmpFileStream();
+
+        $create = function (OperationMode $operationMode) use ($stream): int {
+            $zip = new ZipStream(
+                sendHttpHeaders: false,
+                operationMode: $operationMode,
+                defaultEnableZeroHeader: true,
+                outputStream: $stream,
+            );
+
+            $zip->addFile('sample.txt', 'Sample String Data');
+            $zip->addFile('test/sample.txt', 'More Simple Sample Data');
+
+            return $zip->finish();
+        };
+
+
+        $sizeExpected = $create(OperationMode::NORMAL);
+        $sizeActual = $create(OperationMode::SIMULATE_LAX);
+
+        $this->assertEquals($sizeExpected, $sizeActual);
+    }
+
+    public function testAddFileSimulateWithMaxSize(): void
+    {
+        [, $stream] = $this->getTmpFileStream();
+
+        $create = function (OperationMode $operationMode) use ($stream): int {
+            $zip = new ZipStream(
+                sendHttpHeaders: false,
+                operationMode: $operationMode,
+                defaultCompressionMethod: CompressionMethod::STORE,
+                defaultEnableZeroHeader: true,
+                outputStream: $stream,
+            );
+
+            $zip->addFile('sample.txt', 'Sample String Data', maxSize: 0);
+
+            return $zip->finish();
+        };
+
+
+        $sizeExpected = $create(OperationMode::NORMAL);
+        $sizeActual = $create(OperationMode::SIMULATE_LAX);
+
+        $this->assertEquals($sizeExpected, $sizeActual);
+    }
+
+    public function testAddFileSimulateWithFstat(): void
+    {
+        [, $stream] = $this->getTmpFileStream();
+
+        $create = function (OperationMode $operationMode) use ($stream): int {
+            $zip = new ZipStream(
+                sendHttpHeaders: false,
+                operationMode: $operationMode,
+                defaultCompressionMethod: CompressionMethod::STORE,
+                defaultEnableZeroHeader: true,
+                outputStream: $stream,
+            );
+
+            $zip->addFile('sample.txt', 'Sample String Data');
+            $zip->addFile('test/sample.txt', 'More Simple Sample Data');
+
+            return $zip->finish();
+        };
+
+
+        $sizeExpected = $create(OperationMode::NORMAL);
+        $sizeActual = $create(OperationMode::SIMULATE_LAX);
+
+        $this->assertEquals($sizeExpected, $sizeActual);
+    }
+
+    public function testAddFileSimulateWithExactSizeZero(): void
+    {
+        [, $stream] = $this->getTmpFileStream();
+
+        $create = function (OperationMode $operationMode) use ($stream): int {
+            $zip = new ZipStream(
+                sendHttpHeaders: false,
+                operationMode: $operationMode,
+                defaultCompressionMethod: CompressionMethod::STORE,
+                defaultEnableZeroHeader: true,
+                outputStream: $stream,
+            );
+
+            $zip->addFile('sample.txt', 'Sample String Data', exactSize: 18);
+
+            return $zip->finish();
+        };
+
+
+        $sizeExpected = $create(OperationMode::NORMAL);
+        $sizeActual = $create(OperationMode::SIMULATE_LAX);
+
+        $this->assertEquals($sizeExpected, $sizeActual);
+    }
+
+    public function testAddFileSimulateWithExactSizeInitial(): void
+    {
+        [, $stream] = $this->getTmpFileStream();
+
+        $create = function (OperationMode $operationMode) use ($stream): int {
+            $zip = new ZipStream(
+                sendHttpHeaders: false,
+                operationMode: $operationMode,
+                defaultCompressionMethod: CompressionMethod::STORE,
+                defaultEnableZeroHeader: false,
+                outputStream: $stream,
+            );
+
+            $zip->addFile('sample.txt', 'Sample String Data', exactSize: 18);
+
+            return $zip->finish();
+        };
+
+        $sizeExpected = $create(OperationMode::NORMAL);
+        $sizeActual = $create(OperationMode::SIMULATE_LAX);
+
+        $this->assertEquals($sizeExpected, $sizeActual);
+    }
+
+    public function testAddFileSimulateWithZeroSizeInFstat(): void
+    {
+        [, $stream] = $this->getTmpFileStream();
+
+        $create = function (OperationMode $operationMode) use ($stream): int {
+            $zip = new ZipStream(
+                sendHttpHeaders: false,
+                operationMode: $operationMode,
+                defaultCompressionMethod: CompressionMethod::STORE,
+                defaultEnableZeroHeader: false,
+                outputStream: $stream,
+            );
+
+            $zip->addFileFromPsr7Stream('sample.txt', new class () implements StreamInterface {
+                public $pos = 0;
+
+                public function __toString(): string
+                {
+                    return 'test';
+                }
+
+                public function close(): void
+                {
+                }
+
+                public function detach()
+                {
+                }
+
+                public function getSize(): ?int
+                {
+                    return null;
+                }
+
+                public function tell(): int
+                {
+                    return $this->pos;
+                }
+
+                public function eof(): bool
+                {
+                    return $this->pos >= 4;
+                }
+
+                public function isSeekable(): bool
+                {
+                    return true;
+                }
+
+                public function seek(int $offset, int $whence = SEEK_SET): void
+                {
+                    $this->pos = $offset;
+                }
+
+                public function rewind(): void
+                {
+                    $this->pos = 0;
+                }
+
+                public function isWritable(): bool
+                {
+                    return false;
+                }
+
+                public function write(string $string): int
+                {
+                    return 0;
+                }
+
+                public function isReadable(): bool
+                {
+                    return true;
+                }
+
+                public function read(int $length): string
+                {
+                    $data = substr('test', $this->pos, $length);
+                    $this->pos += strlen($data);
+                    return $data;
+                }
+
+                public function getContents(): string
+                {
+                    return $this->read(4);
+                }
+
+                public function getMetadata(?string $key = null)
+                {
+                    return $key !== null ? null : [];
+                }
+            });
+
+            return $zip->finish();
+        };
+
+        $sizeExpected = $create(OperationMode::NORMAL);
+        $sizeActual = $create(OperationMode::SIMULATE_LAX);
+
+
+        $this->assertEquals($sizeExpected, $sizeActual);
+    }
+
+    public function testAddFileSimulateWithWrongExactSize(): void
+    {
+        $this->expectException(FileSizeIncorrectException::class);
+
+        $zip = new ZipStream(
+            sendHttpHeaders: false,
+            operationMode: OperationMode::SIMULATE_LAX,
+        );
+
+        $zip->addFile('sample.txt', 'Sample String Data', exactSize: 1000);
+    }
+
+    public function testAddFileSimulateStrictZero(): void
+    {
+        $this->expectException(SimulationFileUnknownException::class);
+
+        $zip = new ZipStream(
+            sendHttpHeaders: false,
+            operationMode: OperationMode::SIMULATE_STRICT,
+            defaultEnableZeroHeader: true
+        );
+
+        $zip->addFile('sample.txt', 'Sample String Data');
+    }
+
+    public function testAddFileSimulateStrictInitial(): void
+    {
+        $this->expectException(SimulationFileUnknownException::class);
+
+        $zip = new ZipStream(
+            sendHttpHeaders: false,
+            operationMode: OperationMode::SIMULATE_STRICT,
+            defaultEnableZeroHeader: false
+        );
+
+        $zip->addFile('sample.txt', 'Sample String Data');
+    }
+
+    public function testAddFileCallbackStrict(): void
+    {
+        $this->expectException(SimulationFileUnknownException::class);
+
+        $zip = new ZipStream(
+            sendHttpHeaders: false,
+            operationMode: OperationMode::SIMULATE_STRICT,
+            defaultEnableZeroHeader: false
+        );
+
+        $zip->addFileFromCallback('sample.txt', callback: function () {
+            return '';
+        });
+    }
+
+    public function testAddFileCallbackLax(): void
+    {
+
+        $zip = new ZipStream(
+            operationMode: OperationMode::SIMULATE_LAX,
+            defaultEnableZeroHeader: false,
+            sendHttpHeaders: false,
+        );
+
+        $zip->addFileFromCallback('sample.txt', callback: function () {
+            return 'Sample String Data';
+        });
+
+        $size = $zip->finish();
+
+        $this->assertEquals($size, 142);
+    }
+
+    public function testExecuteSimulation(): void
+    {
+        [$tmp, $stream] = $this->getTmpFileStream();
+
+        $zip = new ZipStream(
+            operationMode: OperationMode::SIMULATE_LAX,
+            defaultEnableZeroHeader: false,
+            sendHttpHeaders: false,
+            outputStream: $stream,
+        );
+
+        $zip->addFileFromCallback(
+            'sample.txt',
+            exactSize: 18,
+            callback: function () {
+                return 'Sample String Data';
+            }
+        );
+
+        $size = $zip->finish();
+
+        $this->assertEquals(filesize($tmp), 0);
+
+        $zip->executeSimulation();
+        fclose($stream);
+
+        clearstatcache();
+
+        $this->assertEquals(filesize($tmp), $size);
+
+        $tmpDir = $this->validateAndExtractZip($tmp);
+
+        $files = $this->getRecursiveFileList($tmpDir);
+        $this->assertSame(['sample.txt'], $files);
+    }
+
+    public function testExecuteSimulationBeforeFinish(): void
+    {
+        $this->expectException(RuntimeException::class);
+
+
+        [, $stream] = $this->getTmpFileStream();
+
+        $zip = new ZipStream(
+            operationMode: OperationMode::SIMULATE_LAX,
+            defaultEnableZeroHeader: false,
+            sendHttpHeaders: false,
+            outputStream: $stream,
+        );
+
+        $zip->executeSimulation();
     }
 
     private function addLargeFileFileFromPath(CompressionMethod $compressionMethod, $zeroHeader, $zip64): void
