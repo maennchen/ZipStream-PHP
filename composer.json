@@ -27,7 +27,7 @@
     "ext-zlib": "*"
   },
   "require-dev": {
-    "phpunit/phpunit": "^9.5",
+    "phpunit/phpunit": "^10.0",
     "guzzlehttp/guzzle": "^7.5",
     "ext-zip": "*",
     "mikey179/vfsstream": "^1.6",
@@ -46,7 +46,7 @@
     "test:unit:slow": "composer run test:unit -- --group slow",
     "test:unit:fast": "composer run test:unit -- --exclude-group slow",
     "test:formatted": "composer run format -- --dry-run --stop-on-violation --using-cache=no",
-    "test:lint": "psalm --stats --show-info --find-unused-psalm-suppress",
+    "test:lint": "psalm --stats --show-info=true --find-unused-psalm-suppress",
     "coverage:report": "php-coveralls --coverage_clover=coverage.clover.xml --json_path=coveralls-upload.json --insecure",
     "install:tools": "phive install --trust-gpg-keys 0x67F861C3D889C656",
     "docs:generate": "tools/phpdocumentor --sourcecode"
