@@ -261,7 +261,6 @@ class File
             $this->uncompressedSize += strlen($data);
 
             if ($deflate) {
-                /** @psalm-suppress InvalidArgument */
                 $data =  deflate_add(
                     $deflate,
                     $data,
@@ -280,7 +279,6 @@ class File
         $this->crc = hexdec(hash_final($hash));
     }
 
-    /** @psalm-suppress InvalidReturnType */
     private function compressionInit(): ?DeflateContext
     {
         switch($this->compressionMethod) {
@@ -300,7 +298,6 @@ class File
                 }
 
                 // False positive, resource is no longer returned from this function
-                /** @psalm-suppress InvalidReturnStatement */
                 return $deflateContext;
             default:
                 // @codeCoverageIgnoreStart

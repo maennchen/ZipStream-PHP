@@ -30,7 +30,6 @@ abstract class CentralDirectoryFileHeader
         int $externalFileAttributes,
         int $relativeOffsetOfLocalHeader,
     ): string {
-        /** @psalm-suppress MixedArgument */
         return PackField::pack(
             new PackField(format: 'V', value: self::SIGNATURE),
             new PackField(format: 'v', value: $versionMadeBy),
