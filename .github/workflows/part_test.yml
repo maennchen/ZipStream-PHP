@@ -83,7 +83,7 @@ jobs:
 
     steps:
       - name: Coveralls Finished
-        uses: coverallsapp/github-action@v1.2.3
+        uses: coverallsapp/github-action@v1.2.4
         with:
           github-token: ${{ secrets.github_token }}
           parallel-finished: true
