@@ -47,9 +47,9 @@ stored in an AWS S3 bucket by key:
             // this is needed to prevent issues with truncated zip files
             //initialise zipstream with output zip filename and options.
             $zip = new ZipStream\ZipStream(
-                'outputName' => 'test.zip',
-                'defaultEnableZeroHeader' => true,
-                'contentType' => 'application/octet-stream',
+                outputName: 'test.zip',
+                defaultEnableZeroHeader: true,
+                contentType: 'application/octet-stream',
             );
 
             //loop keys - useful for multiple files
