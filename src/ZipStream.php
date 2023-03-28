@@ -133,6 +133,11 @@ class ZipStream
     protected $output_name;
 
     /**
+     * @var int
+     */
+    protected $output_size = 0;
+
+    /**
      * Create a new ZipStream object.
      *
      * Parameters:
@@ -434,24 +439,52 @@ class ZipStream
         }
         $this->need_headers = false;
 
-        $outputStream = $this->opt->getOutputStream();
-
-        if ($outputStream instanceof StreamInterface) {
-            $outputStream->write($str);
-        } else {
-            fwrite($outputStream, $str);
+        if ($this->opt->getMaxOutputSize()) {
+            while ((strlen($str) + $this->output_size) >= $this->opt->getMaxOutputSize()) {
+                $allowedLength = $this->opt->getMaxOutputSize() - $this->output_size;
+                $this->write(substr($str, 0, $allowedLength));
+                $str = substr($str, $allowedLength);
+                $this->flushOutput();
+            }
         }
+
+        $this->write($str);
 
         if ($this->opt->isFlushOutput()) {
             // flush output buffer if it is on and flushable
-            $status = ob_get_status();
-            if (isset($status['flags']) && ($status['flags'] & PHP_OUTPUT_HANDLER_FLUSHABLE)) {
-                ob_flush();
-            }
-
-            // Flush system buffers after flushing userspace output buffer
-            flush();
+            $this->flushOutput();
         }
+    }
+
+    /**
+     * @param String $str
+     * @return void
+     */
+    private function write(string $str): void
+    {
+        $outputStream = $this->opt->getOutputStream();
+
+        if ($outputStream instanceof StreamInterface) {
+            $writeSize = $outputStream->write($str);
+        } else {
+            $writeSize = fwrite($outputStream, $str);
+        }
+
+        if ($writeSize) {
+            $this->output_size += $writeSize;
+        }
+    }
+
+    private function flushOutput(): void
+    {
+        $status = ob_get_status();
+        if (isset($status['flags']) && ($status['flags'] & PHP_OUTPUT_HANDLER_FLUSHABLE)) {
+            ob_flush();
+        }
+
+        // Flush system buffers after flushing userspace output buffer
+        flush();
+        $this->output_size = 0;
     }
 
     /**

@@ -94,6 +94,12 @@ final class Archive
     private $flushOutput = false;
 
     /**
+     * When set output will be flushed everytime it hits specified amount of bytes
+     * @var int
+     */
+    private $maxOutputSize = 0;
+
+    /**
      * HTTP Content-Disposition.  Defaults to
      * 'attachment', where
      * FILENAME is the specified filename.
@@ -210,6 +216,19 @@ final class Archive
     public function setFlushOutput(bool $flushOutput): void
     {
         $this->flushOutput = $flushOutput;
+    }
+
+    public function getMaxOutputSize(): int
+    {
+        return $this->maxOutputSize;
+    }
+
+    /**
+     * @param int $size
+     */
+    public function setMaxOutputSize(int $size): void
+    {
+        $this->maxOutputSize = $size;
     }
 
     public function isStatFiles(): bool

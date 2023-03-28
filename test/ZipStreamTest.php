@@ -543,6 +543,31 @@ class ZipStreamTest extends TestCase
         ob_start();
     }
 
+    public function testCreateArchiveWithMaxOutputSize(): void
+    {
+        [$tmp, $stream] = $this->getTmpFileStream();
+
+        $options = new ArchiveOptions();
+        $options->setOutputStream($stream);
+        $options->setMaxOutputSize(3);
+
+        $zip = new ZipStream(null, $options);
+
+        $zip->addFile('sample.txt', 'Sample String Data');
+        $zip->addFile('test/sample.txt', 'More Simple Sample Data');
+
+        $zip->finish();
+        fclose($stream);
+
+        $tmpDir = $this->validateAndExtractZip($tmp);
+
+        $files = $this->getRecursiveFileList($tmpDir);
+        $this->assertSame(['sample.txt', 'test' . DIRECTORY_SEPARATOR . 'sample.txt'], $files);
+
+        $this->assertStringEqualsFile($tmpDir . '/sample.txt', 'Sample String Data');
+        $this->assertStringEqualsFile($tmpDir . '/test/sample.txt', 'More Simple Sample Data');
+    }
+
     /**
      * @return array
      */
