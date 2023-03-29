@@ -549,7 +549,7 @@ class ZipStreamTest extends TestCase
 
         $options = new ArchiveOptions();
         $options->setOutputStream($stream);
-        $options->setMaxOutputSize(3);
+        $options->setOutputStreamBufferSize(3);
 
         $zip = new ZipStream(null, $options);
 

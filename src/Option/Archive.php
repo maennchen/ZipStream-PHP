@@ -94,10 +94,12 @@ final class Archive
     private $flushOutput = false;
 
     /**
-     * When set output will be flushed everytime it hits specified amount of bytes
+     * When set, output stream will be flushed everytime it hits specified amount of bytes.
+     * Defaulted to 0 which translate to unlimited buffer size.
+     * $outputStreamBufferSize does not require $flushOutput to be true.
      * @var int
      */
-    private $maxOutputSize = 0;
+    private $outputStreamBufferSize = 0;
 
     /**
      * HTTP Content-Disposition.  Defaults to
@@ -207,28 +209,29 @@ final class Archive
     {
         $this->zeroHeader = $zeroHeader;
     }
-
+    
     public function isFlushOutput(): bool
     {
         return $this->flushOutput;
     }
 
+    
     public function setFlushOutput(bool $flushOutput): void
     {
         $this->flushOutput = $flushOutput;
     }
 
-    public function getMaxOutputSize(): int
+    public function getOutputStreamBufferSize(): int
     {
-        return $this->maxOutputSize;
+        return $this->outputStreamBufferSize;
     }
 
     /**
      * @param int $size
      */
-    public function setMaxOutputSize(int $size): void
+    public function setOutputStreamBufferSize(int $size): void
     {
-        $this->maxOutputSize = $size;
+        $this->outputStreamBufferSize = $size;
     }
 
     public function isStatFiles(): bool

@@ -439,9 +439,9 @@ class ZipStream
         }
         $this->need_headers = false;
 
-        if ($this->opt->getMaxOutputSize()) {
-            while ((strlen($str) + $this->output_size) >= $this->opt->getMaxOutputSize()) {
-                $allowedLength = $this->opt->getMaxOutputSize() - $this->output_size;
+        if ($this->opt->getOutputStreamBufferSize()) {
+            while ((strlen($str) + $this->output_size) >= $this->opt->getOutputStreamBufferSize()) {
+                $allowedLength = $this->opt->getOutputStreamBufferSize() - $this->output_size;
                 $this->write(substr($str, 0, $allowedLength));
                 $str = substr($str, $allowedLength);
                 $this->flushOutput();
