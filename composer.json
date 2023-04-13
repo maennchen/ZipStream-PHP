@@ -32,7 +32,7 @@
     "ext-zip": "*",
     "mikey179/vfsstream": "^1.6",
     "php-coveralls/php-coveralls": "^2.5",
-    "friendsofphp/php-cs-fixer": "^3.13",
+    "friendsofphp/php-cs-fixer": "^3.16",
     "vimeo/psalm": "^5.0"
   },
   "suggest": {
@@ -40,7 +40,7 @@
     "guzzlehttp/psr7": "^2.4"
   },
   "scripts": {
-    "format": "PHP_CS_FIXER_IGNORE_ENV=true php-cs-fixer fix",
+    "format": "php-cs-fixer fix",
     "test": "composer run test:unit && composer run test:formatted && composer run test:lint",
     "test:unit": "phpunit --coverage-clover=coverage.clover.xml --coverage-html cov",
     "test:unit:slow": "composer run test:unit -- --group slow",
