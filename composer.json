@@ -41,11 +41,15 @@
   },
   "scripts": {
     "format": "php-cs-fixer fix",
-    "test": "composer run test:unit && composer run test:formatted && composer run test:lint",
+    "test": [
+      "@test:unit",
+      "@test:formatted",
+      "@test:lint"
+    ],
     "test:unit": "phpunit --coverage-clover=coverage.clover.xml --coverage-html cov",
-    "test:unit:slow": "composer run test:unit -- --group slow",
-    "test:unit:fast": "composer run test:unit -- --exclude-group slow",
-    "test:formatted": "composer run format -- --dry-run --stop-on-violation --using-cache=no",
+    "test:unit:slow": "@test:unit --group slow",
+    "test:unit:fast": "@test:unit --exclude-group slow",
+    "test:formatted": "@format --dry-run --stop-on-violation --using-cache=no",
     "test:lint": "psalm --stats --show-info=true --find-unused-psalm-suppress",
     "coverage:report": "php-coveralls --coverage_clover=coverage.clover.xml --json_path=coveralls-upload.json --insecure",
     "install:tools": "phive install --trust-gpg-keys 0x67F861C3D889C656",
