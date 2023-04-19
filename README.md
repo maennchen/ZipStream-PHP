@@ -122,6 +122,22 @@ https://github.com/maennchen/ZipStream-PHP/tree/2.0.0#upgrade-to-version-100
 ZipStream-PHP is a collaborative project. Please take a look at the
 [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md) file.
 
+## Version Support
+
+Versions are supported according to the table below.
+
+Please do not open any pull requests contradicting the current version support
+status.
+
+Careful: Always check the `README` on `main` for up-to-date information.
+
+| Version | New Features | Bugfixes | Security |
+|---------|--------------|----------|----------|
+| *3*     | ✓            | ✓        | ✓        |
+| *2*     | ✗            | ✓        | ✓        |
+| *1*     | ✗            | ✗        | ✓        |
+| *0*     | ✗            | ✗        | ✗        |
+
 ## About the Authors
 
 - Paul Duncan <pabs@pablotron.org> - https://pablotron.org/
