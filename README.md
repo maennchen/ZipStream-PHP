@@ -138,6 +138,11 @@ Careful: Always check the `README` on `main` for up-to-date information.
 | *1*     | ✗            | ✗        | ✓        |
 | *0*     | ✗            | ✗        | ✗        |
 
+This library aligns itself with the PHP core support. New features and bugfixes
+will only target PHP versions according to their current status.
+
+See: https://www.php.net/supported-versions.php
+
 ## About the Authors
 
 - Paul Duncan <pabs@pablotron.org> - https://pablotron.org/
