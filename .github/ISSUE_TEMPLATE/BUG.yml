@@ -5,15 +5,6 @@ body:
   - type: markdown
     attributes:
       value: |
-        - Please do not report an issue for a version of ZipStream-PHP that is
-          no longer supported (< 2.0.0).
-        - Please do not report an issue if you are using a version of PHP that
-          is not supported by the version of ZipStream-PHP you are using.
-        - Please fill in this template according to your issue.
-        - Please keep the table shown below at the top of your issue.
-        - Please include the output of "composer info | sort".
-        - Please post code as text (using proper markup). Do not post
-          screenshots of code.
         - Create a discussion instead if you are looking for support:
           https://github.com/maennchen/ZipStream-PHP/discussions
   - type: input
@@ -30,6 +21,26 @@ body:
       placeholder: x.y.z
     validations:
       required: true
+  - type: checkboxes
+    id: constraints
+    attributes:
+      label: Constraints for Bug Report
+      options:
+        - label: |
+            I'm using a version of ZipStream that is currently supported:
+            https://github.com/maennchen/ZipStream-PHP#version-support
+          required: true
+        - label: |
+            I'm using a version of PHP that has active support:
+            https://www.php.net/supported-versions.php
+          required: true
+        - label: |
+            I'm using a version of PHP that is compatible with your used
+            ZipStream version.
+          required: true
+        - label: |
+            I'm using the latest release of the used ZipStream major version.
+          required: true
   - type: textarea
     id: summary
     attributes:
