@@ -24,7 +24,7 @@
   "require": {
     "php": "^8.0",
     "ext-mbstring": "*",
-    "psr/http-message": "^1.0",
+    "psr/http-message": "^1.0 || ^2.0",
     "myclabs/php-enum": "^1.5"
   },
   "require-dev": {
