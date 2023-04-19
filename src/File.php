@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ZipStream;
 
+use DeflateContext;
 use HashContext;
 use Psr\Http\Message\StreamInterface;
 use ZipStream\Exception\FileNotFoundException;
@@ -76,7 +77,7 @@ class File
     public $zip;
 
     /**
-     * @var resource
+     * @var DeflateContext|false
      */
     private $deflate;
 

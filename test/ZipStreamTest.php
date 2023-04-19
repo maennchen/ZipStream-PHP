@@ -317,7 +317,7 @@ class ZipStreamTest extends TestCase
         // it works fine with file stream
         $streamExample = fopen(__FILE__, 'rb');
         $zip->addFileFromStream('sample.txt', $streamExample);
-//        fclose($streamExample);
+        //fclose($streamExample);
 
         $fileOptions = new FileOptions();
         $fileOptions->setMethod(Method::STORE());
@@ -326,7 +326,7 @@ class ZipStreamTest extends TestCase
         fwrite($streamExample2, 'More Simple Sample Data');
         rewind($streamExample2); // move the pointer back to the beginning of file.
         $zip->addFileFromStream('test/sample.txt', $streamExample2, $fileOptions);
-//        fclose($streamExample2);
+        //fclose($streamExample2);
 
         $zip->finish();
         fclose($stream);
@@ -356,13 +356,13 @@ class ZipStreamTest extends TestCase
         fwrite($streamExample, 'Sample String Data');
         rewind($streamExample); // move the pointer back to the beginning of file.
         $zip->addFileFromStream('sample.txt', $streamExample, $fileOptions);
-//        fclose($streamExample);
+        //fclose($streamExample);
 
         $streamExample2 = fopen('php://temp', 'bw+');
         fwrite($streamExample2, 'More Simple Sample Data');
         rewind($streamExample2); // move the pointer back to the beginning of file.
         $zip->addFileFromStream('test/sample.txt', $streamExample2);
-//        fclose($streamExample2);
+        //fclose($streamExample2);
 
         $zip->finish();
         fclose($stream);
