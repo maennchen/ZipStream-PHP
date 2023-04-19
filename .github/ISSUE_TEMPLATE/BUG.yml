@@ -15,8 +15,7 @@ body:
         - Please post code as text (using proper markup). Do not post
           screenshots of code.
         - Create a discussion instead if you are looking for support:
-        - https://github.com/maennchen/ZipStream-PHP/discussions
-        - Please remove this comment before submitting your issue.
+          https://github.com/maennchen/ZipStream-PHP/discussions
   - type: input
     id: version
     attributes:
