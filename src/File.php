@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ZipStream;
 
+use DeflateContext;
 use HashContext;
 use Psr\Http\Message\StreamInterface;
 use ZipStream\Exception\FileNotFoundException;
@@ -76,7 +77,7 @@ class File
     public $zip;
 
     /**
-     * @var resource
+     * @var resource|DeflateContext|null
      */
     private $deflate;
 
@@ -438,6 +439,7 @@ class File
             hash_update($this->hash, $data);
         }
         if ($this->deflate) {
+            /** @psalm-suppress PossiblyInvalidArgument */
             $data = deflate_add(
                 $this->deflate,
                 $data,
