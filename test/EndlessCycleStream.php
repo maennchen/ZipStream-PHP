@@ -33,12 +33,9 @@ class EndlessCycleStream implements StreamInterface
         return;
     }
 
-    /**
-     * @return null
-     */
-    public function getSize()
+    public function getSize(): ?int
     {
-        return;
+        return null;
     }
 
     public function tell(): int
@@ -51,12 +48,12 @@ class EndlessCycleStream implements StreamInterface
         return false;
     }
 
-    public function isSeekable()
+    public function isSeekable(): bool
     {
         return true;
     }
 
-    public function seek($offset, $whence = SEEK_SET)
+    public function seek(int $offset, int $whence = SEEK_SET): void
     {
         switch($whence) {
             case SEEK_SET:
@@ -81,7 +78,7 @@ class EndlessCycleStream implements StreamInterface
         return false;
     }
 
-    public function write($string): int
+    public function write(string $string): int
     {
         throw new RuntimeException('Not writeable');
     }
@@ -91,7 +88,7 @@ class EndlessCycleStream implements StreamInterface
         return true;
     }
 
-    public function read($length): string
+    public function read(int $length): string
     {
         $this->offset += $length;
         return substr(str_repeat($this->toRepeat, (int) ceil($length / strlen($this->toRepeat))), 0, $length);
@@ -102,7 +99,7 @@ class EndlessCycleStream implements StreamInterface
         throw new RuntimeException('Infinite Stream!');
     }
 
-    public function getMetadata($key = null): array|null
+    public function getMetadata(?string $key = null): array|null
     {
         return $key !== null ? null : [];
     }

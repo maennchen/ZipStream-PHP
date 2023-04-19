@@ -355,12 +355,12 @@ class ZipStreamTest extends TestCase
         );
 
         $streamUnseekable = StreamWrapper::getResource(new class ('test') extends EndlessCycleStream {
-            public function isSeekable()
+            public function isSeekable(): bool
             {
                 return false;
             }
 
-            public function seek($offset, $whence = SEEK_SET)
+            public function seek(int $offset, int $whence = SEEK_SET): void
             {
                 throw new RuntimeException('Not seekable');
             }
