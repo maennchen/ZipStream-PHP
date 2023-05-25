@@ -581,7 +581,7 @@ class ZipStream
                 if ($maxSize !== null && fwrite($stream, $data, $maxSize) === false) {
                     // @codeCoverageIgnoreStart
                     throw new ResourceActionException('fwrite', $stream);
-                // @codeCoverageIgnoreEnd
+                    // @codeCoverageIgnoreEnd
                 } elseif (fwrite($stream, $data) === false) {
                     // @codeCoverageIgnoreStart
                     throw new ResourceActionException('fwrite', $stream);
