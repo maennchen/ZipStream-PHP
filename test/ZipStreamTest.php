@@ -22,11 +22,13 @@ use ZipStream\Exception\SimulationFileUnknownException;
 use ZipStream\Exception\StreamNotReadableException;
 use ZipStream\Exception\StreamNotSeekableException;
 use ZipStream\OperationMode;
+use ZipStream\PackField;
 use ZipStream\ZipStream;
 
 class ZipStreamTest extends TestCase
 {
     use Util;
+    use Assertions;
 
     public function testAddFile(): void
     {
@@ -636,6 +638,72 @@ class ZipStreamTest extends TestCase
             compressionMethod: CompressionMethod::STORE,
             lastModificationDateTime: new DateTimeImmutable('2022-01-01 01:01:01Z'),
         );
+    }
+
+    /**
+     * @group slow
+     */
+    public function testAddsZip64HeaderWhenNeeded(): void
+    {
+        [$tmp, $stream] = $this->getTmpFileStream();
+
+        $zip = new ZipStream(
+            outputStream: $stream,
+            sendHttpHeaders: false,
+            enableZip64: true,
+            defaultEnableZeroHeader: false,
+        );
+
+        $zip->addFileFromPsr7Stream(
+            fileName: 'sample.json',
+            stream: new EndlessCycleStream('0'),
+            maxSize: 0x100000000,
+            compressionMethod: CompressionMethod::STORE,
+            lastModificationDateTime: new DateTimeImmutable('2022-01-01 01:01:01Z'),
+        );
+
+        $zip->finish();
+
+        $tmpDir = $this->validateAndExtractZip($tmp);
+        $files = $this->getRecursiveFileList($tmpDir);
+
+        $this->assertSame(['sample.json'], $files);
+        $this->assertFileContains($tmp, PackField::pack(
+            new PackField(format: 'V', value: 0x06064b50)
+        ));
+    }
+
+    /**
+     * @group slow
+     */
+    public function testDoesNotAddZip64HeaderWhenNotNeeded(): void
+    {
+        [$tmp, $stream] = $this->getTmpFileStream();
+
+        $zip = new ZipStream(
+            outputStream: $stream,
+            sendHttpHeaders: false,
+            enableZip64: true,
+            defaultEnableZeroHeader: false,
+        );
+
+        $zip->addFileFromPsr7Stream(
+            fileName: 'sample.json',
+            stream: new EndlessCycleStream('0'),
+            maxSize: 0x10,
+            compressionMethod: CompressionMethod::STORE,
+            lastModificationDateTime: new DateTimeImmutable('2022-01-01 01:01:01Z'),
+        );
+
+        $zip->finish();
+
+        $tmpDir = $this->validateAndExtractZip($tmp);
+        $files = $this->getRecursiveFileList($tmpDir);
+
+        $this->assertSame(['sample.json'], $files);
+        $this->assertFileDoesNotContain($tmp, PackField::pack(
+            new PackField(format: 'V', value: 0x06064b50)
+        ));
     }
 
     /**

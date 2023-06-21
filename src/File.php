@@ -66,7 +66,7 @@ class File
             $this->generalPurposeBitFlag |= GeneralPurposeBitFlag::ZERO_HEADER;
         }
 
-        $this->selectVersion();
+        $this->version = $this->compressionMethod === CompressionMethod::DEFLATE ? Version::DEFLATE : Version::STORE;
     }
 
     public function cloneSimulationExecution(): self
@@ -178,7 +178,15 @@ class File
      */
     private function addFileHeader(): void
     {
-        $footer = $this->buildZip64ExtraBlock($this->enableZeroHeader && $this->enableZip64);
+        $forceEnableZip64 = $this->enableZeroHeader && $this->enableZip64;
+
+        $footer = $this->buildZip64ExtraBlock($forceEnableZip64);
+
+        $zip64Enabled = $footer !== '';
+
+        if($zip64Enabled) {
+            $this->version = Version::ZIP64;
+        }
 
         if ($this->generalPurposeBitFlag & GeneralPurposeBitFlag::EFS) {
             // Put the tricky entry to
@@ -186,17 +194,16 @@ class File
             $footer .= Zs\ExtendedInformationExtraField::generate();
         }
 
-
         $data = LocalFileHeader::generate(
             versionNeededToExtract: $this->version->value,
             generalPurposeBitFlag: $this->generalPurposeBitFlag,
             compressionMethod: $this->compressionMethod,
             lastModificationDateTime: $this->lastModificationDateTime,
             crc32UncompressedData: $this->crc,
-            compressedSize: ($this->enableZip64 || $this->enableZeroHeader || $this->compressedSize > 0xFFFFFFFF)
+            compressedSize: $zip64Enabled
                 ? 0xFFFFFFFF
                 : $this->compressedSize,
-            uncompressedSize: ($this->enableZip64 || $this->enableZeroHeader || $this->uncompressedSize > 0xFFFFFFFF)
+            uncompressedSize: $zip64Enabled
                 ? 0xFFFFFFFF
                 : $this->uncompressedSize,
             fileName: $this->fileName,
@@ -235,20 +242,6 @@ class File
         }
     }
 
-    private function selectVersion(): void
-    {
-        if ($this->enableZip64) {
-            $this->version = Version::ZIP64;
-            return;
-        }
-        if ($this->compressionMethod === CompressionMethod::DEFLATE) {
-            $this->version = Version::DEFLATE;
-            return;
-        }
-
-        $this->version = Version::STORE;
-    }
-
     private function buildZip64ExtraBlock(bool $force = false): string
     {
         $outputZip64ExtraBlock = false;
@@ -278,7 +271,7 @@ class File
             return '';
         }
 
-        if ($this->version !== Version::ZIP64) {
+        if (!$this->enableZip64) {
             throw new OverflowException();
         }
 
