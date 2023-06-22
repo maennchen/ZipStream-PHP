@@ -18,14 +18,6 @@ use ZipArchive;
 
 trait Util
 {
-    protected function getTmpFileStream(): array
-    {
-        $tmp = tempnam(sys_get_temp_dir(), 'zipstreamtest');
-        $stream = fopen($tmp, 'wb+');
-
-        return [$tmp, $stream];
-    }
-
     protected function cmdExists(string $command): bool
     {
         if (strtolower(\substr(PHP_OS, 0, 3)) === 'win') {
