@@ -815,9 +815,9 @@ class ZipStream
         }
     }
 
-     /**
-     * Send HTTP headers for this stream.
-     */
+    /**
+    * Send HTTP headers for this stream.
+    */
     private function sendHttpHeaders(): void
     {
         // grab content disposition
