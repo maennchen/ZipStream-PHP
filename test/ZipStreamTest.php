@@ -29,13 +29,12 @@ class ZipStreamTest extends TestCase
 {
     use Util;
     use Assertions;
+    use Tempfile;
 
     public function testAddFile(): void
     {
-        [$tmp, $stream] = $this->getTmpFileStream();
-
         $zip = new ZipStream(
-            outputStream: $stream,
+            outputStream: $this->tempfileStream,
             sendHttpHeaders: false,
         );
 
@@ -43,9 +42,8 @@ class ZipStreamTest extends TestCase
         $zip->addFile('test/sample.txt', 'More Simple Sample Data');
 
         $zip->finish();
-        fclose($stream);
 
-        $tmpDir = $this->validateAndExtractZip($tmp);
+        $tmpDir = $this->validateAndExtractZip($this->tempfile);
 
         $files = $this->getRecursiveFileList($tmpDir);
         $this->assertSame(['sample.txt', 'test' . DIRECTORY_SEPARATOR . 'sample.txt'], $files);
@@ -56,10 +54,8 @@ class ZipStreamTest extends TestCase
 
     public function testAddFileUtf8NameComment(): void
     {
-        [$tmp, $stream] = $this->getTmpFileStream();
-
         $zip = new ZipStream(
-            outputStream: $stream,
+            outputStream: $this->tempfileStream,
             sendHttpHeaders: false,
         );
 
@@ -72,25 +68,22 @@ class ZipStreamTest extends TestCase
 
         $zip->addFile(fileName: $name, data: $content, comment: $comment);
         $zip->finish();
-        fclose($stream);
 
-        $tmpDir = $this->validateAndExtractZip($tmp);
+        $tmpDir = $this->validateAndExtractZip($this->tempfile);
 
         $files = $this->getRecursiveFileList($tmpDir);
         $this->assertSame([$name], $files);
         $this->assertStringEqualsFile($tmpDir . '/' . $name, $content);
 
         $zipArchive = new ZipArchive();
-        $zipArchive->open($tmp);
+        $zipArchive->open($this->tempfile);
         $this->assertSame($comment, $zipArchive->getCommentName($name));
     }
 
     public function testAddFileUtf8NameNonUtfComment(): void
     {
-        [$tmp, $stream] = $this->getTmpFileStream();
-
         $zip = new ZipStream(
-            outputStream: $stream,
+            outputStream: $this->tempfileStream,
             sendHttpHeaders: false,
         );
 
@@ -107,30 +100,26 @@ class ZipStreamTest extends TestCase
         $zip->addFile(fileName: $name, data: $content, comment: $comment);
 
         $zip->finish();
-        fclose($stream);
 
         $zipArch = new ZipArchive();
-        $zipArch->open($tmp);
+        $zipArch->open($this->tempfile);
         $this->assertSame($guessComment, $zipArch->getCommentName($name));
         $this->assertSame($comment, $zipArch->getCommentName($name, ZipArchive::FL_ENC_RAW));
     }
 
     public function testAddFileWithStorageMethod(): void
     {
-        [$tmp, $stream] = $this->getTmpFileStream();
-
         $zip = new ZipStream(
-            outputStream: $stream,
+            outputStream: $this->tempfileStream,
             sendHttpHeaders: false,
         );
 
         $zip->addFile(fileName: 'sample.txt', data: 'Sample String Data', compressionMethod: CompressionMethod::STORE);
         $zip->addFile(fileName: 'test/sample.txt', data: 'More Simple Sample Data');
         $zip->finish();
-        fclose($stream);
 
         $zipArchive = new ZipArchive();
-        $zipArchive->open($tmp);
+        $zipArchive->open($this->tempfile);
 
         $sample1 = $zipArchive->statName('sample.txt');
         $sample12 = $zipArchive->statName('test/sample.txt');
@@ -142,10 +131,8 @@ class ZipStreamTest extends TestCase
 
     public function testAddFileFromPath(): void
     {
-        [$tmp, $stream] = $this->getTmpFileStream();
-
         $zip = new ZipStream(
-            outputStream: $stream,
+            outputStream: $this->tempfileStream,
             sendHttpHeaders: false,
         );
 
@@ -160,26 +147,25 @@ class ZipStreamTest extends TestCase
         $zip->addFileFromPath(fileName: 'test/sample.txt', path: $tmpExample);
 
         $zip->finish();
-        fclose($stream);
 
-        $tmpDir = $this->validateAndExtractZip($tmp);
+        $tmpDir = $this->validateAndExtractZip($this->tempfile);
 
         $files = $this->getRecursiveFileList($tmpDir);
         $this->assertSame(['sample.txt', 'test' . DIRECTORY_SEPARATOR . 'sample.txt'], $files);
 
         $this->assertStringEqualsFile($tmpDir . '/sample.txt', 'Sample String Data');
         $this->assertStringEqualsFile($tmpDir . '/test/sample.txt', 'More Simple Sample Data');
+
+        unlink($tmpExample);
     }
 
     public function testAddFileFromPathFileNotFoundException(): void
     {
         $this->expectException(FileNotFoundException::class);
 
-        [, $stream] = $this->getTmpFileStream();
-
         // Get ZipStream Object
         $zip = new ZipStream(
-            outputStream: $stream,
+            outputStream: $this->tempfileStream,
             sendHttpHeaders: false,
         );
 
@@ -191,10 +177,6 @@ class ZipStreamTest extends TestCase
     {
         $this->expectException(FileNotReadableException::class);
 
-
-        [, $stream] = $this->getTmpFileStream();
-
-
         // create new virtual filesystem
         $root = vfsStream::setup('vfs');
         // create a virtual file with no permissions
@@ -202,7 +184,7 @@ class ZipStreamTest extends TestCase
 
         // Get ZipStream Object
         $zip = new ZipStream(
-            outputStream: $stream,
+            outputStream: $this->tempfileStream,
             sendHttpHeaders: false,
         );
 
@@ -211,10 +193,8 @@ class ZipStreamTest extends TestCase
 
     public function testAddFileFromPathWithStorageMethod(): void
     {
-        [$tmp, $stream] = $this->getTmpFileStream();
-
         $zip = new ZipStream(
-            outputStream: $stream,
+            outputStream: $this->tempfileStream,
             sendHttpHeaders: false,
         );
 
@@ -229,10 +209,9 @@ class ZipStreamTest extends TestCase
         $zip->addFileFromPath('test/sample.txt', $tmpExample);
 
         $zip->finish();
-        fclose($stream);
 
         $zipArchive = new ZipArchive();
-        $zipArchive->open($tmp);
+        $zipArchive->open($this->tempfile);
 
         $sample1 = $zipArchive->statName('sample.txt');
         $this->assertSame(CompressionMethod::STORE->value, $sample1['comp_method']);
@@ -263,10 +242,8 @@ class ZipStreamTest extends TestCase
 
     public function testAddFileFromStream(): void
     {
-        [$tmp, $stream] = $this->getTmpFileStream();
-
         $zip = new ZipStream(
-            outputStream: $stream,
+            outputStream: $this->tempfileStream,
             sendHttpHeaders: false,
         );
 
@@ -284,9 +261,8 @@ class ZipStreamTest extends TestCase
         fclose($streamExample2);
 
         $zip->finish();
-        fclose($stream);
 
-        $tmpDir = $this->validateAndExtractZip($tmp);
+        $tmpDir = $this->validateAndExtractZip($this->tempfile);
 
         $files = $this->getRecursiveFileList($tmpDir);
         $this->assertSame(['sample.txt', 'test' . DIRECTORY_SEPARATOR . 'sample.txt'], $files);
@@ -299,11 +275,10 @@ class ZipStreamTest extends TestCase
     {
         $this->expectException(StreamNotReadableException::class);
 
-        [, $stream] = $this->getTmpFileStream();
         [$tmpInput] = $this->getTmpFileStream();
 
         $zip = new ZipStream(
-            outputStream: $stream,
+            outputStream: $this->tempfileStream,
             sendHttpHeaders: false,
         );
 
@@ -330,10 +305,8 @@ class ZipStreamTest extends TestCase
     {
         $this->expectException(ResourceActionException::class);
 
-        [,$stream] = $this->getTmpFileStream();
-
         $zip = new ZipStream(
-            outputStream: $stream,
+            outputStream: $this->tempfileStream,
             sendHttpHeaders: false,
             defaultEnableZeroHeader: false,
         );
@@ -347,10 +320,8 @@ class ZipStreamTest extends TestCase
     {
         $this->expectException(StreamNotSeekableException::class);
 
-        [, $stream] = $this->getTmpFileStream();
-
         $zip = new ZipStream(
-            outputStream: $stream,
+            outputStream: $this->tempfileStream,
             sendHttpHeaders: false,
             defaultEnableZeroHeader: false,
         );
@@ -368,10 +339,8 @@ class ZipStreamTest extends TestCase
 
     public function testAddFileFromStreamUnseekableInputWithZeroHeader(): void
     {
-        [$tmp, $stream] = $this->getTmpFileStream();
-
         $zip = new ZipStream(
-            outputStream: $stream,
+            outputStream: $this->tempfileStream,
             sendHttpHeaders: false,
             defaultEnableZeroHeader: true,
             defaultCompressionMethod: CompressionMethod::STORE,
@@ -392,9 +361,8 @@ class ZipStreamTest extends TestCase
         $zip->addFileFromStream('sample.txt', $streamUnseekable, maxSize: 7);
 
         $zip->finish();
-        fclose($stream);
 
-        $tmpDir = $this->validateAndExtractZip($tmp);
+        $tmpDir = $this->validateAndExtractZip($this->tempfile);
 
         $files = $this->getRecursiveFileList($tmpDir);
         $this->assertSame(['sample.txt'], $files);
@@ -404,10 +372,8 @@ class ZipStreamTest extends TestCase
 
     public function testAddFileFromStreamWithStorageMethod(): void
     {
-        [$tmp, $stream] = $this->getTmpFileStream();
-
         $zip = new ZipStream(
-            outputStream: $stream,
+            outputStream: $this->tempfileStream,
             sendHttpHeaders: false,
         );
 
@@ -424,10 +390,9 @@ class ZipStreamTest extends TestCase
         fclose($streamExample2);
 
         $zip->finish();
-        fclose($stream);
 
         $zipArchive = new ZipArchive();
-        $zipArchive->open($tmp);
+        $zipArchive->open($this->tempfile);
 
         $sample1 = $zipArchive->statName('sample.txt');
         $this->assertSame(CompressionMethod::STORE->value, $sample1['comp_method']);
@@ -440,10 +405,8 @@ class ZipStreamTest extends TestCase
 
     public function testAddFileFromPsr7Stream(): void
     {
-        [$tmp, $stream] = $this->getTmpFileStream();
-
         $zip = new ZipStream(
-            outputStream: $stream,
+            outputStream: $this->tempfileStream,
             sendHttpHeaders: false,
         );
 
@@ -452,9 +415,8 @@ class ZipStreamTest extends TestCase
 
         $zip->addFileFromPsr7Stream('sample.json', $response->getBody());
         $zip->finish();
-        fclose($stream);
 
-        $tmpDir = $this->validateAndExtractZip($tmp);
+        $tmpDir = $this->validateAndExtractZip($this->tempfile);
 
         $files = $this->getRecursiveFileList($tmpDir);
         $this->assertSame(['sample.json'], $files);
@@ -466,10 +428,8 @@ class ZipStreamTest extends TestCase
      */
     public function testAddLargeFileFromPsr7Stream(): void
     {
-        [$tmp, $stream] = $this->getTmpFileStream();
-
         $zip = new ZipStream(
-            outputStream: $stream,
+            outputStream: $this->tempfileStream,
             sendHttpHeaders: false,
             enableZip64: true,
         );
@@ -482,9 +442,8 @@ class ZipStreamTest extends TestCase
             lastModificationDateTime: new DateTimeImmutable('2022-01-01 01:01:01Z'),
         );
         $zip->finish();
-        fclose($stream);
 
-        $tmpDir = $this->validateAndExtractZip($tmp);
+        $tmpDir = $this->validateAndExtractZip($this->tempfile);
 
         $files = $this->getRecursiveFileList($tmpDir);
         $this->assertSame(['sample.json'], $files);
@@ -496,10 +455,8 @@ class ZipStreamTest extends TestCase
     {
         $this->expectException(RuntimeException::class);
 
-        [, $stream] = $this->getTmpFileStream();
-
         $zip = new ZipStream(
-            outputStream: $stream,
+            outputStream: $this->tempfileStream,
             sendHttpHeaders: false,
         );
         $zip->finish();
@@ -514,10 +471,8 @@ class ZipStreamTest extends TestCase
     {
         $this->expectException(OverflowException::class);
 
-        [, $stream] = $this->getTmpFileStream();
-
         $zip = new ZipStream(
-            outputStream: $stream,
+            outputStream: $this->tempfileStream,
             sendHttpHeaders: false,
             enableZip64: false,
         );
@@ -534,10 +489,8 @@ class ZipStreamTest extends TestCase
      */
     public function testManyFilesWithZip64(): void
     {
-        [$tmp, $stream] = $this->getTmpFileStream();
-
         $zip = new ZipStream(
-            outputStream: $stream,
+            outputStream: $this->tempfileStream,
             sendHttpHeaders: false,
             enableZip64: true,
         );
@@ -548,7 +501,7 @@ class ZipStreamTest extends TestCase
 
         $zip->finish();
 
-        $tmpDir = $this->validateAndExtractZip($tmp);
+        $tmpDir = $this->validateAndExtractZip($this->tempfile);
 
         $files = $this->getRecursiveFileList($tmpDir);
 
@@ -562,10 +515,8 @@ class ZipStreamTest extends TestCase
     {
         $this->expectException(OverflowException::class);
 
-        [, $stream] = $this->getTmpFileStream();
-
         $zip = new ZipStream(
-            outputStream: $stream,
+            outputStream: $this->tempfileStream,
             sendHttpHeaders: false,
             enableZip64: false,
             defaultCompressionMethod: CompressionMethod::STORE,
@@ -587,10 +538,8 @@ class ZipStreamTest extends TestCase
      */
     public function testLongZipWith64(): void
     {
-        [$tmp, $stream] = $this->getTmpFileStream();
-
         $zip = new ZipStream(
-            outputStream: $stream,
+            outputStream: $this->tempfileStream,
             sendHttpHeaders: false,
             enableZip64: true,
             defaultCompressionMethod: CompressionMethod::STORE,
@@ -607,9 +556,8 @@ class ZipStreamTest extends TestCase
         }
 
         $zip->finish();
-        fclose($stream);
 
-        $tmpDir = $this->validateAndExtractZip($tmp);
+        $tmpDir = $this->validateAndExtractZip($this->tempfile);
 
         $files = $this->getRecursiveFileList($tmpDir);
         $this->assertSame(['sample0', 'sample1', 'sample2', 'sample3'], $files);
@@ -622,10 +570,8 @@ class ZipStreamTest extends TestCase
     {
         $this->expectException(OverflowException::class);
 
-        [, $stream] = $this->getTmpFileStream();
-
         $zip = new ZipStream(
-            outputStream: $stream,
+            outputStream: $this->tempfileStream,
             sendHttpHeaders: false,
             enableZip64: false,
             defaultEnableZeroHeader: true,
@@ -645,10 +591,8 @@ class ZipStreamTest extends TestCase
      */
     public function testAddsZip64HeaderWhenNeeded(): void
     {
-        [$tmp, $stream] = $this->getTmpFileStream();
-
         $zip = new ZipStream(
-            outputStream: $stream,
+            outputStream: $this->tempfileStream,
             sendHttpHeaders: false,
             enableZip64: true,
             defaultEnableZeroHeader: false,
@@ -664,11 +608,11 @@ class ZipStreamTest extends TestCase
 
         $zip->finish();
 
-        $tmpDir = $this->validateAndExtractZip($tmp);
+        $tmpDir = $this->validateAndExtractZip($this->tempfile);
         $files = $this->getRecursiveFileList($tmpDir);
 
         $this->assertSame(['sample.json'], $files);
-        $this->assertFileContains($tmp, PackField::pack(
+        $this->assertFileContains($this->tempfile, PackField::pack(
             new PackField(format: 'V', value: 0x06064b50)
         ));
     }
@@ -678,10 +622,8 @@ class ZipStreamTest extends TestCase
      */
     public function testDoesNotAddZip64HeaderWhenNotNeeded(): void
     {
-        [$tmp, $stream] = $this->getTmpFileStream();
-
         $zip = new ZipStream(
-            outputStream: $stream,
+            outputStream: $this->tempfileStream,
             sendHttpHeaders: false,
             enableZip64: true,
             defaultEnableZeroHeader: false,
@@ -697,11 +639,11 @@ class ZipStreamTest extends TestCase
 
         $zip->finish();
 
-        $tmpDir = $this->validateAndExtractZip($tmp);
+        $tmpDir = $this->validateAndExtractZip($this->tempfile);
         $files = $this->getRecursiveFileList($tmpDir);
 
         $this->assertSame(['sample.json'], $files);
-        $this->assertFileDoesNotContain($tmp, PackField::pack(
+        $this->assertFileDoesNotContain($this->tempfile, PackField::pack(
             new PackField(format: 'V', value: 0x06064b50)
         ));
     }
@@ -713,10 +655,8 @@ class ZipStreamTest extends TestCase
     {
         $this->expectException(OverflowException::class);
 
-        [, $stream] = $this->getTmpFileStream();
-
         $zip = new ZipStream(
-            outputStream: $stream,
+            outputStream: $this->tempfileStream,
             sendHttpHeaders: false,
             enableZip64: false,
             defaultEnableZeroHeader: false,
@@ -733,9 +673,7 @@ class ZipStreamTest extends TestCase
 
     public function testAddFileFromPsr7StreamWithOutputToPsr7Stream(): void
     {
-        [$tmp, $resource] = $this->getTmpFileStream();
-        $psr7OutputStream = new ResourceStream($resource);
-
+        $psr7OutputStream = new ResourceStream($this->tempfileStream);
 
         $zip = new ZipStream(
             outputStream: $psr7OutputStream,
@@ -753,7 +691,7 @@ class ZipStreamTest extends TestCase
         $zip->finish();
         $psr7OutputStream->close();
 
-        $tmpDir = $this->validateAndExtractZip($tmp);
+        $tmpDir = $this->validateAndExtractZip($this->tempfile);
         $files = $this->getRecursiveFileList($tmpDir);
 
         $this->assertSame(['sample.json'], $files);
@@ -762,10 +700,8 @@ class ZipStreamTest extends TestCase
 
     public function testAddFileFromPsr7StreamWithFileSizeSet(): void
     {
-        [$tmp, $stream] = $this->getTmpFileStream();
-
         $zip = new ZipStream(
-            outputStream: $stream,
+            outputStream: $this->tempfileStream,
             sendHttpHeaders: false,
         );
 
@@ -782,9 +718,8 @@ class ZipStreamTest extends TestCase
             maxSize: $fileSize
         );
         $zip->finish();
-        fclose($stream);
 
-        $tmpDir = $this->validateAndExtractZip($tmp);
+        $tmpDir = $this->validateAndExtractZip($this->tempfile);
 
         $files = $this->getRecursiveFileList($tmpDir);
         $this->assertSame(['sample.json'], $files);
@@ -793,8 +728,6 @@ class ZipStreamTest extends TestCase
 
     public function testCreateArchiveHeaders(): void
     {
-        [, $stream] = $this->getTmpFileStream();
-
         $headers = [];
 
         $httpHeaderCallback = function (string $header) use (&$headers) {
@@ -802,7 +735,7 @@ class ZipStreamTest extends TestCase
         };
 
         $zip = new ZipStream(
-            outputStream: $stream,
+            outputStream: $this->tempfileStream,
             sendHttpHeaders: true,
             outputName: 'example.zip',
             httpHeaderCallback: $httpHeaderCallback,
@@ -813,7 +746,6 @@ class ZipStreamTest extends TestCase
             data: 'foo',
         );
         $zip->finish();
-        fclose($stream);
 
         $this->assertContains('Content-Type: application/x-zip', $headers);
         $this->assertContains("Content-Disposition: attachment; filename*=UTF-8''example.zip", $headers);
@@ -824,10 +756,8 @@ class ZipStreamTest extends TestCase
 
     public function testCreateArchiveWithFlushOptionSet(): void
     {
-        [$tmp, $stream] = $this->getTmpFileStream();
-
         $zip = new ZipStream(
-            outputStream: $stream,
+            outputStream: $this->tempfileStream,
             flushOutput: true,
             sendHttpHeaders: false,
         );
@@ -836,9 +766,8 @@ class ZipStreamTest extends TestCase
         $zip->addFile('test/sample.txt', 'More Simple Sample Data');
 
         $zip->finish();
-        fclose($stream);
 
-        $tmpDir = $this->validateAndExtractZip($tmp);
+        $tmpDir = $this->validateAndExtractZip($this->tempfile);
 
         $files = $this->getRecursiveFileList($tmpDir);
         $this->assertSame(['sample.txt', 'test' . DIRECTORY_SEPARATOR . 'sample.txt'], $files);
@@ -853,10 +782,8 @@ class ZipStreamTest extends TestCase
         ob_end_flush();
         $this->assertSame(0, ob_get_level());
 
-        [$tmp, $stream] = $this->getTmpFileStream();
-
         $zip = new ZipStream(
-            outputStream: $stream,
+            outputStream: $this->tempfileStream,
             flushOutput: true,
             sendHttpHeaders: false,
         );
@@ -864,9 +791,8 @@ class ZipStreamTest extends TestCase
         $zip->addFile('sample.txt', 'Sample String Data');
 
         $zip->finish();
-        fclose($stream);
 
-        $tmpDir = $this->validateAndExtractZip($tmp);
+        $tmpDir = $this->validateAndExtractZip($this->tempfile);
         $this->assertStringEqualsFile($tmpDir . '/sample.txt', 'Sample String Data');
 
         // WORKAROUND (2/2): add back output buffering so that PHPUnit doesn't complain that it is missing
@@ -875,19 +801,16 @@ class ZipStreamTest extends TestCase
 
     public function testAddEmptyDirectory(): void
     {
-        [$tmp, $stream] = $this->getTmpFileStream();
-
         $zip = new ZipStream(
-            outputStream: $stream,
+            outputStream: $this->tempfileStream,
             sendHttpHeaders: false,
         );
 
         $zip->addDirectory('foo');
 
         $zip->finish();
-        fclose($stream);
 
-        $tmpDir = $this->validateAndExtractZip($tmp);
+        $tmpDir = $this->validateAndExtractZip($this->tempfile);
 
         $files = $this->getRecursiveFileList($tmpDir, includeDirectories: true);
 
@@ -899,14 +822,12 @@ class ZipStreamTest extends TestCase
 
     public function testAddFileSimulate(): void
     {
-        [, $stream] = $this->getTmpFileStream();
-
-        $create = function (OperationMode $operationMode) use ($stream): int {
+        $create = function (OperationMode $operationMode): int {
             $zip = new ZipStream(
                 sendHttpHeaders: false,
                 operationMode: $operationMode,
                 defaultEnableZeroHeader: true,
-                outputStream: $stream,
+                outputStream: $this->tempfileStream,
             );
 
             $zip->addFile('sample.txt', 'Sample String Data');
@@ -924,15 +845,13 @@ class ZipStreamTest extends TestCase
 
     public function testAddFileSimulateWithMaxSize(): void
     {
-        [, $stream] = $this->getTmpFileStream();
-
-        $create = function (OperationMode $operationMode) use ($stream): int {
+        $create = function (OperationMode $operationMode): int {
             $zip = new ZipStream(
                 sendHttpHeaders: false,
                 operationMode: $operationMode,
                 defaultCompressionMethod: CompressionMethod::STORE,
                 defaultEnableZeroHeader: true,
-                outputStream: $stream,
+                outputStream: $this->tempfileStream,
             );
 
             $zip->addFile('sample.txt', 'Sample String Data', maxSize: 0);
@@ -949,15 +868,13 @@ class ZipStreamTest extends TestCase
 
     public function testAddFileSimulateWithFstat(): void
     {
-        [, $stream] = $this->getTmpFileStream();
-
-        $create = function (OperationMode $operationMode) use ($stream): int {
+        $create = function (OperationMode $operationMode): int {
             $zip = new ZipStream(
                 sendHttpHeaders: false,
                 operationMode: $operationMode,
                 defaultCompressionMethod: CompressionMethod::STORE,
                 defaultEnableZeroHeader: true,
-                outputStream: $stream,
+                outputStream: $this->tempfileStream,
             );
 
             $zip->addFile('sample.txt', 'Sample String Data');
@@ -975,15 +892,13 @@ class ZipStreamTest extends TestCase
 
     public function testAddFileSimulateWithExactSizeZero(): void
     {
-        [, $stream] = $this->getTmpFileStream();
-
-        $create = function (OperationMode $operationMode) use ($stream): int {
+        $create = function (OperationMode $operationMode): int {
             $zip = new ZipStream(
                 sendHttpHeaders: false,
                 operationMode: $operationMode,
                 defaultCompressionMethod: CompressionMethod::STORE,
                 defaultEnableZeroHeader: true,
-                outputStream: $stream,
+                outputStream: $this->tempfileStream,
             );
 
             $zip->addFile('sample.txt', 'Sample String Data', exactSize: 18);
@@ -1000,15 +915,13 @@ class ZipStreamTest extends TestCase
 
     public function testAddFileSimulateWithExactSizeInitial(): void
     {
-        [, $stream] = $this->getTmpFileStream();
-
-        $create = function (OperationMode $operationMode) use ($stream): int {
+        $create = function (OperationMode $operationMode): int {
             $zip = new ZipStream(
                 sendHttpHeaders: false,
                 operationMode: $operationMode,
                 defaultCompressionMethod: CompressionMethod::STORE,
                 defaultEnableZeroHeader: false,
-                outputStream: $stream,
+                outputStream: $this->tempfileStream,
             );
 
             $zip->addFile('sample.txt', 'Sample String Data', exactSize: 18);
@@ -1024,15 +937,13 @@ class ZipStreamTest extends TestCase
 
     public function testAddFileSimulateWithZeroSizeInFstat(): void
     {
-        [, $stream] = $this->getTmpFileStream();
-
-        $create = function (OperationMode $operationMode) use ($stream): int {
+        $create = function (OperationMode $operationMode): int {
             $zip = new ZipStream(
                 sendHttpHeaders: false,
                 operationMode: $operationMode,
                 defaultCompressionMethod: CompressionMethod::STORE,
                 defaultEnableZeroHeader: false,
-                outputStream: $stream,
+                outputStream: $this->tempfileStream,
             );
 
             $zip->addFileFromPsr7Stream('sample.txt', new class () implements StreamInterface {
@@ -1179,7 +1090,6 @@ class ZipStreamTest extends TestCase
 
     public function testAddFileCallbackLax(): void
     {
-
         $zip = new ZipStream(
             operationMode: OperationMode::SIMULATE_LAX,
             defaultEnableZeroHeader: false,
@@ -1197,13 +1107,11 @@ class ZipStreamTest extends TestCase
 
     public function testExecuteSimulation(): void
     {
-        [$tmp, $stream] = $this->getTmpFileStream();
-
         $zip = new ZipStream(
             operationMode: OperationMode::SIMULATE_LAX,
             defaultEnableZeroHeader: false,
             sendHttpHeaders: false,
-            outputStream: $stream,
+            outputStream: $this->tempfileStream,
         );
 
         $zip->addFileFromCallback(
@@ -1216,16 +1124,15 @@ class ZipStreamTest extends TestCase
 
         $size = $zip->finish();
 
-        $this->assertEquals(filesize($tmp), 0);
+        $this->assertEquals(filesize($this->tempfile), 0);
 
         $zip->executeSimulation();
-        fclose($stream);
 
         clearstatcache();
 
-        $this->assertEquals(filesize($tmp), $size);
+        $this->assertEquals(filesize($this->tempfile), $size);
 
-        $tmpDir = $this->validateAndExtractZip($tmp);
+        $tmpDir = $this->validateAndExtractZip($this->tempfile);
 
         $files = $this->getRecursiveFileList($tmpDir);
         $this->assertSame(['sample.txt'], $files);
@@ -1235,14 +1142,11 @@ class ZipStreamTest extends TestCase
     {
         $this->expectException(RuntimeException::class);
 
-
-        [, $stream] = $this->getTmpFileStream();
-
         $zip = new ZipStream(
             operationMode: OperationMode::SIMULATE_LAX,
             defaultEnableZeroHeader: false,
             sendHttpHeaders: false,
-            outputStream: $stream,
+            outputStream: $this->tempfileStream,
         );
 
         $zip->executeSimulation();
@@ -1280,5 +1184,7 @@ class ZipStreamTest extends TestCase
         $this->assertSame(['sample.txt'], $files);
 
         $this->assertSame(sha1_file($tmpDir . '/sample.txt'), $shaExample, "SHA-1 Mismatch Method: {$compressionMethod->value}");
+
+        unlink($tmp);
     }
 }
