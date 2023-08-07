@@ -113,7 +113,7 @@ The native Mac OS archive extraction tool prior to macOS 10.15 might not open
 archives in some conditions. A workaround is to disable the Zip64 feature with
 the option ``enableZip64: false``. This limits the archive to 4 Gb and 64k files
 but will allow users on macOS 10.14 and below to open them without issue.
-See `#116 <https://github.com/maennchen/ZipStream-PHP/issues/146>`_.
+See `#116 <https://github.com/maennchen/ZipStream-PHP/issues/116>`_.
 
 The linux ``unzip`` utility might not handle properly unicode characters.
 It is recommended to extract with another tool like
