@@ -30,7 +30,7 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: SetUp PHP
         id: setup-php
         uses: shivammathur/setup-php@v2
@@ -95,7 +95,7 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: SetUp PHP
         id: setup-php
         uses: shivammathur/setup-php@v2
@@ -127,7 +127,7 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: SetUp PHP
         id: setup-php
         uses: shivammathur/setup-php@v2
