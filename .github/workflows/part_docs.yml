@@ -40,7 +40,7 @@ jobs:
         run: composer run install:tools
       - name: Generate Docs
         run: composer run docs:generate
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: docs
           path: docs
