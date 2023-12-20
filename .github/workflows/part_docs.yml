@@ -45,7 +45,7 @@ jobs:
           name: docs
           path: docs
       - name: Package for GitHub Pages
-        uses: actions/upload-pages-artifact@v2
+        uses: actions/upload-pages-artifact@v3
         with:
           path: docs
 
