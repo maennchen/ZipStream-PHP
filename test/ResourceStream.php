@@ -17,8 +17,7 @@ class ResourceStream implements StreamInterface
          * @var resource
          */
         private $stream
-    ) {
-    }
+    ) {}
 
     public function __toString(): string
     {

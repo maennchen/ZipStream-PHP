@@ -263,7 +263,7 @@ class ZipStream
     ): void {
         $this->addFileFromCallback(
             fileName: $fileName,
-            callback: fn () => $data,
+            callback: fn() => $data,
             comment: $comment,
             compressionMethod: $compressionMethod,
             deflateLevel: $deflateLevel,
@@ -394,7 +394,7 @@ class ZipStream
     ): void {
         $this->addFileFromCallback(
             fileName: $fileName,
-            callback: fn () => $stream,
+            callback: fn() => $stream,
             comment: $comment,
             compressionMethod: $compressionMethod,
             deflateLevel: $deflateLevel,
@@ -473,7 +473,7 @@ class ZipStream
     ): void {
         $this->addFileFromCallback(
             fileName: $fileName,
-            callback: fn () => $stream,
+            callback: fn() => $stream,
             comment: $comment,
             compressionMethod: $compressionMethod,
             deflateLevel: $deflateLevel,
@@ -581,7 +581,7 @@ class ZipStream
                 if ($maxSize !== null && fwrite($stream, $data, $maxSize) === false) {
                     // @codeCoverageIgnoreStart
                     throw new ResourceActionException('fwrite', $stream);
-                    // @codeCoverageIgnoreEnd
+                // @codeCoverageIgnoreEnd
                 } elseif (fwrite($stream, $data) === false) {
                     // @codeCoverageIgnoreStart
                     throw new ResourceActionException('fwrite', $stream);
