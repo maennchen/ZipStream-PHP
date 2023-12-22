@@ -19,8 +19,7 @@ class PackField
     public function __construct(
         public readonly string $format,
         public readonly int|string $value
-    ) {
-    }
+    ) {}
 
     /**
      * Create a format string and argument list for pack(), then call

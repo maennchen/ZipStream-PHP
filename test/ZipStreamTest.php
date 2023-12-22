@@ -954,13 +954,9 @@ class ZipStreamTest extends TestCase
                     return 'test';
                 }
 
-                public function close(): void
-                {
-                }
+                public function close(): void {}
 
-                public function detach()
-                {
-                }
+                public function detach() {}
 
                 public function getSize(): ?int
                 {
