@@ -95,7 +95,7 @@ class File
 
         if ($this->enableZeroHeader) {
             // No calculation required
-        } elseif ($this->isSimulation() && $forecastSize) {
+        } elseif ($this->isSimulation() && $forecastSize !== null) {
             $this->uncompressedSize = $forecastSize;
             $this->compressedSize = $forecastSize;
         } else {
@@ -158,7 +158,7 @@ class File
         if ($this->compressionMethod !== CompressionMethod::STORE) {
             return null;
         }
-        if ($this->exactSize) {
+        if ($this->exactSize !== null) {
             return $this->exactSize;
         }
         $fstat = fstat($this->unpackStream());
@@ -350,7 +350,7 @@ class File
             }
         }
 
-        if ($this->exactSize && $this->uncompressedSize !== $this->exactSize) {
+        if ($this->exactSize !== null && $this->uncompressedSize !== $this->exactSize) {
             throw new FileSizeIncorrectException(expectedSize: $this->exactSize, actualSize: $this->uncompressedSize);
         }
 

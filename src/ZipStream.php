@@ -330,7 +330,8 @@ class ZipStream
             throw new FileNotReadableException($path);
         }
 
-        if ($fileTime = filemtime($path)) {
+        $fileTime = filemtime($path);
+        if ($fileTime !== false) {
             $lastModificationDateTime ??= (new DateTimeImmutable())->setTimestamp($fileTime);
         }
 
@@ -581,7 +582,7 @@ class ZipStream
                 if ($maxSize !== null && fwrite($stream, $data, $maxSize) === false) {
                     // @codeCoverageIgnoreStart
                     throw new ResourceActionException('fwrite', $stream);
-                // @codeCoverageIgnoreEnd
+                    // @codeCoverageIgnoreEnd
                 } elseif (fwrite($stream, $data) === false) {
                     // @codeCoverageIgnoreStart
                     throw new ResourceActionException('fwrite', $stream);
@@ -823,7 +824,7 @@ class ZipStream
         // grab content disposition
         $disposition = $this->contentDisposition;
 
-        if ($this->outputName) {
+        if ($this->outputName !== null) {
             // Various different browsers dislike various characters here. Strip them all for safety.
             $safeOutput = trim(str_replace(['"', "'", '\\', ';', "\n", "\r"], '', $this->outputName));
 

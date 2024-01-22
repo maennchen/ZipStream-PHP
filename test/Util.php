@@ -106,7 +106,7 @@ trait Util
     protected function getRecursiveFileList(string $path, bool $includeDirectories = false): array
     {
         $data = [];
-        $path = (string)realpath($path);
+        $path = (string) realpath($path);
         $files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($path));
 
         $pathLen = strlen($path);

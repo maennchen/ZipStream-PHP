@@ -52,7 +52,7 @@
     "test:formatted": "@format --dry-run --stop-on-violation --using-cache=no",
     "test:lint": "psalm --stats --show-info=true --find-unused-psalm-suppress",
     "coverage:report": "php-coveralls --coverage_clover=coverage.clover.xml --json_path=coveralls-upload.json --insecure",
-    "install:tools": "phive install --trust-gpg-keys 0x67F861C3D889C656",
+    "install:tools": "phive install --trust-gpg-keys 0x67F861C3D889C656 --trust-gpg-keys 0x8AC0BAA79732DD42",
     "docs:generate": "tools/phpdocumentor --sourcecode"
   },
   "autoload": {
