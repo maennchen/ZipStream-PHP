@@ -59,7 +59,7 @@ use ZipStream\Exception\ResourceActionException;
  *
  * // read and add each file to the archive
  * foreach ($files as $path)
- *   $zip->addFileFormPath(fileName: $path, $path);
+ *   $zip->addFileFromPath(fileName: $path, $path);
  *
  * // write archive footer to stream
  * $zip->finish();
@@ -293,7 +293,7 @@ class ZipStream
      * // add a file named 'bigfile.rar' from the local file
      * // '/usr/share/bigfile.rar' with a comment and a last-modified
      * // time of two hours ago
-     * $zip->addFile(
+     * $zip->addFileFromPath(
      *   fileName: 'bigfile.rar',
      *   path: '/usr/share/bigfile.rar',
      *   comment: 'this is a comment about bigfile.rar',
@@ -494,7 +494,7 @@ class ZipStream
      *
      * ```php
      * foreach($files as $name => $size) {
-     *   $archive->addFileFromPsr7Stream(
+     *   $archive->addFileFromCallback(
      *     fileName: 'streamfile.txt',
      *     exactSize: $size,
      *     callback: function() use($name): Psr\Http\Message\StreamInterface {
@@ -629,7 +629,7 @@ class ZipStream
      *
      * ```php
      * // add a directory named 'world/'
-     * $zip->addFile(fileName: 'world/');
+     * $zip->addDirectory(fileName: 'world/');
      * ```
      */
     public function addDirectory(
