@@ -58,7 +58,7 @@ class ResourceStream implements StreamInterface
 
     public function isSeekable(): bool
     {
-        return (bool)$this->getMetadata('seekable');
+        return (bool) $this->getMetadata('seekable');
     }
 
     public function getMetadata(?string $key = null)

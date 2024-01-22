@@ -1161,7 +1161,7 @@ class ZipStreamTest extends TestCase
 
         [$tmpExample, $streamExample] = $this->getTmpFileStream();
         for ($i = 0; $i <= 10000; $i++) {
-            fwrite($streamExample, sha1((string)$i));
+            fwrite($streamExample, sha1((string) $i));
             if ($i % 100 === 0) {
                 fwrite($streamExample, "\n");
             }
