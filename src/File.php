@@ -107,11 +107,11 @@ class File
 
         $this->addFileHeader();
 
-        $detectedSize = $forecastSize ?? $this->compressedSize;
+        $detectedSize = $forecastSize ?? ($this->compressedSize > 0 ? $this->compressedSize : null);
 
         if (
             $this->isSimulation() &&
-            $detectedSize > 0
+            $detectedSize !== null
         ) {
             ($this->recordSentBytes)($detectedSize);
         } else {

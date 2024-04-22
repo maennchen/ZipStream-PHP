@@ -1104,7 +1104,8 @@ class ZipStreamTest extends TestCase
     public function testExecuteSimulation(): void
     {
         $zip = new ZipStream(
-            operationMode: OperationMode::SIMULATE_LAX,
+            operationMode: OperationMode::SIMULATE_STRICT,
+            defaultCompressionMethod: CompressionMethod::STORE,
             defaultEnableZeroHeader: false,
             sendHttpHeaders: false,
             outputStream: $this->tempfileStream,
@@ -1115,6 +1116,14 @@ class ZipStreamTest extends TestCase
             exactSize: 18,
             callback: function () {
                 return 'Sample String Data';
+            }
+        );
+
+        $zip->addFileFromCallback(
+            '.gitkeep',
+            exactSize: 0,
+            callback: function () {
+                return '';
             }
         );
 
@@ -1131,7 +1140,7 @@ class ZipStreamTest extends TestCase
         $tmpDir = $this->validateAndExtractZip($this->tempfile);
 
         $files = $this->getRecursiveFileList($tmpDir);
-        $this->assertSame(['sample.txt'], $files);
+        $this->assertSame(['.gitkeep', 'sample.txt'], $files);
     }
 
     public function testExecuteSimulationBeforeFinish(): void
