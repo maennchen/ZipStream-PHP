@@ -36,7 +36,7 @@ In your bug report, please provide the following:
 - tried that didn't work)
 
 Please do not report a bug for a version of ZIPStream-PHP that is no longer
-supported (`< 2.0.0`). Please do not report a bug if you are using a version of
+supported (`< 3.0.0`). Please do not report a bug if you are using a version of
 PHP that is not supported by the version of ZipStream-PHP you are using.
 
 Please post code and output as text

@@ -134,8 +134,8 @@ Careful: Always check the `README` on `main` for up-to-date information.
 | Version | New Features | Bugfixes | Security |
 |---------|--------------|----------|----------|
 | *3*     | ✓            | ✓        | ✓        |
-| *2*     | ✗            | ✓        | ✓        |
-| *1*     | ✗            | ✗        | ✓        |
+| *2*     | ✗            | ✗        | ✓        |
+| *1*     | ✗            | ✗        | ✗        |
 | *0*     | ✗            | ✗        | ✗        |
 
 This library aligns itself with the PHP core support. New features and bugfixes
