@@ -5,6 +5,9 @@ on:
 
 name: "Main Branch"
 
+permissions:
+  contents: read
+
 jobs:
   test:
     name: "Test"

@@ -5,9 +5,15 @@ on:
 
 name: "Stable Tag"
 
+permissions:
+  contents: read
+
 jobs:
   release:
     name: "Release"
+
+    permissions:
+      contents: write
 
     uses: ./.github/workflows/part_release.yml
     with:
@@ -22,4 +28,60 @@ jobs:
     uses: ./.github/workflows/part_docs.yml
     with:
       releaseName: "${{ github.ref_name }}"
-      publishToPages: true
+
+  deploy_pages:
+    name: "Deploy to GitHub Pages"
+
+    needs: ["release", "docs"]
+
+    runs-on: ubuntu-latest
+
+    if: ${{ inputs.publishToPages }}
+
+    needs: ["generate"]
+
+    permissions:
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  upload_release:
+    name: "Upload"
+
+    needs: ["release", "docs"]
+
+    runs-on: ubuntu-latest
+
+    if: ${{ inputs.releaseName }}
+
+    needs: ["generate"]
+
+    permissions:
+      contents: write
+      attestations: write
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: docs
+          path: docs
+      - run: |
+          tar -czvf docs.tar.gz docs
+      - name: Upload
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload --clobber "${{ inputs.releaseName }}" \
+            docs.tar.gz
+      - name: "Attest Documentation"
+        uses: actions/attest@v1
+        subject-path: "docs.tar.gz"

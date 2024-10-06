@@ -5,9 +5,15 @@ on:
 
 name: "Beta Tag"
 
+permissions:
+  contents: read
+
 jobs:
   release:
     name: "Release"
+
+    permissions:
+      contents: write
 
     uses: ./.github/workflows/part_release.yml
     with:

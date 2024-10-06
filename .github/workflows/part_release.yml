@@ -11,6 +11,9 @@ on:
 
 name: "Release"
 
+permissions:
+  contents: read
+
 jobs:
   create_prerelease:
     name: Create Prerelease
