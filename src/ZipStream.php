@@ -564,11 +564,11 @@ class ZipStream
             dataCallback: function () use ($callback, $maxSize) {
                 $data = $callback();
 
-                if(is_resource($data)) {
+                if (is_resource($data)) {
                     return $data;
                 }
 
-                if($data instanceof StreamInterface) {
+                if ($data instanceof StreamInterface) {
                     return StreamWrapper::getResource($data);
                 }
 
@@ -612,7 +612,7 @@ class ZipStream
             enableZeroHeader: $enableZeroHeader ?? $this->defaultEnableZeroHeader,
         );
 
-        if($this->operationMode !== OperationMode::NORMAL) {
+        if ($this->operationMode !== OperationMode::NORMAL) {
             $this->recordedSimulation[] = $file;
         }
 
@@ -677,11 +677,11 @@ class ZipStream
      */
     public function executeSimulation(): void
     {
-        if($this->operationMode !== OperationMode::NORMAL) {
+        if ($this->operationMode !== OperationMode::NORMAL) {
             throw new RuntimeException('Zip simulation is not finished.');
         }
 
-        foreach($this->recordedSimulation as $file) {
+        foreach ($this->recordedSimulation as $file) {
             $this->centralDirectoryRecords[] = $file->cloneSimulationExecution()->process();
         }
 
@@ -855,7 +855,7 @@ class ZipStream
         $this->centralDirectoryRecords = [];
         $this->offset = 0;
 
-        if($this->operationMode === OperationMode::NORMAL) {
+        if ($this->operationMode === OperationMode::NORMAL) {
             $this->ready = false;
             $this->recordedSimulation = [];
         } else {

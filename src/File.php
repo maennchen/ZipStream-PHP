@@ -184,7 +184,7 @@ class File
 
         $zip64Enabled = $footer !== '';
 
-        if($zip64Enabled) {
+        if ($zip64Enabled) {
             $this->version = Version::ZIP64;
         }
 
@@ -359,7 +359,7 @@ class File
 
     private function compressionInit(): ?DeflateContext
     {
-        switch($this->compressionMethod) {
+        switch ($this->compressionMethod) {
             case CompressionMethod::STORE:
                 // Noting to do
                 return null;
@@ -390,7 +390,7 @@ class File
 
         return CentralDirectoryFileHeader::generate(
             versionMadeBy: ZipStream::ZIP_VERSION_MADE_BY,
-            versionNeededToExtract:$this->version->value,
+            versionNeededToExtract: $this->version->value,
             generalPurposeBitFlag: $this->generalPurposeBitFlag,
             compressionMethod: $this->compressionMethod,
             lastModificationDateTime: $this->lastModificationDateTime,

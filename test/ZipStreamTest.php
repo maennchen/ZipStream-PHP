@@ -946,7 +946,7 @@ class ZipStreamTest extends TestCase
                 outputStream: $this->tempfileStream,
             );
 
-            $zip->addFileFromPsr7Stream('sample.txt', new class () implements StreamInterface {
+            $zip->addFileFromPsr7Stream('sample.txt', new class implements StreamInterface {
                 public $pos = 0;
 
                 public function __toString(): string

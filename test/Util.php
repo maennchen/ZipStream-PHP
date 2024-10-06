@@ -77,7 +77,7 @@ trait Util
 
     protected function zipArchiveOpenErrorCodeName(int $code): string
     {
-        switch($code) {
+        switch ($code) {
             case ZipArchive::ER_EXISTS: return 'ER_EXISTS';
             case ZipArchive::ER_INCONS: return 'ER_INCONS';
             case ZipArchive::ER_INVAL: return 'ER_INVAL';

@@ -53,7 +53,7 @@ class EndlessCycleStream implements StreamInterface
 
     public function seek(int $offset, int $whence = SEEK_SET): void
     {
-        switch($whence) {
+        switch ($whence) {
             case SEEK_SET:
                 $this->offset = $offset;
                 break;

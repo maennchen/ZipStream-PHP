@@ -14,7 +14,7 @@ trait Assertions
         while (!feof($handle)) {
             $line = fgets($handle, 1024);
 
-            if(str_contains($last . $line, $needle)) {
+            if (str_contains($last . $line, $needle)) {
                 fclose($handle);
                 return;
             }
@@ -35,7 +35,7 @@ trait Assertions
         while (!feof($handle)) {
             $line = fgets($handle, 1024);
 
-            if(str_contains($last . $line, $needle)) {
+            if (str_contains($last . $line, $needle)) {
                 fclose($handle);
 
                 $this->fail("File {$filePath} must not contain {$needle}");

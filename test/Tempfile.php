@@ -24,7 +24,7 @@ trait Tempfile
     protected function tearDown(): void
     {
         unlink($this->tempfile);
-        if(is_resource($this->tempfileStream)) {
+        if (is_resource($this->tempfileStream)) {
             fclose($this->tempfileStream);
         }
 
