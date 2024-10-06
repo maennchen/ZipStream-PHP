@@ -6,6 +6,7 @@
 [![Total Downloads](https://poser.pugx.org/maennchen/zipstream-php/downloads)](https://packagist.org/packages/maennchen/zipstream-php)
 [![Financial Contributors on Open Collective](https://opencollective.com/zipstream/all/badge.svg?label=financial+contributors)](https://opencollective.com/zipstream) [![License](https://img.shields.io/github/license/maennchen/zipstream-php.svg)](LICENSE)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/9524/badge)](https://www.bestpractices.dev/projects/9524)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/maennchen/ZipStream-PHP/badge)](https://scorecard.dev/viewer/?uri=github.com/maennchen/ZipStream-PHP)
 
 ## Unstable Branch
 
