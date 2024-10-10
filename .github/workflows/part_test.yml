@@ -32,11 +32,16 @@ jobs:
             experimental: false
 
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
+        with:
+          egress-policy: audit
+
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4.2.1
       - name: SetUp PHP
         id: setup-php
-        uses: shivammathur/setup-php@v2
+        uses: shivammathur/setup-php@c541c155eee45413f5b09a52248675b1a2575231 # v2
         with:
           php-version: "${{ matrix.php }}"
           tools: phpunit
@@ -51,7 +56,7 @@ jobs:
         if: "${{ runner.os == 'Windows' }}"
         run: echo "dir=$(composer config cache-files-dir)" >> $env:GITHUB_OUTPUT
       - name: Cache Deps
-        uses: actions/cache@v4
+        uses: actions/cache@3624ceb22c1c5a301c8db4169662070a689d9ea8 # v4.1.1
         id: cache
         with:
           path: ${{ steps.composer-cache-common.outputs.dir }}${{ steps.composer-cache-windows.outputs.dir }}
@@ -85,8 +90,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
+        with:
+          egress-policy: audit
+
       - name: Coveralls Finished
-        uses: coverallsapp/github-action@v2.3.0
+        uses: coverallsapp/github-action@643bc377ffa44ace6394b2b5d0d3950076de9f63 # v2.3.0
         with:
           github-token: ${{ secrets.github_token }}
           parallel-finished: true
@@ -97,18 +107,23 @@ jobs:
     runs-on: "ubuntu-latest"
 
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
+        with:
+          egress-policy: audit
+
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4.2.1
       - name: SetUp PHP
         id: setup-php
-        uses: shivammathur/setup-php@v2
+        uses: shivammathur/setup-php@c541c155eee45413f5b09a52248675b1a2575231 # v2
         with:
           php-version: "8.3"
       - name: Get composer cache directory
         id: composer-cache
         run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
       - name: Cache Deps
-        uses: actions/cache@v4
+        uses: actions/cache@3624ceb22c1c5a301c8db4169662070a689d9ea8 # v4.1.1
         id: cache
         with:
           path: ${{ steps.composer-cache.outputs.dir }}
@@ -129,18 +144,23 @@ jobs:
     runs-on: "ubuntu-latest"
 
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
+        with:
+          egress-policy: audit
+
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4.2.1
       - name: SetUp PHP
         id: setup-php
-        uses: shivammathur/setup-php@v2
+        uses: shivammathur/setup-php@c541c155eee45413f5b09a52248675b1a2575231 # v2
         with:
           php-version: "8.3"
       - name: Get composer cache directory
         id: composer-cache
         run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
       - name: Cache Deps
-        uses: actions/cache@v4
+        uses: actions/cache@3624ceb22c1c5a301c8db4169662070a689d9ea8 # v4.1.1
         id: cache
         with:
           path: ${{ steps.composer-cache.outputs.dir }}
@@ -154,3 +174,16 @@ jobs:
         run: composer install --prefer-dist
       - name: Run PHP-CS
         run: composer run test:formatted
+
+  dependency-review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
+        with:
+          egress-policy: audit
+
+      - name: 'Checkout Repository'
+        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4.2.1
+      - name: 'Dependency Review'
+        uses: actions/dependency-review-action@5a2ce3f5b92ee19cbb1541a4984c76d921601d7c # v4.3.4

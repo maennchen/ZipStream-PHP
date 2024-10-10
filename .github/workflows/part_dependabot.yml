@@ -17,7 +17,12 @@ jobs:
       contents: write
 
     steps:
-      - uses: fastify/github-action-merge-dependabot@v3.10
+      - name: Harden Runner
+        uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
+        with:
+          egress-policy: audit
+
+      - uses: fastify/github-action-merge-dependabot@3892334d1c649bb8119af3d22a3f3766bd5e593f # v3.10.2
         with:
           github-token: ${{ github.token }}
           use-github-auto-merge: true
