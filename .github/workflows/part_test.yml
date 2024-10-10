@@ -136,7 +136,11 @@ jobs:
       - name: Install Deps
         run: composer install --prefer-dist
       - name: Run Psalm
-        run: composer run test:lint
+        run: composer run test:lint -- --report=results.sarif
+      - name: "Upload SARIF"
+        uses: github/codeql-action/upload-sarif@c36620d31ac7c881962c3d9dd939c40ec9434f2b # v3
+        with:
+          sarif_file: results.sarif
 
   php-cs:
     name: Run PHP-CS
