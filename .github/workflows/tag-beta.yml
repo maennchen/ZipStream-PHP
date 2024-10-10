@@ -9,21 +9,21 @@ permissions:
   contents: read
 
 jobs:
-  release:
-    name: "Release"
-
-    permissions:
-      contents: write
-
-    uses: ./.github/workflows/part_release.yml
-    with:
-      releaseName: "${{ github.ref_name }}"
-
   docs:
     name: "Docs"
 
-    needs: ["release"]
-
     uses: ./.github/workflows/part_docs.yml
+
+  release:
+    name: "Release"
+
+    needs: ["docs"]
+
+    permissions:
+      id-token: write
+      contents: write
+      attestations: write
+
+    uses: ./.github/workflows/part_release.yml
     with:
       releaseName: "${{ github.ref_name }}"
