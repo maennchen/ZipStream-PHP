@@ -14,6 +14,7 @@ jobs:
     name: "Test"
 
     permissions:
+      contents: read
       security-events: write
 
     uses: ./.github/workflows/part_test.yml
