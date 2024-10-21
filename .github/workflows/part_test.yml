@@ -96,7 +96,7 @@ jobs:
           egress-policy: audit
 
       - name: Coveralls Finished
-        uses: coverallsapp/github-action@1134c89e4bf10443bf8f0ec69640b667cfd91041 # v2.3.1
+        uses: coverallsapp/github-action@4cdef0b2dbe0c9aa26bed48edb868db738625e79 # v2.3.3
         with:
           github-token: ${{ secrets.github_token }}
           parallel-finished: true
@@ -141,7 +141,7 @@ jobs:
       - name: Run Psalm
         run: composer run test:lint -- --report=results.sarif
       - name: "Upload SARIF"
-        uses: github/codeql-action/upload-sarif@c36620d31ac7c881962c3d9dd939c40ec9434f2b # v3
+        uses: github/codeql-action/upload-sarif@f779452ac5af1c261dce0346a8f964149f49322b # v3
         with:
           sarif_file: results.sarif
 
