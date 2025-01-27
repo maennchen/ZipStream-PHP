@@ -73,9 +73,7 @@ jobs:
         if: matrix.php == 'nightly'
         run: composer install --prefer-dist --ignore-platform-req=php+
       - name: Run PHPUnit
-        run: composer run test:unit
-        env:
-          XDEBUG_MODE: coverage
+        run: composer run test:unit:cov
       - name: Upload coverage results to Coveralls
         env:
           COVERALLS_REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
