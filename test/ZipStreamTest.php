@@ -1157,6 +1157,46 @@ class ZipStreamTest extends TestCase
         $zip->executeSimulation();
     }
 
+    /**
+     * @group slow
+     */
+    public function testSimulationWithLargeZip64AndZeroHeader(): void
+    {
+        $zip = new ZipStream(
+            outputStream: $this->tempfileStream,
+            sendHttpHeaders: false,
+            operationMode: OperationMode::SIMULATE_STRICT,
+            defaultCompressionMethod: CompressionMethod::STORE,
+            outputName: 'archive.zip',
+            enableZip64: true,
+            defaultEnableZeroHeader: true
+        );
+
+        $zip->addFileFromPsr7Stream(
+            fileName: 'large',
+            stream: new EndlessCycleStream('large'),
+            exactSize: 0x120000000, // ~5gb
+            compressionMethod: CompressionMethod::STORE,
+            lastModificationDateTime: new DateTimeImmutable('2022-01-01 01:01:01Z'),
+        );
+
+        $zip->addFileFromPsr7Stream(
+            fileName: 'small',
+            stream: new EndlessCycleStream('small'),
+            exactSize: 0x20,
+            compressionMethod: CompressionMethod::STORE,
+            lastModificationDateTime: new DateTimeImmutable('2022-01-01 01:01:01Z'),
+        );
+
+        $forecastedSize = $zip->finish();
+
+        $zip->executeSimulation();
+
+        $this->assertSame($forecastedSize, filesize($this->tempfile));
+
+        $this->validateAndExtractZip($this->tempfile);
+    }
+
     private function addLargeFileFileFromPath(CompressionMethod $compressionMethod, $zeroHeader, $zip64): void
     {
         [$tmp, $stream] = $this->getTmpFileStream();

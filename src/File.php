@@ -113,6 +113,8 @@ class File
             $this->isSimulation() &&
             $detectedSize !== null
         ) {
+            $this->uncompressedSize = $detectedSize;
+            $this->compressedSize = $detectedSize;
             ($this->recordSentBytes)($detectedSize);
         } else {
             $this->readStream(send: true);
