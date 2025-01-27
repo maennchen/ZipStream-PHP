@@ -33,7 +33,7 @@
     "mikey179/vfsstream": "^1.6",
     "php-coveralls/php-coveralls": "^2.5",
     "friendsofphp/php-cs-fixer": "^3.16",
-    "vimeo/psalm": "^5.0"
+    "vimeo/psalm": "^5.0 || ^6.0"
   },
   "suggest": {
     "psr/http-message": "^2.0",
