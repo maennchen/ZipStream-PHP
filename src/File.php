@@ -331,6 +331,10 @@ class File
 
             $data = fread($this->unpackStream(), $readLength);
 
+            if ($data === false) {
+                throw new ResourceActionException('fread', $this->unpackStream());
+            }
+
             hash_update($hash, $data);
 
             $this->uncompressedSize += strlen($data);
@@ -341,6 +345,10 @@ class File
                     $data,
                     feof($this->unpackStream()) ? ZLIB_FINISH : ZLIB_NO_FLUSH
                 );
+
+                if ($data === false) {
+                    throw new RuntimeException('deflate_add failed');
+                }
             }
 
             $this->compressedSize += strlen($data);
