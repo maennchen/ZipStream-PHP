@@ -8,6 +8,7 @@ use DateTimeImmutable;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\StreamWrapper;
 use org\bovigo\vfs\vfsStream;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\StreamInterface;
 use RuntimeException;
@@ -423,9 +424,7 @@ class ZipStreamTest extends TestCase
         $this->assertStringEqualsFile($tmpDir . '/sample.json', $body);
     }
 
-    /**
-     * @group slow
-     */
+    #[Group('slow')]
     public function testAddLargeFileFromPsr7Stream(): void
     {
         $zip = new ZipStream(
@@ -464,9 +463,7 @@ class ZipStreamTest extends TestCase
         $zip->addFile('sample.txt', '1234');
     }
 
-    /**
-     * @group slow
-     */
+    #[Group('slow')]
     public function testManyFilesWithoutZip64(): void
     {
         $this->expectException(OverflowException::class);
@@ -484,9 +481,7 @@ class ZipStreamTest extends TestCase
         $zip->finish();
     }
 
-    /**
-     * @group slow
-     */
+    #[Group('slow')]
     public function testManyFilesWithZip64(): void
     {
         $zip = new ZipStream(
@@ -508,9 +503,7 @@ class ZipStreamTest extends TestCase
         $this->assertSame(count($files), 0x10000);
     }
 
-    /**
-     * @group slow
-     */
+    #[Group('slow')]
     public function testLongZipWithout64(): void
     {
         $this->expectException(OverflowException::class);
@@ -533,9 +526,7 @@ class ZipStreamTest extends TestCase
         }
     }
 
-    /**
-     * @group slow
-     */
+    #[Group('slow')]
     public function testLongZipWith64(): void
     {
         $zip = new ZipStream(
@@ -563,9 +554,7 @@ class ZipStreamTest extends TestCase
         $this->assertSame(['sample0', 'sample1', 'sample2', 'sample3'], $files);
     }
 
-    /**
-     * @group slow
-     */
+    #[Group('slow')]
     public function testAddLargeFileWithoutZip64WithZeroHeader(): void
     {
         $this->expectException(OverflowException::class);
@@ -586,9 +575,7 @@ class ZipStreamTest extends TestCase
         );
     }
 
-    /**
-     * @group slow
-     */
+    #[Group('slow')]
     public function testAddsZip64HeaderWhenNeeded(): void
     {
         $zip = new ZipStream(
@@ -617,9 +604,7 @@ class ZipStreamTest extends TestCase
         ));
     }
 
-    /**
-     * @group slow
-     */
+    #[Group('slow')]
     public function testDoesNotAddZip64HeaderWhenNotNeeded(): void
     {
         $zip = new ZipStream(
@@ -648,9 +633,7 @@ class ZipStreamTest extends TestCase
         ));
     }
 
-    /**
-     * @group slow
-     */
+    #[Group('slow')]
     public function testAddLargeFileWithoutZip64WithoutZeroHeader(): void
     {
         $this->expectException(OverflowException::class);
@@ -1157,9 +1140,7 @@ class ZipStreamTest extends TestCase
         $zip->executeSimulation();
     }
 
-    /**
-     * @group slow
-     */
+    #[Group('slow')]
     public function testSimulationWithLargeZip64AndZeroHeader(): void
     {
         $zip = new ZipStream(
