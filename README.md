@@ -64,6 +64,10 @@ $zip->addFileFromPath(
 $zip->finish();
 ```
 
+## Upgrade to version 3.1.2
+
+- Minimum PHP Version: `8.2`
+
 ## Upgrade to version 3.0.0
 
 ### General
