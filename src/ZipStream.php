@@ -64,6 +64,8 @@ use ZipStream\Exception\ResourceActionException;
  * // write archive footer to stream
  * $zip->finish();
  * ```
+ *
+ * @api
  */
 class ZipStream
 {
