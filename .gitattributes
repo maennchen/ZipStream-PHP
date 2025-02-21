@@ -4,3 +4,7 @@
 *.php      text eol=lf
 *.yml      text eol=lf
 *.xml      text eol=lf
+
+/.github          export-ignore
+/.gitattributes   export-ignore
+/.gitignore       export-ignore
