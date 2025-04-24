@@ -64,6 +64,18 @@ $zip->addFileFromPath(
 $zip->finish();
 ```
 
+## Questions
+
+**💬 Questions? Please Read This First!**
+
+If you have a question about using this library, please *do not email the
+authors directly*. Instead, head over to the
+[GitHub Discussions](https://github.com/maennchen/ZipStream-PHP/discussions)
+page — your question might already be answered there! Using Discussions helps
+build a shared knowledge base, so others can also benefit from the answers. If
+you need dedicated 1:1 support, check out the options available on
+[@maennchen's sponsorship page](https://github.com/sponsors/maennchen?frequency=one-time&sponsor=maennchen).
+
 ## Upgrade to version 3.1.2
 
 - Minimum PHP Version: `8.2`
