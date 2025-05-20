@@ -5,6 +5,16 @@
 *.yml      text eol=lf
 *.xml      text eol=lf
 
-/.github          export-ignore
-/.gitattributes   export-ignore
-/.gitignore       export-ignore
+/.github/               export-ignore
+/.gitattributes         export-ignore
+/.gitignore             export-ignore
+/.phive/                export-ignore
+/.phpdoc/               export-ignore
+/.editorconfig          export-ignore
+/.php-cs-fixer.dist.php export-ignore
+/.tool-versions         export-ignore
+/guides/                export-ignore
+/phpdoc.dist.xml        export-ignore
+/phpunit.xml.dist       export-ignore
+/psalm.xml              export-ignore
+/test/                  export-ignore
