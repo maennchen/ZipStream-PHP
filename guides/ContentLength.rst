@@ -7,7 +7,7 @@ using the options ``SIMULATION_STRICT`` or ``SIMULATION_LAX`` in the
 
 In the ``SIMULATION_STRICT`` mode, ``ZipStream`` will not allow to calculate the
 size based on reading the whole file. ``SIMULATION_LAX`` will read the whole
-file if neccessary.
+file if necessary.
 
 ``SIMULATION_STRICT`` is therefore useful to make sure that the size can be
 calculated efficiently.

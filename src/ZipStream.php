@@ -693,7 +693,7 @@ class ZipStream
     /**
      * Write zip footer to stream.
      *
-     * The clase is left in an unusable state after `finish`.
+     * The class is left in an unusable state after `finish`.
      *
      * ##### Example
      *
