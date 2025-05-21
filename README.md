@@ -88,7 +88,7 @@ you need dedicated 1:1 support, check out the options available on
 - Only 64bit Architecture is supported.
 - The class `ZipStream\Option\Method` has been replaced with the enum
   `ZipStream\CompressionMethod`.
-- Most clases have been flagged as `@internal` and should not be used from the
+- Most classes have been flagged as `@internal` and should not be used from the
   outside.
   If you're using internal resources to extend this library, please open an
   issue so that a clean interface can be added & published.
@@ -100,7 +100,7 @@ you need dedicated 1:1 support, check out the options available on
 ### Archive Options
 
 - The class `ZipStream\Option\Archive` has been replaced in favor of named
-  arguments in the `ZipStream\ZipStream` constuctor.
+  arguments in the `ZipStream\ZipStream` constructor.
 - The archive options `largeFileSize` & `largeFileMethod` has been removed. If
   you want different `compressionMethods` based on the file size, you'll have to
   implement this yourself.
@@ -113,7 +113,7 @@ you need dedicated 1:1 support, check out the options available on
   filesizes this way.
 - The archive option `deflateLevel` has been replaced with the option
   `defaultDeflateLevel` and can be overridden for every file.
-- The first argument (`name`) of the `ZipStream\ZipStream` constuctor has been
+- The first argument (`name`) of the `ZipStream\ZipStream` constructor has been
   replaced with the named argument `outputName`.
 - Headers are now also sent if the `outputName` is empty. If you do not want to
   automatically send http headers, set `sendHttpHeaders` to `false`.

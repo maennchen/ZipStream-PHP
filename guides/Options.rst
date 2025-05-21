@@ -12,7 +12,7 @@ Here is the full list of options available to you. You can also have a look at
 
     $zip = new ZipStream(
         // Define output stream
-        // (argument is eiter a resource or implementing
+        // (argument is either a resource or implementing
         // `Psr\Http\Message\StreamInterface`)
         //
         // Setup with `psr/http-message` & `guzzlehttp/psr7` dependencies
