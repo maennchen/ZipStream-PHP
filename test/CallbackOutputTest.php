@@ -1,12 +1,14 @@
 <?php
+
 declare(strict_types=1);
 
 namespace ZipStream\Test;
 
 use PHPUnit\Framework\TestCase;
-use ZipStream\ZipStream;
-use ZipStream\Stream\CallbackStreamWrapper;
+use RuntimeException;
 use ZipArchive;
+use ZipStream\Stream\CallbackStreamWrapper;
+use ZipStream\ZipStream;
 
 final class CallbackOutputTest extends TestCase
 {
@@ -73,11 +75,11 @@ final class CallbackOutputTest extends TestCase
     {
         $stream = CallbackStreamWrapper::open(
             static function (string $chunk): void {
-                throw new \RuntimeException('Callback error');
+                throw new RuntimeException('Callback error');
             }
         );
 
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Callback function failed during stream write: Callback error');
 
         fwrite($stream, 'test data');
@@ -149,7 +151,7 @@ final class CallbackOutputTest extends TestCase
         $stats = fstat($stream);
         $this->assertIsArray($stats);
         $this->assertSame(9, $stats['size']); // Length of 'test data'
-        $this->assertSame(0100666, $stats['mode']); // Regular file permissions
+        $this->assertSame(0o100666, $stats['mode']); // Regular file permissions
 
         fclose($stream);
     }
