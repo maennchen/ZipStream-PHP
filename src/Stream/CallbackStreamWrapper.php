@@ -4,13 +4,16 @@ declare(strict_types=1);
 
 namespace ZipStream\Stream;
 
+use RuntimeException;
+use Throwable;
+
 /**
  * Stream wrapper that allows writing data to a callback function.
- * 
+ *
  * This wrapper creates a virtual stream that forwards all written data
  * to a provided callback function, enabling custom output handling
  * such as streaming to HTTP responses, files, or other destinations.
- * 
+ *
  * @psalm-suppress UnusedClass Used dynamically through stream_wrapper_register
  */
 final class CallbackStreamWrapper
@@ -25,6 +28,15 @@ final class CallbackStreamWrapper
 
     /** @var int Current position in the stream */
     private int $pos = 0;
+
+    /**
+     * Destructor - ensures cleanup even if stream_close() isn't called.
+     * Prevents memory leaks in long-running processes.
+     */
+    public function __destruct()
+    {
+        $this->stream_close();
+    }
 
     /**
      * Create a new callback stream.
@@ -44,8 +56,7 @@ final class CallbackStreamWrapper
         $id = 'cb_' . bin2hex(random_bytes(16));
         self::$callbacks[$id] = $callback;
 
-        $resource = fopen(self::PROTOCOL . "://{$id}", 'wb');
-        return $resource;
+        return fopen(self::PROTOCOL . "://{$id}", 'wb');
     }
 
     /**
@@ -56,15 +67,6 @@ final class CallbackStreamWrapper
     public static function cleanup(): void
     {
         self::$callbacks = [];
-    }
-
-    /**
-     * Destructor - ensures cleanup even if stream_close() isn't called.
-     * Prevents memory leaks in long-running processes.
-     */
-    public function __destruct()
-    {
-        $this->stream_close();
     }
 
     /**
@@ -97,7 +99,7 @@ final class CallbackStreamWrapper
      *
      * @param string $data Data to write
      * @return int Number of bytes written
-     * @throws \RuntimeException If callback execution fails
+     * @throws RuntimeException If callback execution fails
      */
     public function stream_write(string $data): int
     {
@@ -114,8 +116,8 @@ final class CallbackStreamWrapper
 
         try {
             $callback($data);
-        } catch (\Throwable $e) {
-            throw new \RuntimeException(
+        } catch (Throwable $e) {
+            throw new RuntimeException(
                 'Callback function failed during stream write: ' . $e->getMessage(),
                 0,
                 $e
@@ -178,7 +180,7 @@ final class CallbackStreamWrapper
         return [
             'dev' => 0,
             'ino' => 0,
-            'mode' => 0100666, // Regular file, read/write permissions
+            'mode' => 0o100666, // Regular file, read/write permissions
             'nlink' => 1,
             'uid' => 0,
             'gid' => 0,
