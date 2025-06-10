@@ -37,3 +37,78 @@ Stream to S3 Bucket
     $zip->finish();
 
     fclose($zipFile);
+
+Stream to Callback Function
+---------------------------
+
+The CallbackStreamWrapper allows you to stream ZIP data to a custom callback function,
+enabling flexible output handling such as streaming to multiple destinations,
+progress tracking, or data transformation.
+
+.. code-block:: php
+
+    use ZipStream\ZipStream;
+    use ZipStream\Stream\CallbackStreamWrapper;
+
+    // Example 1: Stream to multiple destinations with proper file handling
+    $backupFile = fopen('backup.zip', 'wb');
+    $logFile = fopen('transfer.log', 'ab');
+    
+    $zip = new ZipStream(
+        outputStream: CallbackStreamWrapper::open(function (string $data) use ($backupFile, $logFile) {
+            // Send to browser
+            echo $data;
+            
+            // Save to file efficiently
+            fwrite($backupFile, $data);
+            
+            // Log transfer progress
+            fwrite($logFile, "Transferred " . strlen($data) . " bytes\n");
+        }),
+        sendHttpHeaders: false,
+    );
+
+    $zip->addFile('hello.txt', 'Hello World!');
+    $zip->finish();
+    
+    // Clean up resources
+    fclose($backupFile);
+    fclose($logFile);
+
+.. code-block:: php
+
+    // Example 2: Progress tracking
+    $totalBytes = 0;
+    $zip = new ZipStream(
+        outputStream: CallbackStreamWrapper::open(function (string $data) use (&$totalBytes) {
+            $totalBytes += strlen($data);
+            echo "Progress: {$totalBytes} bytes written\n";
+            
+            // Your actual output handling
+            echo $data;
+        }),
+        sendHttpHeaders: false,
+    );
+
+    $zip->addFile('large_file.txt', str_repeat('A', 10000));
+    $zip->finish();
+
+.. code-block:: php
+
+    // Example 3: Data transformation
+    $zip = new ZipStream(
+        outputStream: CallbackStreamWrapper::open(function (string $data) {
+            // Transform data before output (e.g., encryption)
+            $transformedData = base64_encode($data);
+            
+            // Send transformed data
+            echo $transformedData;
+        }),
+        sendHttpHeaders: false,
+    );
+
+    $zip->addFile('secret.txt', 'Confidential data');
+    $zip->finish();
+
+.. note::
+   Transformations must be applied with care. Applying functions like ``base64_encode`` to arbitrary chunks will corrupt the structure of the final ZIP file. This pattern is best suited for transformations that can operate independently on a byte-stream, such as on-the-fly encryption or streaming to different protocols that require encoding.
