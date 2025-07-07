@@ -64,6 +64,38 @@ $zip->addFileFromPath(
 $zip->finish();
 ```
 
+### Callback Output
+
+You can stream ZIP data to a custom callback function instead of directly to the browser:
+
+```php
+use ZipStream\ZipStream;
+use ZipStream\Stream\CallbackStreamWrapper;
+
+// Stream to a callback function with proper file handling
+$outputFile = fopen('output.zip', 'wb');
+$backupFile = fopen('backup.zip', 'wb');
+
+$zip = new ZipStream(
+    outputStream: CallbackStreamWrapper::open(function (string $data) use ($outputFile, $backupFile) {
+        // Handle ZIP data as it's generated
+        fwrite($outputFile, $data);
+        
+        // Send to multiple destinations efficiently
+        echo $data; // Browser
+        fwrite($backupFile, $data); // Backup file
+    }),
+    sendHttpHeaders: false,
+);
+
+$zip->addFile('hello.txt', 'Hello World!');
+$zip->finish();
+
+// Clean up resources
+fclose($outputFile);
+fclose($backupFile);
+```
+
 ## Questions
 
 **💬 Questions? Please Read This First!**
