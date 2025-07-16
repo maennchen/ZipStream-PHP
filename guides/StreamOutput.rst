@@ -82,7 +82,7 @@ progress tracking, or data transformation.
     $zip = new ZipStream(
         outputStream: CallbackStreamWrapper::open(function (string $data) use (&$totalBytes) {
             $totalBytes += strlen($data);
-            echo "Progress: {$totalBytes} bytes written\n";
+            reportProgress($totalBytes); // Report progress to your tracking system
             
             // Your actual output handling
             echo $data;
@@ -95,20 +95,19 @@ progress tracking, or data transformation.
 
 .. code-block:: php
 
-    // Example 3: Data transformation
+    // Example 3: Data transformation using PHP stream filters
+    // For data transformations, prefer PHP's built-in stream filters
+    $outputStream = fopen('php://output', 'w');
+    stream_filter_append($outputStream, 'convert.base64-encode');
+    
     $zip = new ZipStream(
-        outputStream: CallbackStreamWrapper::open(function (string $data) {
-            // Transform data before output (e.g., encryption)
-            $transformedData = base64_encode($data);
-            
-            // Send transformed data
-            echo $transformedData;
-        }),
+        outputStream: $outputStream,
         sendHttpHeaders: false,
     );
 
     $zip->addFile('secret.txt', 'Confidential data');
     $zip->finish();
+    fclose($outputStream);
 
 .. note::
-   Transformations must be applied with care. Applying functions like ``base64_encode`` to arbitrary chunks will corrupt the structure of the final ZIP file. This pattern is best suited for transformations that can operate independently on a byte-stream, such as on-the-fly encryption or streaming to different protocols that require encoding.
+   For data transformations, PHP's built-in stream filters are preferred over callback transformations. Stream filters operate at the stream level and maintain data integrity. You can register custom filters using ``stream_filter_register()`` for specialized transformations.
