@@ -20,6 +20,9 @@ final class CallbackStreamWrapper
 {
     public const PROTOCOL = 'zipcb';
 
+    /** @var resource|null */
+    public $context;
+
     /** @var array<string, callable(string):void> Map of stream IDs to callback functions */
     private static array $callbacks = [];
 
