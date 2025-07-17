@@ -17,6 +17,9 @@ Here is the full list of options available to you. You can also have a look at
         //
         // Setup with `psr/http-message` & `guzzlehttp/psr7` dependencies
         // required when using `Psr\Http\Message\StreamInterface`.
+        //
+        // Can also use CallbackStreamWrapper for custom output handling:
+        // outputStream: CallbackStreamWrapper::open(function($data) { /* handle data */ }),
         outputStream: $filePointer,
 
         // Set the deflate level (default is 6; use -1 to disable it)
