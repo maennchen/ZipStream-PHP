@@ -15,8 +15,8 @@ class ExtendedInformationExtraFieldTest extends TestCase
 
         $this->assertSame(
             bin2hex((string) $extraField),
-            '5356' . // 2 bytes; Tag for this "extra" block type
-            '0000' // 2 bytes; TODO: Document
+            '5356' // 2 bytes; Tag for this "extra" block type
+            . '0000' // 2 bytes; TODO: Document
         );
     }
 }

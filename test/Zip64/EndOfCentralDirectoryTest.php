@@ -25,17 +25,17 @@ class EndOfCentralDirectoryTest extends TestCase
 
         $this->assertSame(
             bin2hex($descriptor),
-            '504b0606' . // 4 bytes;zip64 end of central dir signature - 0x06064b50
-            '2f00000000000000' . // 8 bytes; size of zip64 end of central directory record
-            '3333' . // 2 bytes; version made by
-            '4444' . // 2 bytes; version needed to extract
-            '55555555' . // 4 bytes; number of this disk
-            '66666666' . // 4 bytes; number of the disk with the start of the central directory
-            '8888888877777777' . // 8 bytes; total number of entries in the central directory on this disk
-            'aaaaaaaa99999999' . // 8 bytes; total number of entries in the central directory
-            'ccccccccbbbbbbbb' . // 8 bytes; size of the central directory
-            'eeeeeeeedddddddd' . // 8 bytes; offset of start of central directory with respect to the starting disk number
-            bin2hex('foo')
+            '504b0606' // 4 bytes;zip64 end of central dir signature - 0x06064b50
+            . '2f00000000000000' // 8 bytes; size of zip64 end of central directory record
+            . '3333' // 2 bytes; version made by
+            . '4444' // 2 bytes; version needed to extract
+            . '55555555' // 4 bytes; number of this disk
+            . '66666666' // 4 bytes; number of the disk with the start of the central directory
+            . '8888888877777777' // 8 bytes; total number of entries in the central directory on this disk
+            . 'aaaaaaaa99999999' // 8 bytes; total number of entries in the central directory
+            . 'ccccccccbbbbbbbb' // 8 bytes; size of the central directory
+            . 'eeeeeeeedddddddd' // 8 bytes; offset of start of central directory with respect to the starting disk number
+            . bin2hex('foo')
         );
     }
 }

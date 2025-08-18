@@ -6,7 +6,7 @@ namespace ZipStream\Test;
 
 trait Tempfile
 {
-    protected string|null $tempfile;
+    protected ?string $tempfile;
 
     /**
      * @var resource

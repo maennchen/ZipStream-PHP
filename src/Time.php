@@ -29,11 +29,11 @@ abstract class Time
         [$year, $month, $day, $hour, $minute, $second] = explode(' ', $dateTime->format('Y n j G i s'));
 
         return
-            ((int) $year << 25) |
-            ((int) $month << 21) |
-            ((int) $day << 16) |
-            ((int) $hour << 11) |
-            ((int) $minute << 5) |
-            ((int) $second >> 1);
+            ((int) $year << 25)
+            | ((int) $month << 21)
+            | ((int) $day << 16)
+            | ((int) $hour << 11)
+            | ((int) $minute << 5)
+            | ((int) $second >> 1);
     }
 }

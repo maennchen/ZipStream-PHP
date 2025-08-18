@@ -19,10 +19,10 @@ class EndOfCentralDirectoryLocatorTest extends TestCase
 
         $this->assertSame(
             bin2hex($descriptor),
-            '504b0607' . // 4 bytes; zip64 end of central dir locator signature - 0x07064b50
-            '11111111' . // 4 bytes; number of the disk with the start of the zip64 end of central directory
-            '3333333322222222' . // 28 bytes; relative offset of the zip64 end of central directory record
-            '44444444' // 4 bytes;total number of disks
+            '504b0607' // 4 bytes; zip64 end of central dir locator signature - 0x07064b50
+            . '11111111' // 4 bytes; number of the disk with the start of the zip64 end of central directory
+            . '3333333322222222' // 28 bytes; relative offset of the zip64 end of central directory record
+            . '44444444' // 4 bytes;total number of disks
         );
     }
 }

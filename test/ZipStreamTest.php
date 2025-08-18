@@ -62,10 +62,10 @@ class ZipStreamTest extends TestCase
 
         $name = 'árvíztűrő tükörfúrógép.txt';
         $content = 'Sample String Data';
-        $comment =
-            'Filename has every special characters ' .
-            'from Hungarian language in lowercase. ' .
-            'In uppercase: ÁÍŰŐÜÖÚÓÉ';
+        $comment
+            = 'Filename has every special characters '
+            . 'from Hungarian language in lowercase. '
+            . 'In uppercase: ÁÍŰŐÜÖÚÓÉ';
 
         $zip->addFile(fileName: $name, data: $content, comment: $comment);
         $zip->finish();

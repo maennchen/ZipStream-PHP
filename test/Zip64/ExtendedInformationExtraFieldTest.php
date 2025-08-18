@@ -20,12 +20,12 @@ class ExtendedInformationExtraFieldTest extends TestCase
 
         $this->assertSame(
             bin2hex($extraField),
-            '0100' . // 2 bytes; Tag for this "extra" block type
-            '1c00' . // 2 bytes; Size of this "extra" block
-            '6666666677777777' . // 8 bytes; Original uncompressed file size
-            '8888888899999999' . // 8 bytes; Size of compressed data
-            '1111111122222222' . // 8 bytes; Offset of local header record
-            '33333333' // 4 bytes; Number of the disk on which this file starts
+            '0100' // 2 bytes; Tag for this "extra" block type
+            . '1c00' // 2 bytes; Size of this "extra" block
+            . '6666666677777777' // 8 bytes; Original uncompressed file size
+            . '8888888899999999' // 8 bytes; Size of compressed data
+            . '1111111122222222' // 8 bytes; Offset of local header record
+            . '33333333' // 4 bytes; Number of the disk on which this file starts
         );
     }
 
@@ -35,8 +35,8 @@ class ExtendedInformationExtraFieldTest extends TestCase
 
         $this->assertSame(
             bin2hex($extraField),
-            '0100' . // 2 bytes; Tag for this "extra" block type
-            '0000' // 2 bytes; Size of this "extra" block
+            '0100' // 2 bytes; Tag for this "extra" block type
+            . '0000' // 2 bytes; Size of this "extra" block
         );
     }
 }

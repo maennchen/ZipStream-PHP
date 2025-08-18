@@ -19,10 +19,10 @@ class DataDescriptorTest extends TestCase
 
         $this->assertSame(
             bin2hex($descriptor),
-            '504b0708' . // 4 bytes; Optional data descriptor signature = 0x08074b50
-            '11111111' . // 4 bytes; CRC-32 of uncompressed data
-            '6666666677777777' . // 8 bytes; Compressed size
-            '8888888899999999' // 8 bytes; Uncompressed size
+            '504b0708' // 4 bytes; Optional data descriptor signature = 0x08074b50
+            . '11111111' // 4 bytes; CRC-32 of uncompressed data
+            . '6666666677777777' // 8 bytes; Compressed size
+            . '8888888899999999' // 8 bytes; Uncompressed size
         );
     }
 }
