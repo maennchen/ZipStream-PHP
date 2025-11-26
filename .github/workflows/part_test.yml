@@ -73,7 +73,6 @@ jobs:
             deps-${{ runner.os }}-${{ steps.setup-php.outputs.php-version }}-
             deps-${{ steps.setup-php.outputs.php-version }}-
             deps-
-      - run: composer remove --dev vimeo/psalm --no-update
       - name: Install Deps
         if: matrix.php != 'nightly'
         run: composer install --prefer-dist
