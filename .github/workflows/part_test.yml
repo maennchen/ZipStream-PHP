@@ -37,6 +37,13 @@ jobs:
         with:
           egress-policy: audit
 
+      - name: Maximize build space
+        if: "${{ runner.os == 'Linux' }}"
+        uses: easimon/maximize-build-space@fc881a613ad2a34aca9c9624518214ebc21dfc0c # v10
+        with:
+          root-reserve-mb: 512
+          swap-size-mb: 1024
+
       - name: Checkout Code
         uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
       - name: SetUp PHP
@@ -72,8 +79,12 @@ jobs:
       - name: Install Deps (ignore PHP requirement)
         if: matrix.php == 'nightly'
         run: composer install --prefer-dist --ignore-platform-req=php+
+      - name: "Create temp directory for tests"
+        run: mkdir -p tmp
       - name: Run PHPUnit
         run: composer run test:unit:cov
+        env:
+          TMPDIR: "${{ github.workspace }}/tmp"
       - name: Upload coverage results to Coveralls
         env:
           COVERALLS_REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
