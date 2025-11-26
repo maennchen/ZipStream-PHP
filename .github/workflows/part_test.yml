@@ -79,6 +79,7 @@ jobs:
       - name: Install Deps (ignore PHP requirement)
         if: matrix.php == 'nightly'
         run: composer install --prefer-dist --ignore-platform-req=php+
+      - run: composer remove --dev vimeo/psalm --no-update
       - name: "Create temp directory for tests"
         run: mkdir -p tmp
       - name: Run PHPUnit
