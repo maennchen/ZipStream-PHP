@@ -24,7 +24,7 @@ jobs:
         id: setup-php
         uses: shivammathur/setup-php@bf6b4fbd49ca58e4608c9c89fba0b8d90bd2a39f # v2
         with:
-          php-version: "8.3"
+          php-version-file: ".tool-versions"
           tools: phive
       - name: Cache Tools
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
