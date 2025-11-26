@@ -73,13 +73,13 @@ jobs:
             deps-${{ runner.os }}-${{ steps.setup-php.outputs.php-version }}-
             deps-${{ steps.setup-php.outputs.php-version }}-
             deps-
+      - run: composer remove --dev vimeo/psalm --no-update
       - name: Install Deps
         if: matrix.php != 'nightly'
         run: composer install --prefer-dist
       - name: Install Deps (ignore PHP requirement)
         if: matrix.php == 'nightly'
         run: composer install --prefer-dist --ignore-platform-req=php+
-      - run: composer remove --dev vimeo/psalm --no-update
       - name: "Create temp directory for tests"
         run: mkdir -p tmp
       - name: Run PHPUnit
