@@ -24,10 +24,10 @@ jobs:
           - php: nightly
             os: ubuntu-latest
             experimental: true
-          - php: "8.4"
+          - php: "8.5"
             os: windows-latest
             experimental: false
-          - php: "8.4"
+          - php: "8.5"
             os: macos-latest
             experimental: false
 
