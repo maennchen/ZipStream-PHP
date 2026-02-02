@@ -63,7 +63,7 @@ jobs:
         if: "${{ runner.os == 'Windows' }}"
         run: echo "dir=$(composer config cache-files-dir)" >> $env:GITHUB_OUTPUT
       - name: Cache Deps
-        uses: actions/cache@8b402f58fbc84540c8b491a91e594a4576fec3d7 # v5.0.2
+        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         id: cache
         with:
           path: ${{ steps.composer-cache-common.outputs.dir }}${{ steps.composer-cache-windows.outputs.dir }}
@@ -135,7 +135,7 @@ jobs:
         id: composer-cache
         run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
       - name: Cache Deps
-        uses: actions/cache@8b402f58fbc84540c8b491a91e594a4576fec3d7 # v5.0.2
+        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         id: cache
         with:
           path: ${{ steps.composer-cache.outputs.dir }}
@@ -150,7 +150,7 @@ jobs:
       - name: Run Psalm
         run: composer run test:lint -- --report=results.sarif
       - name: "Upload SARIF"
-        uses: github/codeql-action/upload-sarif@19b2f06db2b6f5108140aeb04014ef02b648f789 # v4.31.11
+        uses: github/codeql-action/upload-sarif@b20883b0cd1f46c72ae0ba6d1090936928f9fa30 # v4.32.0
         with:
           sarif_file: results.sarif
 
@@ -176,7 +176,7 @@ jobs:
         id: composer-cache
         run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
       - name: Cache Deps
-        uses: actions/cache@8b402f58fbc84540c8b491a91e594a4576fec3d7 # v5.0.2
+        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         id: cache
         with:
           path: ${{ steps.composer-cache.outputs.dir }}
