@@ -36,6 +36,14 @@ jobs:
         uses: step-security/harden-runner@5ef0c079ce82195b2a36a210272d6b661572d83e # v2.14.2
         with:
           egress-policy: audit
+      - name: SetUp PHP
+        id: setup-php
+        uses: shivammathur/setup-php@44454db4f0199b8b9685a5d763dc37cbf79108e1 # v2
+        with:
+          php-version: "${{ matrix.php }}"
+          tools: phpunit
+          coverage: xdebug
+          extensions: xdebug,zip
 
       - name: Maximize build space
         if: "${{ runner.os == 'Linux' }}"
@@ -46,14 +54,6 @@ jobs:
 
       - name: Checkout Code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - name: SetUp PHP
-        id: setup-php
-        uses: shivammathur/setup-php@44454db4f0199b8b9685a5d763dc37cbf79108e1 # v2
-        with:
-          php-version: "${{ matrix.php }}"
-          tools: phpunit
-          coverage: xdebug
-          extensions: xdebug,zip
       - name: Get composer cache directory
         id: composer-cache-common
         if: "${{ runner.os != 'Windows' }}"
