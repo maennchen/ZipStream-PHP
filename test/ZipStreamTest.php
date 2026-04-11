@@ -549,12 +549,24 @@ class ZipStreamTest extends TestCase
             );
         }
 
+        $zip->addDirectory('mydir/');
+
         $zip->finish();
 
         $tmpDir = $this->validateAndExtractZip($this->tempfile);
 
         $files = $this->getRecursiveFileList($tmpDir);
         $this->assertSame(['sample0', 'sample1', 'sample2', 'sample3'], $files);
+
+        $this->assertFileDoesNotContain(
+            $this->tempfile,
+            PackField::pack(
+                new PackField(format: 'V', value: 0x00000000), // CRC-32 = 0 (directory)
+                new PackField(format: 'V', value: 0xFFFFFFFF), // compressedSize — bug sentinel
+                new PackField(format: 'V', value: 0xFFFFFFFF), // uncompressedSize — bug sentinel
+                new PackField(format: 'v', value: 6),          // filename length = strlen('mydir/')
+            )
+        );
     }
 
     #[Group('slow')]

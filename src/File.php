@@ -202,10 +202,10 @@ final class File
             compressionMethod: $this->compressionMethod,
             lastModificationDateTime: $this->lastModificationDateTime,
             crc32UncompressedData: $this->crc,
-            compressedSize: $zip64Enabled
+            compressedSize: ($forceEnableZip64 || $this->compressedSize > 0xFFFFFFFF)
                 ? 0xFFFFFFFF
                 : $this->compressedSize,
-            uncompressedSize: $zip64Enabled
+            uncompressedSize: ($forceEnableZip64 || $this->uncompressedSize > 0xFFFFFFFF)
                 ? 0xFFFFFFFF
                 : $this->uncompressedSize,
             fileName: $this->fileName,
