@@ -204,7 +204,7 @@ final class File
             crc32UncompressedData: $this->crc,
             compressedSize: ($forceEnableZip64 || $this->compressedSize > 0xFFFFFFFF)
                 ? 0xFFFFFFFF
-                : $this->compressedSize,
+                : (int)$this->compressedSize,
             uncompressedSize: ($forceEnableZip64 || $this->uncompressedSize > 0xFFFFFFFF)
                 ? 0xFFFFFFFF
                 : $this->uncompressedSize,
