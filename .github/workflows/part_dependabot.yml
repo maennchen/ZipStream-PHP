@@ -22,7 +22,7 @@ jobs:
         with:
           egress-policy: audit
 
-      - uses: fastify/github-action-merge-dependabot@30c3f8f14a4f7b315ba38dbc1b793d27128fef82 # v3.12.0
+      - uses: fastify/github-action-merge-dependabot@4ed43935e3bd362966dfb1e0829f9a35638fe6eb # v3.13.0
         with:
           github-token: ${{ github.token }}
           use-github-auto-merge: true
