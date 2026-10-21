@@ -38,7 +38,7 @@ jobs:
           egress-policy: audit
       - name: SetUp PHP
         id: setup-php
-        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2
         with:
           php-version: "${{ matrix.php }}"
           tools: phpunit
@@ -132,7 +132,7 @@ jobs:
           persist-credentials: false
       - name: SetUp PHP
         id: setup-php
-        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2
         with:
           php-version-file: ".tool-versions"
       - name: Get composer cache directory
@@ -154,7 +154,7 @@ jobs:
       - name: Run Psalm
         run: composer run test:lint -- --report=results.sarif
       - name: "Upload SARIF"
-        uses: github/codeql-action/upload-sarif@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
+        uses: github/codeql-action/upload-sarif@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
         with:
           sarif_file: results.sarif
 
@@ -175,7 +175,7 @@ jobs:
           persist-credentials: false
       - name: SetUp PHP
         id: setup-php
-        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2
         with:
           php-version-file: ".tool-versions"
       - name: Get composer cache directory
